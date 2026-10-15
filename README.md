@@ -1,67 +1,200 @@
-# Circle Code site — js.org edition
+# CircleCode
 
-Static site (no build step): landing page + generator + scanner.
-`generator.html` and `scanner.html` are copies of the tested apps.
+<p align="center">
+  <img src="https://circlecode.js.org/CNAME" alt="CircleCode Logo" style="display:none;" />
+  <h2 align="center">High-performance, dependency-free circular barcode codec for Browser and Node.js</h2>
+  <p align="center">
+    Inspired by Apple Pay & Apple App Clips codes. Generate elegant circular barcodes with center branding and scan them across full 360° rotations at 10 FPS.
+  </p>
+  <p align="center">
+    <a href="https://circlecode.js.org"><img src="https://img.shields.io/badge/website-circlecode.js.org-0071e3?style=flat-square" alt="Website" /></a>
+    <a href="https://github.com/Axphia/CircleCode"><img src="https://img.shields.io/badge/github-Axphia%2FCircleCode-black?style=flat-square&logo=github" alt="GitHub" /></a>
+    <img src="https://img.shields.io/badge/dependencies-0-brightgreen?style=flat-square" alt="Zero Dependencies" />
+    <img src="https://img.shields.io/badge/bundle-39.5_KB_minified-blue?style=flat-square" alt="Bundle Size" />
+    <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License" />
+  </p>
+</p>
 
-## Publish it (4 steps, per https://github.com/js-org/js.org)
+---
 
-**Step 1 — GitHub Pages.** Create a repo (e.g. `circlecode`), upload this
-folder's files to its publishing branch (`main` + `/ (root)`), enable
-Settings → Pages. Open `https://YOURNAME.github.io/circlecode/` and check
-both pages load. Camera scanning needs `https://` — GitHub Pages has it.
+## ✨ Features
 
-**Step 2 — Pick subdomain.** Either your username or repo name, e.g.
-`circlecode.js.org`. Edit the `CNAME` file in this folder to that one line.
+- 🎨 **Apple Pay & App Clips Aesthetic:** Minimalist circular dash design that feels natural on round packaging, coasters, cards, and luxury brand merchandise.
+- ⚡ **Zero Dependencies:** Pure vanilla JavaScript. Runs out-of-the-box in Node.js, modern browsers, PWAs, or embedded webviews.
+- 🔍 **Subpixel 360° Scanning Engine:** Dual-centroid edge detection, scale-aware radial search (`dr = 2.2 * scale`), and hybrid Otsu/K-means thresholding for extreme reliability under shadows and glare.
+- 📱 **Live Camera & Mobile Features:** Integrated torch (flashlight) toggle, digital 2x zoom crop, and 1-frame instant lock when checksum matches.
+- 📐 **Vector SVG & Canvas Support:** Export crisp, high-resolution SVG markup or render directly to 2D canvas contexts.
+- 🏷️ **Center Logo Slot:** Dedicated center circular badge (42px standard) for custom logos (Apple Pay, brand icons, avatars, or text) with zero data occlusion.
+- 📦 **Dual Module Format:** Full support for ECMAScript Modules (`import`), CommonJS (`require`), TypeScript types (`index.d.ts`), and standalone UMD browser bundle.
 
-**Step 3 — CNAME.** Already included: the `CNAME` file in this folder goes
-to the repo root (same branch you publish from). Commit + push it.
+---
 
-**Step 4 — Claim it.** Fork https://github.com/js-org/js.org, add your line
-to `cnames_active.js`, e.g. `"circlecode": "YOURNAME.github.io/circlecode"`,
-open a PR. Goes live ~24h after merge. Watch the PR for naming conflicts.
+## 🚀 Live Demos
 
-Notes:
-- js.org requires JS-ecosystem content with real substance — this is a JS
-  developer tool, no redirects, so it qualifies.
-- Never commit secrets; this repo is pure static files.
+- **Generator:** [https://circlecode.js.org/generator.html](https://circlecode.js.org/generator.html)
+- **Camera Scanner:** [https://circlecode.js.org/scanner.html](https://circlecode.js.org/scanner.html)
+- **Home / Studio:** [https://circlecode.js.org](https://circlecode.js.org)
 
-## Use as a library
+---
 
-### 1. Code Generator (`circle-code.js`)
-`circle-code.js` is a dependency-free ES module for generating Apple Pay-style circular codes:
+## 📦 Installation
 
-```js
-import { buildModel, renderToCanvas, renderToSVG }
-  from 'https://circlecode.js.org/circle-code.js'; // or './circle-code.js'
+```bash
+# npm
+npm install circlecode
 
-const model = buildModel('user-12345', { rings: 5, density: 0.35 });
-renderToCanvas(model, canvas.getContext('2d'), 400, {
+# yarn
+yarn add circlecode
+
+# pnpm
+pnpm add circlecode
+```
+
+### Or use directly in the browser via CDN:
+
+```html
+<!-- Standalone All-in-One UMD Bundle -->
+<script src="https://circlecode.js.org/dist/circlecode.min.js"></script>
+```
+
+---
+
+## 🛠️ Usage
+
+### 1. Generating Codes (Encoder)
+
+#### Render SVG in Node.js or Browser
+```javascript
+import { buildModel, renderToSVG } from 'circlecode';
+
+// 1. Build circular code data model (supports rings from 4 to 14)
+const model = buildModel('user-12345vvsvssdvdsvsvsdvvsvsvssdvsd', {
+  rings: 9,
+  density: 0.35
+});
+
+// 2. Generate pure SVG string
+const svg = renderToSVG(model, {
   dark: '#000000',
+  light: '#8e8e93',
+  center: 'Pay',
+  centerBg: '#000000'
+});
+
+console.log(svg);
+```
+
+#### Render to HTML Canvas
+```javascript
+import { buildModel, renderToCanvas } from 'circlecode';
+
+const canvas = document.getElementById('myCanvas');
+const ctx = canvas.getContext('2d');
+
+const model = buildModel('Table 24', { rings: 5, density: 0.35 });
+
+renderToCanvas(model, ctx, 400, {
+  dark: '#1d1d1f',
   light: '#d1d1d6',
-  center: 'Pay'
+  center: 'MyBrand',
+  centerBg: '#000000'
 });
 ```
 
-### 2. Code Scanner (`circle-scanner.js`)
-`circle-scanner.js` is a standalone, dependency-free decoder for images, canvases, and live camera streams:
+---
 
-```js
-import { scanImage, scanCanvas, CircleScanner }
-  from 'https://circlecode.js.org/circle-scanner.js'; // or './circle-scanner.js'
+### 2. Scanning & Decoding (Decoder)
 
-// Scan from an Image or Canvas
-const result = await scanImage(imgElement);
+#### Scan Static Image or Canvas
+```javascript
+import { scanImageData, scanCanvas, scanImage } from 'circlecode';
+
+// From an Image element
+const img = document.querySelector('img#uploadedCode');
+const result = await scanImage(img);
+
 if (result.ok) {
-  console.log('Decoded text:', result.text); // 'user-12345'
+  console.log('Decoded:', result.text);
+  console.log('Rings detected:', result.rings);
+  console.log('Rotation angle:', Math.round(result.rot * 180 / Math.PI) + '°');
+} else {
+  console.error('Scan failed:', result.reason);
 }
+```
 
-// Live Camera Scanner
-const scanner = new CircleScanner({
-  fps: 8,
-  onScan: (res) => {
-    console.log('Scanned successfully:', res.text);
+#### Real-Time Camera Scanner
+```javascript
+import { CircleScanner } from 'circlecode';
+
+const videoElement = document.getElementById('cameraVideo');
+
+const scanner = new CircleScanner(videoElement, {
+  fps: 10,
+  targetSize: 480,
+  facingMode: 'environment',
+  onScan: (result) => {
+    console.log('Scanned successfully:', result.text);
+    // Beep / vibrate / stop scanner
     scanner.stop();
   }
 });
-await scanner.start(videoElement);
+
+// Start camera stream
+await scanner.start();
+
+// Control camera features
+if (scanner.hasTorch()) {
+  await scanner.toggleTorch();
+}
+scanner.setZoom(2); // 2x digital zoom
 ```
+
+---
+
+### 3. CommonJS Usage (Node.js)
+
+```javascript
+const { buildModel, renderToSVG, scanImageData } = require('circlecode');
+
+const model = buildModel('Hello World');
+const svg = renderToSVG(model, { center: 'Pay' });
+```
+
+---
+
+## 📊 Technical Specifications
+
+| Parameter | Standard Value | Description |
+| :--- | :--- | :--- |
+| **Center Radius** | `42` (normalized) | Protected circular branding slot for logos / icons |
+| **Inner Ring Start** | `55` | Ring 0 start radius |
+| **Outer Ring End** | `157` | Outermost ring radius |
+| **Disc Edge Radius** | `190` | Outer white boundary border |
+| **Standard Density** | `0.35` | Dash density (Apple Pay specification) |
+| **Ring Counts** | `4` to `14` | Dynamically expandable for payloads up to 50+ bytes |
+| **Checksum** | `Modulo-256 Sum` | 8-bit checksum with 1–2 bit mathematical error recovery |
+| **Framerate** | `10 FPS` | Camera processing cycle (~70ms decode time) |
+
+---
+
+## 🧪 Development & Testing
+
+```bash
+# Clone the repository
+git clone https://github.com/Axphia/CircleCode.git
+cd CircleCode
+
+# Run automated codec & roundtrip test suite
+npm test
+
+# Build standalone UMD and minified bundles
+npm run build
+```
+
+---
+
+## 📄 License
+
+This project is open-source and available under the [MIT License](LICENSE).
+
+Developed and maintained with ❤️ by [Axphia Project](https://github.com/Axphia).
