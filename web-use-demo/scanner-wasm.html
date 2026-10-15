@@ -361,7 +361,7 @@
 
   <div class="container">
     <div class="header-area">
-      <div class="badge-wasm">⚡ Full WebAssembly Engine (Rust)</div>
+      <div class="badge-wasm">Full WebAssembly Engine (Rust)</div>
       <h1>High-Performance WASM Circular Scanner</h1>
       <p>Decodes circular barcodes at maximum native speeds (2–4 ms) using compiled Rust WebAssembly linear memory. Zero mobile heating.</p>
     </div>
@@ -381,17 +381,17 @@
 
         <div class="controls">
           <button id="startBtn">Start Camera</button>
-          <button id="flipBtn" class="ghost" title="Switch between front and back cameras">🔄 Flip</button>
-          <button id="torchBtn" class="ghost" disabled title="Toggle Flashlight">🔦 Torch</button>
+          <button id="flipBtn" class="ghost" title="Switch between front and back cameras">Flip Camera</button>
+          <button id="torchBtn" class="ghost" disabled title="Toggle Flashlight">Torch</button>
         </div>
 
         <div class="controls" style="margin-top: 8px;">
-          <button id="demoBtn" class="ghost" style="flex: 1;">⚡ Benchmark Demo Code</button>
+          <button id="demoBtn" class="ghost" style="flex: 1;">Benchmark Demo Code</button>
           <button id="clearBtn" class="ghost" style="flex: 0 0 80px;">Clear</button>
         </div>
 
         <div class="upload-zone" id="dropZone">
-          <span style="font-size: 13px; font-weight: 600; color: var(--text);">📂 Click or Drop image to scan with WASM</span>
+          <span style="font-size: 13px; font-weight: 600; color: var(--text);">Click or Drop image to scan with WASM</span>
           <input type="file" id="fileInput" accept="image/*" style="display:none;" />
         </div>
 
@@ -632,7 +632,7 @@
       fpsStat.textContent = Math.round(1000 / Math.max(ms, 1)) + ' FPS';
 
       if (res && res.ok) {
-        onDecodeSuccess(res, 'Live Camera (⚡ Rust WASM)');
+        onDecodeSuccess(res, 'Live Camera (Rust WASM)');
       } else {
         reticle.classList.remove('locked');
         if (statusStat.textContent === 'LOCKED') {
@@ -657,7 +657,7 @@
       try {
         torchOn = !torchOn;
         await track.applyConstraints({ advanced: [{ torch: torchOn }] });
-        torchBtn.textContent = torchOn ? '🔦 Torch Off' : '🔦 Torch';
+        torchBtn.textContent = torchOn ? 'Torch Off' : 'Torch';
       } catch (e) {}
     };
 
@@ -699,7 +699,7 @@
       document.getElementById('benchmarkWasm').textContent = ms.toFixed(1) + ' ms (instant)';
 
       if (res && res.ok) {
-        onDecodeSuccess(res, 'Demo Benchmark (⚡ Rust WASM)');
+        onDecodeSuccess(res, 'Demo Benchmark (Rust WASM)');
       } else {
         onDecodeFail(res ? res.reason : 'Benchmark decode error');
       }
@@ -756,7 +756,7 @@
         fpsStat.textContent = Math.round(1000 / Math.max(ms, 1)) + ' FPS';
 
         if (res && res.ok) {
-          onDecodeSuccess(res, 'Uploaded File (⚡ Rust WASM)');
+          onDecodeSuccess(res, 'Uploaded File (Rust WASM)');
         } else {
           onDecodeFail(res ? res.reason : 'No circular code found in file');
         }

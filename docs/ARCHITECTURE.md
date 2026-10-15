@@ -37,8 +37,8 @@ CircleCode is built with a **dual-engine architecture**:
 
 | Engine | Best Use Case | Performance & Characteristics |
 | :--- | :--- | :--- |
-| **🐢 Pure JavaScript (`circlecode`)** | **Web image uploads, drag-and-drop files, and Node.js backend** | • Zero external dependencies or binary fetches<br>• Runs universally on all browsers & Node environments<br>• Latency: ~25–50 ms per full image scan<br>• Recommended for: `<input type="file">`, photo uploads, forms, and one-off decodes |
-| **⚡ Native Rust WebAssembly (`circlecode/wasm`)** | **Real-time 60 FPS camera scanning & mobile video streams** | • Compiled from Rust via LLVM into native bytecode<br>• Sub-3ms latency with SIMD 128-bit vectorization<br>• Linear memory buffer eliminates Garbage Collection (GC) pauses<br>• Low CPU (<10%) prevents smartphone battery drain & device overheating |
+| **Pure JavaScript (`circlecode`)** | **Web image uploads, drag-and-drop files, and Node.js backend** | • Zero external dependencies or binary fetches<br>• Runs universally on all browsers & Node environments<br>• Latency: ~25–50 ms per full image scan<br>• Recommended for: `<input type="file">`, photo uploads, forms, and one-off decodes |
+| **Native Rust WebAssembly (`circlecode/wasm`)** | **Real-time 60 FPS camera scanning & mobile video streams** | • Compiled from Rust via LLVM into native bytecode<br>• Sub-3ms latency with SIMD 128-bit vectorization<br>• Linear memory buffer eliminates Garbage Collection (GC) pauses<br>• Low CPU (<10%) prevents smartphone battery drain & device overheating |
 
 ---
 

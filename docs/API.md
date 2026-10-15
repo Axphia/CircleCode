@@ -4,7 +4,7 @@
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
 - [Installation](#installation)
 - [Module Exports](#module-exports)

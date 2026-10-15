@@ -552,11 +552,11 @@
       </div>
     </section>
 
-    <!-- 📐 Mathematical Specification & Algorithmic Foundations -->
+    <!-- Mathematical Specification & Algorithmic Foundations -->
     <section class="how-box" id="mathSpec">
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
         <div>
-          <div class="badge-pill">📐 Rigorous Formal Specification</div>
+          <div class="badge-pill">Formal Specification</div>
           <h2 class="section-title">Mathematical &amp; Algorithmic Foundations</h2>
         </div>
         <div style="display: flex; gap: 10px; font-size: 13px; font-weight: 600;">
@@ -662,15 +662,15 @@
 
     <!-- Engine Selection: Pure JS vs Native Rust WASM -->
     <section class="compare-box" id="engineCompare">
-      <h2 class="section-title">⚖️ Which Engine Should You Use?</h2>
+      <h2 class="section-title">Which Engine Should You Use?</h2>
       <p class="section-desc">Choose the right engine for your application's requirements:</p>
 
       <table class="compare-table">
         <thead>
           <tr>
             <th>Feature</th>
-            <th>🐢 Pure JavaScript (<code>circlecode</code>)</th>
-            <th>⚡ Native Rust WASM (<code>circlecode/wasm</code>)</th>
+            <th>Pure JavaScript (<code>circlecode</code>)</th>
+            <th>Native Rust WASM (<code>circlecode/wasm</code>)</th>
           </tr>
         </thead>
         <tbody>
@@ -705,37 +705,86 @@
 
     <!-- Quick Installation -->
     <section class="how-box" id="quickInstall">
-      <h2 class="section-title">📦 Quick Installation</h2>
-      <p class="section-desc">Install from npm or include the standalone UMD bundle:</p>
+      <h2 class="section-title">Quick Installation</h2>
+      <p class="section-desc">Install via npm, GitHub Packages, or include the browser bundle:</p>
 
-      <div class="code-box">
-<span class="code-comment"># Install from NPM Registry</span>
+      <!-- Package Install -->
+      <div class="code-box"># Install from NPM Registry
 npm install circlecode
 
-<span class="code-comment"># Or install from GitHub Packages (Axphia scope)</span>
-npm install @axphia/circlecode --registry=https://npm.pkg.github.com
-      </div>
+# Or install from GitHub Packages (Axphia scope)
+npm install @axphia/circlecode --registry=https://npm.pkg.github.com</div>
 
-      <div class="code-box" style="margin-top: 14px;">
-<span class="code-comment">// In your JavaScript / TypeScript application</span>
-<span class="code-kw">import</span> { buildModel, renderToSVG, scanCanvas } <span class="code-kw">from</span> <span class="code-str">'circlecode'</span>;
+      <!-- 1. Encoder -->
+      <div style="margin-top: 24px;">
+        <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">1. Generating Codes (Encoder)</h4>
+        <p style="font-size: 13px; color: var(--text-sec); margin-bottom: 8px;">Create Apple Pay circular barcodes and render to SVG or HTML5 Canvas:</p>
+        <div class="code-box"><span class="code-kw">import</span> { buildModel, renderToSVG, renderToCanvas } <span class="code-kw">from</span> <span class="code-str">'circlecode'</span>;
 
-<span class="code-comment">// 1. Generate circular barcode SVG</span>
-<span class="code-kw">const</span> model = <span class="code-fn">buildModel</span>(<span class="code-str">'Table-24'</span>);
+<span class="code-comment">// 1. Build circular code model</span>
+<span class="code-kw">const</span> model = <span class="code-fn">buildModel</span>(<span class="code-str">'user-12345'</span>, { rings: 5, density: 0.35 });
+
+<span class="code-comment">// 2. Export vector SVG markup</span>
 <span class="code-kw">const</span> svg = <span class="code-fn">renderToSVG</span>(model, { dark: <span class="code-str">'#0071e3'</span>, light: <span class="code-str">'#ffffff'</span> });
 
-<span class="code-comment">// 2. Decode from an HTML canvas</span>
-<span class="code-kw">const</span> result = <span class="code-fn">scanCanvas</span>(canvas);
+<span class="code-comment">// 3. Or render directly to an HTML5 Canvas</span>
+<span class="code-fn">renderToCanvas</span>(model, canvas.getContext(<span class="code-str">'2d'</span>), 400);</div>
+      </div>
+
+      <!-- 2. Pure JS Scanner -->
+      <div style="margin-top: 24px;">
+        <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">2. Pure JS Scanner (Web Image Uploads &amp; Drag-and-Drop)</h4>
+        <p style="font-size: 13px; color: var(--text-sec); margin-bottom: 8px;">Zero-dependency client-side decoding from user file uploads or canvas elements:</p>
+        <div class="code-box"><span class="code-kw">import</span> { scanCanvas, scanImageData, CircleScanner } <span class="code-kw">from</span> <span class="code-str">'circlecode'</span>;
+
+<span class="code-comment">// A) Scan directly from an uploaded image or HTMLCanvasElement</span>
+<span class="code-kw">const</span> result = <span class="code-fn">scanCanvas</span>(myCanvas, { aggressive: <span class="code-kw">false</span> });
 <span class="code-kw">if</span> (result.ok) {
-  console.log(<span class="code-str">'Decoded payload:'</span>, result.text);
+  console.log(<span class="code-str">'Decoded payload:'</span>, result.text); <span class="code-comment">// "user-12345"</span>
+  console.log(<span class="code-str">'Rings detected:'</span>, result.rings, <span class="code-str">'Rotation:'</span>, result.rot);
 }
+
+<span class="code-comment">// B) Or launch live webcam scanner in pure JavaScript</span>
+<span class="code-kw">const</span> scanner = <span class="code-kw">new</span> <span class="code-fn">CircleScanner</span>({
+  video: document.getElementById(<span class="code-str">'cameraVideo'</span>),
+  onDecode: (res) => console.log(<span class="code-str">'Scanned:'</span>, res.text)
+});
+<span class="code-kw">await</span> scanner.<span class="code-fn">start</span>();</div>
+      </div>
+
+      <!-- 3. WASM Scanner -->
+      <div style="margin-top: 24px;">
+        <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">3. Native WebAssembly Scanner (Real-Time 60 FPS Mobile Camera)</h4>
+        <p style="font-size: 13px; color: var(--text-sec); margin-bottom: 8px;">Sub-3ms Rust WASM core with zero garbage collection pauses and minimal battery usage:</p>
+        <div class="code-box"><span class="code-kw">import</span> { initWasm, scanFrameWasm } <span class="code-kw">from</span> <span class="code-str">'circlecode/wasm'</span>;
+
+<span class="code-comment">// 1. Initialize WebAssembly core</span>
+<span class="code-kw">await</span> <span class="code-fn">initWasm</span>();
+
+<span class="code-comment">// 2. Scan continuous camera video frames at native speed (~2-4 ms)</span>
+<span class="code-comment">// Pass: grayscale Uint8Array, frame width, frame height</span>
+<span class="code-kw">const</span> result = <span class="code-fn">scanFrameWasm</span>(grayscalePixelBuffer, 480, 480);
+<span class="code-kw">if</span> (result.ok) {
+  console.log(<span class="code-str">'WASM instant lock:'</span>, result.text);
+  console.log(<span class="code-str">'Latency:'</span>, result.ms, <span class="code-str">'ms'</span>);
+}</div>
+      </div>
+
+      <!-- 4. CDN Script -->
+      <div style="margin-top: 24px;">
+        <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">4. Standalone Browser CDN</h4>
+        <p style="font-size: 13px; color: var(--text-sec); margin-bottom: 8px;">Include directly via script tag in vanilla HTML:</p>
+        <div class="code-box">&lt;script src=<span class="code-str">"https://cdn.jsdelivr.net/npm/circlecode@1.1.1/dist/circlecode.min.js"</span>&gt;&lt;/script&gt;
+&lt;script&gt;
+  <span class="code-kw">const</span> { buildModel, renderToCanvas, scanCanvas, CircleScanner } = window.CircleCode;
+&lt;/script&gt;</div>
       </div>
     </section>
 
     <!-- Teleport Launchpad Cards (MOVED TO BOTTOM) -->
     <section id="demosLaunchpad" style="margin-bottom: 64px;">
       <div style="text-align: center; margin-bottom: 28px;">
-        <div class="badge-pill">🚀 Live Interactive Showcase</div>
+        <div class="badge-pill">Live Interactive Showcase</div>
         <h2 class="section-title">Teleport to Web Demos</h2>
         <p class="section-desc" style="max-width: 600px; margin: 0 auto 20px;">
           Experience CircleCode live in action. Select a tool to teleport directly into the <code>web-use-demo/</code> environment:
@@ -744,16 +793,16 @@ npm install @axphia/circlecode --registry=https://npm.pkg.github.com
         <!-- Instant Teleport Buttons -->
         <div class="tp-actions" style="margin-bottom: 30px;">
           <a href="web-use-demo/scanner-wasm.html" class="tp-btn tp-btn-wasm" id="tpWasmBtn">
-            ⚡ WASM Camera Scanner
+            WASM Camera Scanner
           </a>
           <a href="web-use-demo/scanner.html" class="tp-btn tp-btn-primary" id="tpJsBtn">
-            🐢 JS Upload Scanner
+            JS Upload Scanner
           </a>
           <a href="web-use-demo/generator.html" class="tp-btn tp-btn-secondary" id="tpGenBtn">
-            🎨 Barcode Generator
+            Barcode Generator
           </a>
           <a href="web-use-demo/example.html" class="tp-btn tp-btn-secondary" id="tpShowcaseBtn">
-            🧪 CDN & Comparison Hub
+            CDN &amp; Comparison Hub
           </a>
         </div>
       </div>
@@ -771,7 +820,7 @@ npm install @axphia/circlecode --registry=https://npm.pkg.github.com
             <h3>Full WASM Scanner</h3>
             <p>Built with compiled Native Rust WebAssembly. Sub-3ms latency, zero garbage collection pauses, audio chimes, haptics, flashlight torch, and reticle tracking.</p>
           </div>
-          <span class="lp-link" style="color: #1a9e38;">Launch WASM Scanner ⚡ →</span>
+          <span class="lp-link" style="color: #1a9e38;">Launch WASM Scanner →</span>
         </a>
 
         <!-- Card 2: Pure JS Scanner -->

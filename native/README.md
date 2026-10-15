@@ -4,7 +4,7 @@ High-performance native core for CircleCode, built in Rust and compiled directly
 
 ---
 
-## ⚡ Performance Highlights
+## Performance Highlights
 
 | Metric | Pure JavaScript | Rust WebAssembly (`circlecode/wasm`) |
 | :--- | :--- | :--- |
@@ -16,7 +16,7 @@ High-performance native core for CircleCode, built in Rust and compiled directly
 
 ---
 
-## 📦 Using in Node.js or Browser
+## Using in Node.js or Browser
 
 The compiled WebAssembly binary is packaged into the official npm release (`circlecode` v1.1.0+):
 
@@ -36,7 +36,7 @@ if (result.ok) {
 
 ---
 
-## 🛠️ Building from Source
+## Building from Source
 
 To compile the Rust source into `.wasm` yourself:
 
@@ -56,7 +56,7 @@ Outputs in `native/rust/pkg/`:
 
 ---
 
-## 📚 Related Documentation
+## Related Documentation
 
 - [Full API Reference](../docs/API.md)
 - [Format Specification](../docs/SPECIFICATION.md)

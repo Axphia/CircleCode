@@ -399,7 +399,7 @@
 
   <div class="container">
     <div class="header-area">
-      <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: rgba(0, 113, 227, 0.08); color: #0071e3; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 8px;">🐢 Pure JavaScript Engine</div>
+      <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: rgba(0, 113, 227, 0.08); color: #0071e3; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 8px;">Pure JavaScript Engine</div>
       <h1>Circle Code Pure JS Scanner</h1>
       <p>Clean, zero-dependency client-side circular barcode decoding in pure JavaScript.</p>
     </div>
@@ -407,7 +407,7 @@
     <!-- Production Notice -->
     <div style="margin-bottom: 24px; padding: 14px 18px; background: #fff; border: 1px solid rgba(0, 113, 227, 0.2); border-radius: 14px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
       <div>
-        <div style="font-weight: 600; font-size: 13.5px; color: #1d1d1f;">⚡ Looking for Production Mobile Camera Scanning?</div>
+        <div style="font-weight: 600; font-size: 13.5px; color: #1d1d1f;">Looking for Production Mobile Camera Scanning?</div>
         <div style="font-size: 12.5px; color: #86868b; margin-top: 2px;">Use the Full WebAssembly Scanner for 3ms native speed, 60 FPS video, and zero battery heating.</div>
       </div>
       <a href="scanner-wasm.html" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: #0071e3; color: white; border-radius: 980px; font-size: 12.5px; font-weight: 600; text-decoration: none;">Open WASM Scanner →</a>
@@ -422,8 +422,8 @@
           <button class="ghost" id="camStart">Start camera</button>
           <button class="ghost" id="camShot" disabled>Capture</button>
           <button class="ghost" id="camStop" disabled>Stop</button>
-          <button class="ghost" id="camTorch" style="display:none">🔦 Torch</button>
-          <button class="ghost" id="camZoom" style="display:none">🔍 Zoom 1x</button>
+          <button class="ghost" id="camTorch" style="display:none">Torch</button>
+          <button class="ghost" id="camZoom" style="display:none">Zoom 1x</button>
         </div>
         <div class="camwrap" id="camwrap" style="display:none">
           <video id="video" playsinline muted></video>
@@ -452,10 +452,10 @@
         </div>
 
         <div class="scan-tips">
-          💡 <b>Scanning Tips:</b><br>
+          <b>Scanning Tips:</b><br>
           • Hold camera 15–30 cm from code, aligned with the reticle.<br>
-          • In low light, toggle <b>🔦 Torch</b> for enhanced contrast.<br>
-          • For smaller or distant codes, tap <b>🔍 Zoom 2x</b>.<br>
+          • In low light, toggle <b>Torch</b> for enhanced contrast.<br>
+          • For smaller or distant codes, tap <b>Zoom 2x</b>.<br>
           • Supports arbitrary 360° camera orientation and mirrored front cameras.
         </div>
 
@@ -665,7 +665,7 @@
     document.getElementById('camTorch').onclick = async () => {
       if (scanner) {
         const on = await scanner.toggleTorch();
-        document.getElementById('camTorch').textContent = on ? '🔦 Torch Off' : '🔦 Torch';
+        document.getElementById('camTorch').textContent = on ? 'Torch Off' : 'Torch';
       }
     };
 
