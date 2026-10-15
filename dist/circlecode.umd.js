@@ -147,7 +147,8 @@ function drawCenterLogo(ctx, cx, cy, s, center, centerBg) {
   }
 
   // 3. Apple Pay preset
-  if (center === 'Pay' || center === 'Pay' || center === 'apple') {
+  // 3. Apple Logo Preset (only if explicitly requested with Pay or apple)
+  if (center === 'Pay' || center === 'apple') {
     ctx.save();
     ctx.fillStyle = textFill;
     ctx.translate(cx - 23 * s, cy - 9 * s);
@@ -205,17 +206,17 @@ function getRuns(bits) {
 }
 
 function renderToCanvas(model, ctx, size, style) {
-  const o = Object.assign({ dark: '#000000', light: '#8e8e93', center: 'Pay', centerBg: '#000000' }, style);
+  const o = Object.assign({ dark: '#000000', light: '#8e8e93', center: 'Pay', centerBg: '#000000' }, style);
   const s = size / 400, cx = size / 2, cy = size / 2;
-  const isApple = !!(o.appleStyle || o.connectedArcs || o.merged || o.style === 'apple');
+  const isLonCle = !!(o.style === 'loncle' || o.loncle || o.lonCle || o.appleStyle || o.connectedArcs || o.merged || o.style === 'apple');
   ctx.clearRect(0, 0, size, size);
   if (o.bg !== 'transparent') {
     ctx.beginPath(); ctx.fillStyle = o.bg || '#ffffff';
     ctx.arc(cx, cy, DISC_R * s, 0, Math.PI * 2); ctx.fill();
   }
 
-  if (isApple) {
-    // Apple App Clip / Apple Pay connected sweeping arcs with variable lengths
+  if (isLonCle) {
+    // LonCle Mode: connected sweeping arcs with variable lengths
     model.rings.forEach((rg) => {
       const n = rg.n;
       const slot = (Math.PI * 2) / n;
@@ -237,7 +238,7 @@ function renderToCanvas(model, ctx, size, style) {
       });
     });
   } else {
-    // Classic discrete dashed pills
+    // Circle Mode: classic discrete dashed pills
     model.rings.forEach((rg) => {
       const slot = Math.PI * 2 / rg.n;
       rg.slots.forEach((sl, j) => {
@@ -263,9 +264,9 @@ function renderToCanvas(model, ctx, size, style) {
 }
 
 function renderToSVG(model, style) {
-  const o = Object.assign({ dark: '#000000', light: '#8e8e93', center: 'Pay', centerBg: '#000000' }, style);
+  const o = Object.assign({ dark: '#000000', light: '#8e8e93', center: 'Pay', centerBg: '#000000' }, style);
   const cx = 200, cy = 200;
-  const isApple = !!(o.appleStyle || o.connectedArcs || o.merged || o.style === 'apple');
+  const isLonCle = !!(o.style === 'loncle' || o.loncle || o.lonCle || o.appleStyle || o.connectedArcs || o.merged || o.style === 'apple');
   const pol = (r, a) => [cx + r * Math.cos(a), cy + r * Math.sin(a)];
   let h = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">';
   if (o.bg !== 'transparent') {
@@ -273,7 +274,8 @@ function renderToSVG(model, style) {
   }
   const w = o.lineWidth || 7.5;
 
-  if (isApple) {
+  if (isLonCle) {
+    // LonCle Mode: connected sweeping arcs with variable lengths
     model.rings.forEach((rg) => {
       const n = rg.n;
       const slot = (Math.PI * 2) / n;
@@ -295,6 +297,7 @@ function renderToSVG(model, style) {
       });
     });
   } else {
+    // Circle Mode: classic discrete dashed pills
     model.rings.forEach((rg) => {
       const slot = Math.PI * 2 / rg.n;
       rg.slots.forEach((sl, j) => {

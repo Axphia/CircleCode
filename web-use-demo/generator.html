@@ -509,12 +509,12 @@
     <div class="panel">
       <div class="header">
         <h1>Circle Code Generator</h1>
-        <p>Generate Apple Pay-style circular codes with custom data — fast, accurate, and 360° scannable.</p>
+        <p>สร้างบาร์โค้ดทรงกลมความแม่นยำสูง รองรับการสแกน 360° รอบทิศทาง — รวดเร็ว แม่นยำ และสวยงาม</p>
       </div>
 
       <div class="apple-badge">
         <span class="dot"></span>
-        <span>Apple Standard: 5 Rings · Density 0.35 · Black &amp; Gray</span>
+        <span>Standard: 5 Rings · Density 0.35 · Dual Contrast</span>
       </div>
 
       <div class="form-group">
@@ -522,15 +522,16 @@
         <textarea id="payload" placeholder="e.g. user-12345 or https://example.com">user-12345</textarea>
       </div>
 
-      <!-- Arc Stroke Style: Apple Connected Arcs vs Classic Discrete -->
+      <!-- Barcode Style: Circle (ดั้งเดิม) vs LonCle (เส้นสั้น-ยาว) -->
       <div class="form-group">
-        <label>Barcode Arc Style</label>
+        <label>โหมดบาร์โค้ด (Barcode Mode)</label>
         <div class="segmented-control" id="arcStyleSeg">
-          <button type="button" class="seg-btn active" data-style="apple">Apple Style (Merged Arcs)</button>
-          <button type="button" class="seg-btn" data-style="discrete">Classic (Discrete Pills)</button>
+          <button type="button" class="seg-btn" data-style="circle">Circle (ดั้งเดิม)</button>
+          <button type="button" class="seg-btn active" data-style="loncle">LonCle (เส้นสั้น-ยาว)</button>
         </div>
         <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 6px; line-height: 1.4;">
-          <strong>Apple Style:</strong> Consecutive 1-bits merge into fluid, variable-length sweeping strokes, identical to official Apple Pay &amp; App Clip codes.
+          <strong>Circle:</strong> โหมดดั้งเดิม เส้นประแคปซูลแยกแต่ละบิต (Discrete Dashes)<br>
+          <strong>LonCle:</strong> โหมดเส้นโค้งสั้น-ยาวต่อเนื่องตามชุดข้อมูล (Connected Sweeping Arcs)
         </div>
       </div>
 
@@ -538,8 +539,8 @@
       <div class="form-group">
         <label>Center Logo Badge</label>
         <div class="segmented-control" id="logoModeSeg">
-          <button type="button" class="seg-btn active" data-mode="apple">Apple Pay</button>
-          <button type="button" class="seg-btn" data-mode="appclip">App Clip</button>
+          <button type="button" class="seg-btn active" data-mode="pay">Pay</button>
+          <button type="button" class="seg-btn" data-mode="appclip">App Icon</button>
           <button type="button" class="seg-btn" data-mode="image">Upload Logo</button>
           <button type="button" class="seg-btn" data-mode="text">Text</button>
         </div>
@@ -578,9 +579,9 @@
       <div class="form-group">
         <label>Color Theme</label>
         <div class="theme-grid" id="themeGrid">
-          <button type="button" class="theme-chip active" data-theme="apple" data-dark="#000000" data-light="#8e8e93" data-bg="#000000">
+          <button type="button" class="theme-chip active" data-theme="mono" data-dark="#000000" data-light="#8e8e93" data-bg="#000000">
             <span class="theme-preview" style="background: linear-gradient(135deg, #000000 50%, #8e8e93 50%);"></span>
-            <span>Apple Classic</span>
+            <span>Monochrome</span>
           </button>
           <button type="button" class="theme-chip" data-theme="blue" data-dark="#0071e3" data-light="#b9d9fc" data-bg="#0071e3">
             <span class="theme-preview" style="background: linear-gradient(135deg, #0071e3 50%, #b9d9fc 50%);"></span>
@@ -630,7 +631,7 @@
       <div class="form-group" id="grayToneGroup">
         <label>Inactive Dash Contrast (Bit 0 Tone)</label>
         <div class="segmented-control" id="grayToneSeg">
-          <button type="button" class="seg-btn active" data-gray="#8e8e93">Dark Gray (Apple)</button>
+          <button type="button" class="seg-btn active" data-gray="#8e8e93">Dark Gray</button>
           <button type="button" class="seg-btn" data-gray="#aeaeb2">Medium Gray</button>
           <button type="button" class="seg-btn" data-gray="#d1d1d6">Light Gray</button>
         </div>
@@ -705,7 +706,7 @@
             <img id="sheetImg" class="hidden" alt="code preview">
           </div>
         </div>
-        <h2 id="sheetTitleOut">Scan with iPhone Camera</h2>
+        <h2 id="sheetTitleOut">Scan with Camera</h2>
         <p id="sheetSubOut">Hold camera over code to continue</p>
 
         <div class="sheet-actions">
@@ -724,7 +725,7 @@ const ctx = cv.getContext('2d', { willReadFrequently: true });
 let model = null;
 
 // Logo State
-let currentLogoMode = 'apple'; // 'apple', 'appclip', 'image', 'text'
+let currentLogoMode = 'pay'; // 'pay', 'appclip', 'image', 'text'
 let customLogoImg = null;
 let customLogoDataUrl = null;
 
@@ -732,7 +733,7 @@ function xmur3(str){ let h=1779033703^str.length; for(let i=0;i<str.length;i++){
 function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
 function rngFrom(s){ const seed=xmur3(s)(); return mulberry32(seed); }
 
-let currentArcStyle = 'apple';
+let currentArcStyle = 'loncle';
 
 function getRuns(bits) {
   const n = bits.length;
@@ -772,6 +773,7 @@ function opts(){
     density: parseFloat(document.getElementById('density').value),
     dark: document.getElementById('colorDark').value || '#000000',
     light: document.getElementById('colorLight').value || '#8e8e93',
+    style: currentArcStyle,
     arcStyle: currentArcStyle,
     centerMode: currentLogoMode,
     centerText: document.getElementById('centerText').value || 'MyPay',
@@ -805,7 +807,7 @@ const model = buildModel(${JSON.stringify(payload)}, {
 });
 
 renderToCanvas(model, canvas.getContext('2d'), 400, {
-  appleStyle: ${o.arcStyle === 'apple'},
+  style: ${JSON.stringify(o.style || 'loncle')}, // 'circle' (ดั้งเดิม) หรือ 'loncle' (เส้นสั้น-ยาว)
   dark: ${JSON.stringify(o.dark)},
   light: ${JSON.stringify(o.light)},
   center: ${JSON.stringify(o.centerMode === 'text' ? o.centerText : o.centerMode)}
@@ -905,7 +907,18 @@ function drawCenterLogo(context, cx, cy, s, o){
     return;
   }
 
-  // 3. Apple Pay Preset (Pay)
+  // 3. Pay Preset
+  if (mode === 'pay') {
+    const textFill = o.centerBg === '#ffffff' ? '#000000' : '#ffffff';
+    context.fillStyle = textFill;
+    context.font = 'bold ' + Math.round(18 * s) + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText('Pay', cx, cy);
+    return;
+  }
+
+  // 3b. Apple Pay Preset (only if explicitly requested)
   if (mode === 'apple') {
     const textFill = o.centerBg === '#ffffff' ? '#000000' : '#ffffff';
     context.save();
@@ -942,10 +955,10 @@ function drawTo(context, size, m, o){
   context.beginPath(); context.fillStyle='#ffffff';
   context.arc(cx,cy,190*s,0,7); context.fill();
 
-  const isApple = o.arcStyle === 'apple';
+  const isLonCle = o.style === 'loncle' || o.arcStyle === 'loncle' || o.loncle || o.appleStyle;
 
-  if (isApple) {
-    // Apple App Clip / Apple Pay connected sweeping arcs with variable lengths
+  if (isLonCle) {
+    // LonCle Mode: connected sweeping arcs with variable lengths
     m.rings.forEach((rg)=>{
       const n = rg.n;
       const slot = Math.PI * 2 / n;
@@ -967,7 +980,7 @@ function drawTo(context, size, m, o){
       });
     });
   } else {
-    // Classic discrete dashed pills
+    // Circle Mode: classic discrete dashed pills
     m.rings.forEach((rg,ri)=>{
       const slot=Math.PI*2/rg.n;
       rg.slots.forEach((sl,j)=>{
@@ -1002,9 +1015,10 @@ function modelToSVG(m,o){
   let h='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">';
   h+='<circle cx="200" cy="200" r="190" fill="#ffffff"/>';
 
-  const isApple = o.arcStyle === 'apple';
+  const isLonCle = o.style === 'loncle' || o.arcStyle === 'loncle' || o.loncle || o.appleStyle;
 
-  if (isApple) {
+  if (isLonCle) {
+    // LonCle Mode: connected sweeping arcs with variable lengths
     m.rings.forEach((rg)=>{
       const n = rg.n;
       const slot = Math.PI * 2 / n;
@@ -1027,6 +1041,7 @@ function modelToSVG(m,o){
       });
     });
   } else {
+    // Circle Mode: classic discrete dashed pills
     m.rings.forEach((rg,ri)=>{
       const slot=Math.PI*2/rg.n;
       const w=7.5;
@@ -1060,6 +1075,8 @@ function modelToSVG(m,o){
     h += '<circle cx="200" cy="200" r="24" stroke="' + textFill + '" stroke-width="2.2" stroke-dasharray="4 3.5" fill="none"/>';
     h += '<rect x="189" y="189" width="22" height="22" rx="4" fill="' + textFill + '"/>';
     h += '<circle cx="200" cy="200" r="3.5" fill="' + (centerBg === '#ffffff' ? '#ffffff' : '#000000') + '"/>';
+  } else if (o.centerMode === 'pay') {
+    h += '<text x="200" y="200" fill="' + textFill + '" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="19" font-weight="bold" text-anchor="middle" dominant-baseline="central">Pay</text>';
   } else if (o.centerMode === 'apple') {
     h+='<path transform="translate(177, 191) scale(1.15)" d="M15.22 8.44c-.03-2.03 1.66-3.02 1.74-3.07-.95-1.38-2.42-1.57-2.94-1.59-1.25-.13-2.45.74-3.09.74-.64 0-1.62-.72-2.67-.7-1.37.02-2.64.8-3.34 2.03-1.43 2.48-.37 6.16 1.02 8.17.68.98 1.49 2.08 2.55 2.04 1.02-.04 1.41-.66 2.65-.66 1.23 0 1.59.66 2.66.64 1.09-.02 1.78-.99 2.45-1.98.78-1.13 1.1-2.23 1.12-2.29-.02-.01-2.14-.82-2.15-3.33zM13.63 3.19c.56-.68.94-1.63.84-2.58-.81.03-1.8.54-2.38 1.22-.51.6-.96 1.56-.84 2.48.9.07 1.83-.45 2.38-1.12z" fill="'+textFill+'"/>';
     h+='<text x="199" y="201" fill="'+textFill+'" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="18" font-weight="bold" text-anchor="start" dominant-baseline="central">Pay</text>';
@@ -1111,7 +1128,8 @@ function generate(){
   drawTo(ctx, 400, m, o);
   document.getElementById('sheetImg').src = cv.toDataURL();
   document.getElementById('info').textContent = 'Capacity: ' + m.used + ' / ' + m.cap + ' bits (' + m.bytes + ' bytes) · ' + rings + ' Rings';
-  setStatus('✓ Ready (Apple Pay Standard)', 'ok');
+  const modeName = (o.style === 'loncle' || o.arcStyle === 'loncle') ? 'LonCle Mode' : 'Circle Mode';
+  setStatus('✓ Ready (' + modeName + ')', 'ok');
 }
 
 // Arc Style Segmented Buttons

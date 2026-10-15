@@ -97,11 +97,15 @@ Renders a `CircleCodeModel` to a clean, scalable SVG string.
 
 #### Parameters:
 - `model` (`CircleCodeModel`): Object returned by `buildModel`.
-- `options` (`RenderOptions`, optional):
+  - `style` (`'circle' | 'loncle'`, default: `'circle'`):
+    - `'circle'`: โหมดดั้งเดิม แท่งขีดแคปซูลแยกชิ้นเดี่ยว (Classic discrete dashed pills).
+    - `'loncle'`: โหมด LonCle เส้นโค้งสั้น-ยาวต่อเนื่อง เชื่อมต่อบิต 1 ที่ติดกัน (Connected variable-length sweeping arcs).
+  - `loncle` (`boolean`, optional): Convenience shortcut for `style: 'loncle'`.
   - `dark` (`string`, default: `'#000000'`): Hex or CSS color for active bits (1) and center badge.
   - `light` (`string`, default: `'#8e8e93'`): Hex or CSS color for inactive bits (0).
+  - `lineWidth` (`number`, default: `7.5`): Stroke width in 400x400 normalized space.
   - `bg` (`string`, default: `'transparent'`): Canvas background color.
-  - `center` (`string`, default: `''`): Text or emoji to render inside the center circular badge (e.g., `'Pay'`).
+  - `center` (`string | object`, default: `'Pay'`): Text, logo preset (`'Pay'`, `'appclip'`), or image to render inside the center circular badge.
   - `centerBg` (`string`, default: `'#000000'`): Center circular badge background color (`'#000000'`, `'#ffffff'`, or `'transparent'`).
 
 #### Returns:

@@ -48,19 +48,19 @@ const mLong = buildModel(longText, { rings: 9, density: 0.35 });
 assert.strictEqual(mLong.bytes, 37);
 console.log('✓ buildModel(longText) works');
 
-// 4. Test SVG Rendering (Discrete and Apple Style)
-const svg = renderToSVG(mStd, { dark: '#000', light: '#8e8e93', center: 'Test Table' });
-assert.ok(svg.startsWith('<svg'));
-assert.ok(svg.includes('Test Table'));
-console.log('✓ renderToSVG() discrete works');
+// 4. Test SVG Rendering (Circle and LonCle Modes)
+const svgCircle = renderToSVG(mStd, { style: 'circle', dark: '#000', light: '#8e8e93', center: 'Test Table' });
+assert.ok(svgCircle.startsWith('<svg'));
+assert.ok(svgCircle.includes('Test Table'));
+console.log('✓ renderToSVG({ style: "circle" }) works');
 
-const svgApple = renderToSVG(mStd, { appleStyle: true, dark: '#000', center: 'Pay' });
-assert.ok(svgApple.startsWith('<svg'));
-assert.ok(svgApple.includes('stroke-linecap="round"'));
-console.log('✓ renderToSVG({ appleStyle: true }) works');
+const svgLonCle = renderToSVG(mStd, { style: 'loncle', dark: '#000', center: 'Pay' });
+assert.ok(svgLonCle.startsWith('<svg'));
+assert.ok(svgLonCle.includes('stroke-linecap="round"'));
+console.log('✓ renderToSVG({ style: "loncle" }) works');
 
-// 4. Test Synthetic Image Scan Roundtrip
-function renderSyntheticCode(model, w = 400, h = 400, rot = 0.4) {
+// 5. Test Synthetic Image Scan Roundtrip (Circle & LonCle Modes)
+function renderSyntheticCode(model, w = 400, h = 400, rot = 0.4, style = 'circle') {
   const rgba = new Uint8ClampedArray(w * h * 4).fill(255);
   function setPx(x, y, r, g, b) {
     if (x < 0 || y < 0 || x >= w || y >= h) return;
@@ -75,36 +75,60 @@ function renderSyntheticCode(model, w = 400, h = 400, rot = 0.4) {
       if (dx * dx + dy * dy <= badgeR * badgeR) setPx(x, y, 20, 20, 20);
     }
   }
-  model.rings.forEach(rg => {
-    const r = rg.r * scale, n = rg.slots.length, slot = (Math.PI * 2) / n;
-    rg.slots.forEach((d, j) => {
-      const color = d.bit ? 20 : 150;
-      const a0 = (j / n) * Math.PI * 2 + rot + slot * 0.28;
-      const a1 = a0 + slot * 0.44;
-      for (let th = a0; th <= a1; th += 0.003) {
-        for (let dr = -3.2 * scale; dr <= 3.2 * scale; dr += 0.7 * scale) {
-          setPx(Math.round(cx + (r + dr) * Math.cos(th)), Math.round(cy + (r + dr) * Math.sin(th)), color, color, color);
+  if (style === 'loncle') {
+    model.rings.forEach(rg => {
+      const r = rg.r * scale, n = rg.slots.length, slot = (Math.PI * 2) / n;
+      const bits = rg.slots.map(sl => (sl.finder || sl.bit === 1) ? 1 : 0);
+      const runs = getRuns(bits);
+      runs.forEach(({ start, len, full }) => {
+        const a0 = full ? rot : (rot + (start / n) * Math.PI * 2 + slot * 0.15);
+        const a1 = full ? (rot + Math.PI * 2) : (a0 + (len - 1) * slot + slot * 0.70);
+        for (let th = a0; th <= a1; th += 0.003) {
+          for (let dr = -3.2 * scale; dr <= 3.2 * scale; dr += 0.7 * scale) {
+            setPx(Math.round(cx + (r + dr) * Math.cos(th)), Math.round(cy + (r + dr) * Math.sin(th)), 20, 20, 20);
+          }
         }
-      }
+      });
     });
-  });
+  } else {
+    model.rings.forEach(rg => {
+      const r = rg.r * scale, n = rg.slots.length, slot = (Math.PI * 2) / n;
+      rg.slots.forEach((d, j) => {
+        const color = d.bit ? 20 : 150;
+        const a0 = (j / n) * Math.PI * 2 + rot + slot * 0.28;
+        const a1 = a0 + slot * 0.44;
+        for (let th = a0; th <= a1; th += 0.003) {
+          for (let dr = -3.2 * scale; dr <= 3.2 * scale; dr += 0.7 * scale) {
+            setPx(Math.round(cx + (r + dr) * Math.cos(th)), Math.round(cy + (r + dr) * Math.sin(th)), color, color, color);
+          }
+        }
+      });
+    });
+  }
   return { data: rgba, width: w, height: h };
 }
 
-console.log('Testing full scanImageData roundtrips...');
+console.log('Testing full scanImageData roundtrips for Circle & LonCle...');
 
-// Test roundtrip: standard
-const imgStd = renderSyntheticCode(mStd, 400, 400, 0.5);
-const resStd = scanImageData(imgStd);
-assert.strictEqual(resStd.ok, true);
-assert.strictEqual(resStd.text, standardText);
-console.log('✓ Decoded standard payload ("' + resStd.text + '")');
+// Test roundtrip: Circle mode
+const imgCircle = renderSyntheticCode(mStd, 400, 400, 0.5, 'circle');
+const resCircle = scanImageData(imgCircle);
+assert.strictEqual(resCircle.ok, true);
+assert.strictEqual(resCircle.text, standardText);
+console.log('✓ Decoded Circle mode payload ("' + resCircle.text + '")');
+
+// Test roundtrip: LonCle mode
+const imgLonCle = renderSyntheticCode(mStd, 400, 400, 0.7, 'loncle');
+const resLonCle = scanImageData(imgLonCle);
+assert.strictEqual(resLonCle.ok, true);
+assert.strictEqual(resLonCle.text, standardText);
+console.log('✓ Decoded LonCle mode payload ("' + resLonCle.text + '")');
 
 // Test roundtrip: long payload (9 rings, 800px)
-const imgLong = renderSyntheticCode(mLong, 800, 800, 1.2);
+const imgLong = renderSyntheticCode(mLong, 800, 800, 1.2, 'loncle');
 const resLong = scanImageData(imgLong);
 assert.strictEqual(resLong.ok, true);
 assert.strictEqual(resLong.text, longText);
 console.log('✓ Decoded long payload ("' + resLong.text + '")');
 
-console.log('🎉 All 7 test cases passed cleanly!');
+console.log('🎉 All Circle and LonCle test cases passed cleanly!');
