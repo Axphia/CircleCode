@@ -4,23 +4,34 @@
   <img src="https://circlecode.js.org/CNAME" alt="CircleCode Logo" style="display:none;" />
   <h2 align="center">High-performance, dependency-free circular barcode codec for Browser and Node.js</h2>
   <p align="center">
-    Inspired by Apple Pay & Apple App Clips codes. Generate elegant circular barcodes with center branding and scan them across full 360° rotations at 10 FPS.
+    Inspired by Apple Pay & Apple App Clips codes. Generate elegant circular barcodes with center branding and scan them across full 360° rotations at native speeds.
   </p>
   <p align="center">
+    <a href="https://www.npmjs.com/package/circlecode"><img src="https://img.shields.io/npm/v/circlecode?color=0071e3&style=flat-square" alt="NPM Version" /></a>
     <a href="https://circlecode.js.org"><img src="https://img.shields.io/badge/website-circlecode.js.org-0071e3?style=flat-square" alt="Website" /></a>
     <a href="https://github.com/Axphia/CircleCode"><img src="https://img.shields.io/badge/github-Axphia%2FCircleCode-black?style=flat-square&logo=github" alt="GitHub" /></a>
     <img src="https://img.shields.io/badge/dependencies-0-brightgreen?style=flat-square" alt="Zero Dependencies" />
-    <img src="https://img.shields.io/badge/bundle-39.5_KB_minified-blue?style=flat-square" alt="Bundle Size" />
+    <img src="https://img.shields.io/badge/WASM-Rust_Accelerated-orange?style=flat-square" alt="Rust WASM" />
     <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License" />
   </p>
 </p>
 
 ---
 
+## 📑 Documentation
+
+- 📖 **[API Reference](docs/API.md)** — Complete function signatures, options, and TypeScript definitions.
+- 📐 **[Technical Specification](docs/SPECIFICATION.md)** — Format geometry, dash angles, header encoding, and error correction.
+- 🏗️ **[System Architecture](docs/ARCHITECTURE.md)** — Dual-engine design, subpixel image pipeline, and threading models.
+- 🦀 **[Native Rust Core](native/README.md)** — Compiling and benchmarking the WebAssembly module.
+
+---
+
 ## ✨ Features
 
 - 🎨 **Apple Pay & App Clips Aesthetic:** Minimalist circular dash design that feels natural on round packaging, coasters, cards, and luxury brand merchandise.
-- ⚡ **Zero Dependencies:** Pure vanilla JavaScript. Runs out-of-the-box in Node.js, modern browsers, PWAs, or embedded webviews.
+- ⚡ **Zero Dependencies:** Pure vanilla JavaScript default. Runs out-of-the-box in Node.js, modern browsers, PWAs, or embedded webviews.
+- 🦀 **Native WebAssembly Acceleration (`circlecode/wasm`):** Compiled from Rust for sub-3ms frame processing and 300+ FPS decoding.
 - 🧵 **Non-Blocking Web Worker:** Dedicated background worker (`scanner-worker.js`) decouples CPU-heavy decoding from the UI thread, ensuring silky smooth 60 FPS camera previews.
 - 📐 **Perspective & Tilt Recovery:** Automatically corrects for camera angles (15°–30° tilt) and elliptical distortion.
 - 🔍 **Subpixel 360° Scanning Engine:** Dual-centroid edge detection, scale-aware radial search (`dr = 2.2 * scale`), and hybrid Otsu/K-means thresholding for extreme reliability under shadows and glare.
@@ -34,9 +45,10 @@
 ## 🚀 Live Demos
 
 - **Generator:** [https://circlecode.js.org/generator.html](https://circlecode.js.org/generator.html)
-- **Camera Scanner:** [https://circlecode.js.org/scanner.html](https://circlecode.js.org/scanner.html)
-- **WASM Acceleration Demo:** [https://circlecode.js.org/wasm-demo.html](https://circlecode.js.org/wasm-demo.html)
-- **Home / Studio:** [https://circlecode.js.org](https://circlecode.js.org)
+- **Live Camera Scanner (JS):** [https://circlecode.js.org/scanner.html](https://circlecode.js.org/scanner.html)
+- **Live Camera Scanner (WASM):** [https://circlecode.js.org/scanner-wasm.html](https://circlecode.js.org/scanner-wasm.html)
+- **WASM Benchmark:** [https://circlecode.js.org/wasm-demo.html](https://circlecode.js.org/wasm-demo.html)
+- **Studio Home:** [https://circlecode.js.org](https://circlecode.js.org)
 
 ---
 
@@ -51,22 +63,25 @@ yarn add circlecode
 
 # pnpm
 pnpm add circlecode
+
+# bun
+bun add circlecode
 ```
 
-### Or use directly in the browser via CDN:
+### Standalone Browser CDN:
 
 ```html
-<!-- Standalone All-in-One UMD Bundle -->
-<script src="https://circlecode.js.org/dist/circlecode.min.js"></script>
+<!-- All-in-One UMD Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/circlecode@latest/dist/circlecode.min.js"></script>
 ```
 
 ---
 
-## 🛠️ Usage
+## 🛠️ Quick Start
 
 ### 1. Generating Codes (Encoder)
 
-#### Render SVG in Node.js or Browser
+#### Render Scalable SVG
 ```javascript
 import { buildModel, renderToSVG } from 'circlecode';
 
@@ -76,7 +91,7 @@ const model = buildModel('user-12345vvsvssdvdsvsvsdvvsvsvssdvsd', {
   density: 0.35
 });
 
-// 2. Generate pure SVG string
+// 2. Generate pure SVG markup
 const svg = renderToSVG(model, {
   dark: '#000000',
   light: '#8e8e93',
@@ -116,7 +131,7 @@ import { scanImageData, scanCanvas, scanImage } from 'circlecode';
 const img = document.querySelector('img#uploadedCode');
 const result = await scanImage(img, {
   aggressive: true,
-  perspective: true // Compensates for perspective tilt
+  perspective: true // Compensates for camera tilt angle
 });
 
 if (result.ok) {
@@ -136,13 +151,12 @@ const videoElement = document.getElementById('cameraVideo');
 
 const scanner = new CircleScanner({
   fps: 12,
-  useWorker: true, // Run frame decoding in background thread (60 FPS UI)
+  useWorker: true, // Run frame decoding in background worker (60 FPS UI)
   workerUrl: 'scanner-worker.js',
   perspective: true,
   facingMode: 'environment',
   onScan: (result) => {
     console.log('Scanned successfully:', result.text);
-    // Beep / vibrate / stop scanner
     scanner.stop();
   }
 });
@@ -160,15 +174,15 @@ if (scanner.hasTorch()) {
 
 ### 3. Native Rust WebAssembly (WASM) Acceleration
 
-For maximum scanning throughput, you can use the compiled Rust WebAssembly module directly:
+For maximum scanning throughput, use the compiled Rust WebAssembly module directly:
 
 ```javascript
 import { ensureWasm, scanFrameWasm } from 'circlecode/wasm';
 
-// 1. Initialize WASM module
+// 1. Initialize WASM runtime (33.7 KB)
 await ensureWasm();
 
-// 2. Scan RGBA buffer with sub-3ms latency
+// 2. Scan raw RGBA buffer with sub-3ms latency
 const result = scanFrameWasm(imageData.data, 480, 480, true);
 
 if (result.ok) {
@@ -200,7 +214,7 @@ const svg = renderToSVG(model, { center: 'Pay' });
 | **Standard Density** | `0.35` | Dash density (Apple Pay specification) |
 | **Ring Counts** | `4` to `14` | Dynamically expandable for payloads up to 50+ bytes |
 | **Checksum** | `Modulo-256 Sum` | 8-bit checksum with 1–2 bit mathematical error recovery |
-| **Framerate** | `10 FPS` | Camera processing cycle (~70ms decode time) |
+| **Framerate** | `12 FPS` | Camera processing cycle (~3ms decode time via WASM) |
 
 ---
 
@@ -211,11 +225,17 @@ const svg = renderToSVG(model, { center: 'Pay' });
 git clone https://github.com/Axphia/CircleCode.git
 cd CircleCode
 
-# Run automated codec & roundtrip test suite
+# Run JavaScript test suite
 npm test
 
-# Build standalone UMD and minified bundles
+# Run Rust WebAssembly test suite
+npm run test:wasm
+
+# Rebuild standalone UMD bundle
 npm run build
+
+# Recompile Rust WebAssembly core
+npm run build:wasm
 ```
 
 ---
