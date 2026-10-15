@@ -67,19 +67,19 @@
 
 ```bash
 # Install from NPM Registry
-npm install circlecode
+npm install @axphia/circlecode
 
 # Or install from GitHub Packages (Axphia scope)
 npm install @axphia/circlecode --registry=https://npm.pkg.github.com
 
 # yarn
-yarn add circlecode
+yarn add @axphia/circlecode
 
 # pnpm
-pnpm add circlecode
+pnpm add @axphia/circlecode
 
 # bun
-bun add circlecode
+bun add @axphia/circlecode
 ```
 
 ### Standalone Browser CDN
@@ -88,7 +88,7 @@ Include directly via script tag in vanilla HTML:
 
 ```html
 <!-- Standalone UMD Bundle -->
-<script src="https://cdn.jsdelivr.net/npm/circlecode@1.1.2/dist/circlecode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.3/dist/circlecode.min.js"></script>
 <script>
   const { buildModel, renderToCanvas, scanCanvas, CircleScanner } = window.CircleCode;
 </script>
