@@ -482,6 +482,7 @@
         <div class="small">PREVIEW + SAMPLE OVERLAY (green=1, yellow=0)</div>
         <canvas id="view" width="600" height="600"></canvas>
         <div class="mono" id="dbg">debug: —</div>
+        <div class="mono" id="out" style="margin-top:6px; font-size:11.5px; color:#86868b;"></div>
       </div>
     </div>
   </div>
@@ -549,10 +550,10 @@
 
       statusStat.textContent = 'LOCKED';
       guideRing.className = 'good';
-      outEl.textContent = 'DECODED: "' + res.text + '" (' + (res.len || res.text.length) + ' bytes, rings=' + (res.rings || 5) + (res.fixed ? ', fixed=' + res.fixed : '') + ')';
-      dbgEl.textContent = (label || 'Live') + ' @' + new Date().toLocaleTimeString() + ' rot=' + (res.rot ? Math.round(res.rot * 180 / Math.PI) + '°' : '0°') + ' scale=' + (res.scale ? res.scale.toFixed(3) : '1.0');
+      if (outEl) outEl.textContent = 'DECODED: "' + res.text + '" (' + (res.len || res.text.length) + ' bytes, rings=' + (res.rings || 5) + (res.fixed ? ', fixed=' + res.fixed : '') + ')';
+      if (dbgEl) dbgEl.textContent = (label || 'Live') + ' @' + new Date().toLocaleTimeString() + ' rot=' + (res.rot ? Math.round(res.rot * 180 / Math.PI) + '°' : '0°') + ' scale=' + (res.scale ? res.scale.toFixed(3) : '1.0');
       setStatus('Decode OK' + (res.fixed ? ' (corrected)' : ''), 'ok');
-      autoStat.textContent = 'auto: LOCKED "' + res.text + '" — Scan successful!';
+      if (autoStat) autoStat.textContent = 'auto: LOCKED "' + res.text + '" — Scan successful!';
 
       const now = Date.now();
       if (now - lastBeep > 3000) {
@@ -569,7 +570,7 @@
       statusStat.textContent = 'FAILED';
       guideRing.className = 'bad';
       setStatus(reason || 'Decode failed', 'err');
-      outEl.textContent = 'FAIL: ' + (reason || 'No valid code found');
+      if (outEl) outEl.textContent = 'FAIL: ' + (reason || 'No valid code found');
     }
 
     function drawPreview(canvas) {
@@ -696,7 +697,7 @@
       copyBtn.style.display = 'none';
       statusStat.textContent = scanner && scanner.isScanning ? 'SCANNING' : 'IDLE';
       guideRing.className = '';
-      outEl.textContent = 'result: cleared — ready to scan';
+      if (outEl) outEl.textContent = 'result: cleared — ready to scan';
       dbgEl.textContent = 'debug: —';
       setStatus('');
     };
