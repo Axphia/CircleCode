@@ -315,20 +315,6 @@
       border-radius: 50%;
     }
 
-    /* 3D Holographic Radar Laser Sweep */
-    .radar-scanner-beam-3d {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      background: conic-gradient(from 0deg, rgba(0, 113, 227, 0.45) 0deg, rgba(48, 209, 88, 0.15) 50deg, transparent 100deg);
-      transform: translateZ(32px);
-      pointer-events: none;
-      animation: radarSweep 3.2s linear infinite;
-    }
-    @keyframes radarSweep {
-      100% { transform: rotate(360deg); }
-    }
-
     /* 3D Specular Glass Glare */
     .hero-3d-glare {
       position: absolute;
@@ -912,8 +898,6 @@
           <div class="hero-canvas-plate">
             <canvas id="heroCanvas" width="440" height="440"></canvas>
           </div>
-          
-          <div class="radar-scanner-beam-3d"></div>
           <div class="hero-3d-glare"></div>
           <div class="hero-3d-center-badge" id="heroCenterBadge">LonCle</div>
         </div>
