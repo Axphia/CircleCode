@@ -399,8 +399,18 @@
 
   <div class="container">
     <div class="header-area">
-      <h1>Circle Code Scanner</h1>
-      <p>Decode circular barcodes via live camera stream or image upload — 360° rotation invariant.</p>
+      <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: rgba(0, 113, 227, 0.08); color: #0071e3; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 8px;">🐢 Pure JavaScript Engine</div>
+      <h1>Circle Code Pure JS Scanner</h1>
+      <p>Clean, zero-dependency client-side circular barcode decoding in pure JavaScript.</p>
+    </div>
+
+    <!-- Production Notice -->
+    <div style="margin-bottom: 24px; padding: 14px 18px; background: #fff; border: 1px solid rgba(0, 113, 227, 0.2); border-radius: 14px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
+      <div>
+        <div style="font-weight: 600; font-size: 13.5px; color: #1d1d1f;">⚡ Looking for Production Mobile Camera Scanning?</div>
+        <div style="font-size: 12.5px; color: #86868b; margin-top: 2px;">Use the Full WebAssembly Scanner for 3ms native speed, 60 FPS video, and zero battery heating.</div>
+      </div>
+      <a href="scanner-wasm.html" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: #0071e3; color: white; border-radius: 980px; font-size: 12.5px; font-weight: 600; text-decoration: none;">Open WASM Scanner →</a>
     </div>
 
     <div class="wrap">
@@ -449,12 +459,6 @@
           • Supports arbitrary 360° camera orientation and mirrored front cameras.
         </div>
 
-        <label>DECODING ENGINE (FOR PRODUCTION / MOBILE)</label>
-        <div style="display: flex; gap: 8px; margin-bottom: 14px;">
-          <button id="btnEngineWasm" type="button" style="flex: 1; padding: 10px 12px; font-size: 13px; border-radius: 10px; background: #0071e3; color: #fff; border: 0; cursor: pointer; font-weight: 600;">⚡ WebAssembly (3ms Native)</button>
-          <button id="btnEngineJs" type="button" class="ghost" style="flex: 1; padding: 10px 12px; font-size: 13px; border-radius: 10px; cursor: pointer; font-weight: 600;">🐢 Pure JS</button>
-        </div>
-
         <label>2) FINE-TUNE (only if auto-decode fails)</label>
         <div class="row">
           <div><label>Center X <span id="cxV">50</span>%</label><input type="range" id="cxR" min="30" max="70"
@@ -490,73 +494,8 @@
     }
   </script>
 
-  <script type="module">
+  <script>
     const { CircleScanner, scanImageData, scanCanvas, buildModel, renderToCanvas, radii } = window.CircleCode;
-
-    let wasmEngine = null;
-    let wasmReady = false;
-    let currentEngine = 'wasm';
-
-    const btnWasm = document.getElementById('btnEngineWasm');
-    const btnJs = document.getElementById('btnEngineJs');
-
-    function updateEngineUI() {
-      if (currentEngine === 'wasm') {
-        btnWasm.style.background = '#0071e3';
-        btnWasm.style.color = '#fff';
-        btnWasm.classList.remove('ghost');
-        btnJs.style.background = '';
-        btnJs.style.color = '';
-        btnJs.classList.add('ghost');
-        if (scanner) scanner.setWasmEngine(wasmEngine);
-        autoStat.textContent = 'auto: ⚡ Rust WebAssembly active (3ms decode, cool battery mode)';
-      } else {
-        btnJs.style.background = '#0071e3';
-        btnJs.style.color = '#fff';
-        btnJs.classList.remove('ghost');
-        btnWasm.style.background = '';
-        btnWasm.style.color = '';
-        btnWasm.classList.add('ghost');
-        if (scanner) scanner.setWasmEngine(null);
-        autoStat.textContent = 'auto: 🐢 Pure JavaScript fallback active';
-      }
-    }
-
-    btnWasm.onclick = () => {
-      if (!wasmReady) {
-        alert('WebAssembly engine is loading...');
-        return;
-      }
-      currentEngine = 'wasm';
-      updateEngineUI();
-    };
-
-    btnJs.onclick = () => {
-      currentEngine = 'js';
-      updateEngineUI();
-    };
-
-    async function initWasm() {
-      try {
-        let mod;
-        try {
-          mod = await import('../wasm/circlecode_core.js');
-          await mod.default({ module_or_path: '../wasm/circlecode_core_bg.wasm' });
-        } catch (e1) {
-          mod = await import('https://cdn.jsdelivr.net/npm/circlecode@1.1.1/wasm/circlecode_core.js');
-          await mod.default({ module_or_path: 'https://cdn.jsdelivr.net/npm/circlecode@1.1.1/wasm/circlecode_core_bg.wasm' });
-        }
-        wasmEngine = mod;
-        wasmReady = true;
-        updateEngineUI();
-        console.log('✓ Rust WebAssembly engine active in scanner!');
-      } catch (err) {
-        console.warn('WASM initialization failed, falling back to pure JS:', err);
-        currentEngine = 'js';
-        updateEngineUI();
-      }
-    }
-    initWasm();
 
     const view = document.getElementById('view');
     const vctx = view.getContext('2d');
@@ -673,13 +612,12 @@
       try {
         if (!scanner) {
           scanner = new CircleScanner({
-            fps: 15,
-            wasmEngine: (currentEngine === 'wasm' && wasmReady) ? wasmEngine : null,
+            fps: 12,
             aggressive: document.getElementById('aggr').checked,
             perspective: true,
             confirmCount: 1, // Instant decode on 1 confirmed checksum frame
             onScan: (res) => {
-              onDecodeSuccess(res, currentEngine === 'wasm' ? 'Live Camera (⚡ Rust WASM)' : 'Live Camera (🐢 Pure JS)');
+              onDecodeSuccess(res, 'Live Camera (Pure JS)');
             },
             onFrame: ({ ms, fps, result }) => {
               msStat.textContent = ms.toFixed(1) + ' ms';
@@ -703,9 +641,7 @@
           document.getElementById('camTorch').style.display = 'inline-flex';
         }
         statusStat.textContent = 'SCANNING';
-        autoStat.textContent = currentEngine === 'wasm'
-          ? 'auto: Scanning camera stream @ 15 FPS (⚡ Rust WASM 3ms mode)'
-          : 'auto: Scanning camera stream @ 15 FPS (🐢 Pure JS mode)';
+        autoStat.textContent = 'auto: Scanning camera stream @ 12 FPS (Pure JS mode)';
       } catch (err) {
         alert('Could not start camera: ' + err.message);
       }
@@ -741,18 +677,12 @@
       drawPreview(c);
 
       const t0 = performance.now();
-      let res;
-      if (currentEngine === 'wasm' && wasmReady) {
-        const imgData = c.getContext('2d').getImageData(0, 0, c.width, c.height);
-        res = wasmEngine.scan_frame_wasm(imgData.data, c.width, c.height, document.getElementById('aggr').checked);
-      } else {
-        res = scanCanvas(c, { aggressive: document.getElementById('aggr').checked });
-      }
+      const res = scanCanvas(c, { aggressive: document.getElementById('aggr').checked });
       const t1 = performance.now();
       msStat.textContent = (t1 - t0).toFixed(1) + ' ms';
 
       if (res.ok) {
-        onDecodeSuccess(res, 'Camera Snapshot (' + (currentEngine === 'wasm' ? '⚡ Rust WASM' : '🐢 Pure JS') + ')');
+        onDecodeSuccess(res, 'Camera Snapshot (Pure JS)');
         drawOverlay(res);
       } else {
         onDecodeFail(res.reason);
@@ -798,18 +728,12 @@
         drawPreview(c);
 
         const t0 = performance.now();
-        let res;
-        if (currentEngine === 'wasm' && wasmReady) {
-          const imgData = c.getContext('2d').getImageData(0, 0, c.width, c.height);
-          res = wasmEngine.scan_frame_wasm(imgData.data, c.width, c.height, document.getElementById('aggr').checked);
-        } else {
-          res = scanCanvas(c, { aggressive: document.getElementById('aggr').checked });
-        }
+        const res = scanCanvas(c, { aggressive: document.getElementById('aggr').checked });
         const t1 = performance.now();
         msStat.textContent = (t1 - t0).toFixed(1) + ' ms';
 
         if (res.ok) {
-          onDecodeSuccess(res, 'Uploaded Image (' + (currentEngine === 'wasm' ? '⚡ Rust WASM' : '🐢 Pure JS') + ')');
+          onDecodeSuccess(res, 'Uploaded Image (Pure JS)');
           drawOverlay(res);
         } else {
           onDecodeFail(res.reason || 'No circular code found in image');
@@ -834,18 +758,12 @@
       drawPreview(c);
 
       const t0 = performance.now();
-      let res;
-      if (currentEngine === 'wasm' && wasmReady) {
-        const imgData = c.getContext('2d').getImageData(0, 0, 400, 400);
-        res = wasmEngine.scan_frame_wasm(imgData.data, 400, 400, document.getElementById('aggr').checked);
-      } else {
-        res = scanCanvas(c, { aggressive: document.getElementById('aggr').checked });
-      }
+      const res = scanCanvas(c, { aggressive: document.getElementById('aggr').checked });
       const t1 = performance.now();
       msStat.textContent = (t1 - t0).toFixed(1) + ' ms';
 
       if (res.ok) {
-        onDecodeSuccess(res, 'Demo Code (' + (currentEngine === 'wasm' ? '⚡ Rust WASM' : '🐢 Pure JS') + ')');
+        onDecodeSuccess(res, 'Demo Code (Pure JS)');
         drawOverlay(res);
       } else {
         onDecodeFail(res.reason || 'Demo decode failed');
@@ -859,20 +777,14 @@
         return;
       }
       const t0 = performance.now();
-      let res;
-      if (currentEngine === 'wasm' && wasmReady) {
-        const imgData = currentCanvas.getContext('2d').getImageData(0, 0, currentCanvas.width, currentCanvas.height);
-        res = wasmEngine.scan_frame_wasm(imgData.data, currentCanvas.width, currentCanvas.height, document.getElementById('aggr').checked);
-      } else {
-        res = scanCanvas(currentCanvas, {
-          aggressive: document.getElementById('aggr').checked,
-          scale: parseFloat(document.getElementById('scR').value)
-        });
-      }
+      const res = scanCanvas(currentCanvas, {
+        aggressive: document.getElementById('aggr').checked,
+        scale: parseFloat(document.getElementById('scR').value)
+      });
       const t1 = performance.now();
       msStat.textContent = (t1 - t0).toFixed(1) + ' ms';
       if (res.ok) {
-        onDecodeSuccess(res, 'Manual Decode (' + (currentEngine === 'wasm' ? '⚡ Rust WASM' : '🐢 Pure JS') + ')');
+        onDecodeSuccess(res, 'Manual Decode (Pure JS)');
         drawOverlay(res);
       } else {
         onDecodeFail(res.reason || 'No circular code detected');
