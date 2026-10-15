@@ -449,7 +449,7 @@ pub fn try_config(
     }
 
     let f_mean = finder_lum.iter().sum::<f32>() / (finder_lum.len() as f32);
-    if f_mean > 165.0 || f_mean > km_thr + 5.0 {
+    if f_mean > 215.0 || f_mean > km_thr + 15.0 {
         return None;
     }
 
@@ -522,8 +522,17 @@ pub fn to_grayscale(rgba: &[u8], len: usize) -> Vec<f32> {
     let mut g = Vec::with_capacity(len);
     for i in 0..len {
         let idx = i * 4;
-        let v = (rgba[idx] as f32 + rgba[idx + 1] as f32 + rgba[idx + 2] as f32) / 3.0;
-        g.push(v);
+        let a = rgba[idx + 3] as f32;
+        if a == 0.0 {
+            g.push(255.0);
+        } else {
+            let lum = rgba[idx] as f32 * 0.299 + rgba[idx + 1] as f32 * 0.587 + rgba[idx + 2] as f32 * 0.114;
+            if a < 255.0 {
+                g.push((lum * a + 255.0 * (255.0 - a)) / 255.0);
+            } else {
+                g.push(lum);
+            }
+        }
     }
     g
 }
@@ -663,7 +672,7 @@ pub fn scan_frame_wasm(
                     }
                 }
 
-                if best_s > 185.0 {
+                if best_s > 225.0 {
                     continue;
                 }
 

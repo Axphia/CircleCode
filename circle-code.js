@@ -191,8 +191,8 @@ export function renderToCanvas(model, ctx, size, style) {
   const isLonCle = !!(o.style === 'loncle' || o.loncle || o.lonCle || o.appleStyle || o.connectedArcs || o.merged || o.style === 'apple');
   ctx.clearRect(0, 0, size, size);
   if (o.bg !== 'transparent') {
-    ctx.beginPath(); ctx.fillStyle = o.bg || '#ffffff';
-    ctx.arc(cx, cy, DISC_R * s, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = o.bg || '#ffffff';
+    ctx.fillRect(0, 0, size, size);
   }
 
   if (isLonCle) {
@@ -302,7 +302,7 @@ export function renderToSVG(model, style) {
   if (typeof o.center === 'object' && o.center.dataUrl) {
     const targetSize = 64;
     h += '<defs><clipPath id="centerClip"><circle cx="200" cy="200" r="39"/></clipPath></defs>';
-    h += '<image href="' + o.center.dataUrl + '" x="' + (200 - targetSize/2) + '" y="' + (200 - targetSize/2) + '" width="' + targetSize + '" height="' + targetSize + '" clip-path="url(#centerClip)" preserveAspectRatio="xMidYMid meet"/>';
+    h += '<image href="' + o.center.dataUrl + '" x="' + (200 - targetSize / 2) + '" y="' + (200 - targetSize / 2) + '" width="' + targetSize + '" height="' + targetSize + '" clip-path="url(#centerClip)" preserveAspectRatio="xMidYMid meet"/>';
   } else if (o.center === 'appclip') {
     h += '<circle cx="200" cy="200" r="24" stroke="' + textFill + '" stroke-width="2.2" stroke-dasharray="4 3.5" fill="none"/>';
     h += '<rect x="189" y="189" width="22" height="22" rx="4" fill="' + textFill + '"/>';

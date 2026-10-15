@@ -295,7 +295,7 @@
   <script src="../dist/circlecode.min.js"></script>
   <script>
     if (!window.CircleCode) {
-      document.write('<script src="https://cdn.jsdelivr.net/npm/circlecode@1.1.1/dist/circlecode.min.js"><\/script>');
+      document.write('<script src="https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.5/dist/circlecode.min.js"><\/script>');
     }
   </script>
 </head>
@@ -425,8 +425,8 @@
           wasmModule = await import('../wasm/circlecode_core.js');
           await wasmModule.default({ module_or_path: '../wasm/circlecode_core_bg.wasm' });
         } catch (localErr) {
-          wasmModule = await import('https://cdn.jsdelivr.net/npm/circlecode@1.1.1/wasm/circlecode_core.js');
-          await wasmModule.default({ module_or_path: 'https://cdn.jsdelivr.net/npm/circlecode@1.1.1/wasm/circlecode_core_bg.wasm' });
+          wasmModule = await import('https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.5/wasm/circlecode_core.js');
+          await wasmModule.default({ module_or_path: 'https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.5/wasm/circlecode_core_bg.wasm' });
         }
         wasmEngine = wasmModule;
         wasmReady = true;
@@ -498,8 +498,8 @@
 
       document.getElementById('capVal').textContent = currentModel.used + ' / ' + currentModel.cap + ' B (' + rings + ' Rings)';
 
-      // Render to 2D Canvas
-      renderToCanvas(currentModel, ctx, 400, { dark, light, center });
+      // Render to 2D Canvas with solid white background to avoid transparent corners
+      renderToCanvas(currentModel, ctx, 400, { dark, light, center, bg: '#ffffff' });
 
       // Grab RGBA
       const imgData = ctx.getImageData(0, 0, 400, 400);
@@ -509,6 +509,7 @@
       const engineVal = document.getElementById('engineVal');
 
       if (currentEngine === 'wasm') {
+        engineVal.textContent = 'Rust WASM';
         if (!wasmReady) {
           statusBadge.className = 'status-badge status-err';
           statusBadge.textContent = 'WASM Loading...';
@@ -552,7 +553,7 @@
       let code = '';
       if (eng === 'wasm') {
         code = `<!-- 1. Include CircleCode via CDN for Rendering -->
-<script src="https://cdn.jsdelivr.net/npm/circlecode@1.1.1/dist/circlecode.min.js"><\\/script>
+<script src="https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.5/dist/circlecode.min.js"><\\/script>
 
 <canvas id="circlecode-canvas" width="400" height="400"></canvas>
 
@@ -564,16 +565,17 @@
   renderToCanvas(model, canvas.getContext('2d'), 400, {
     dark: '${dark}',
     light: '${light}',
-    center: '${center}'
+    center: '${center}',
+    bg: '#ffffff'
   });
 <\\/script>
 
 <!-- 3. Load & Run Rust WebAssembly Scanner Engine -->
 <script type="module">
-  import init, { scan_frame_wasm } from 'https://cdn.jsdelivr.net/npm/circlecode@1.1.1/wasm/circlecode_core.js';
+  import init, { scan_frame_wasm } from 'https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.5/wasm/circlecode_core.js';
 
   // Initialize WebAssembly linear memory module
-  await init({ module_or_path: 'https://cdn.jsdelivr.net/npm/circlecode@1.1.1/wasm/circlecode_core_bg.wasm' });
+  await init({ module_or_path: 'https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.5/wasm/circlecode_core_bg.wasm' });
 
   // Fast zero-copy decode directly from canvas ImageData
   const canvas = document.getElementById('circlecode-canvas');
@@ -587,7 +589,7 @@
 <\\/script>`;
       } else {
         code = `<!-- 1. Include CircleCode via CDN -->
-<script src="https://cdn.jsdelivr.net/npm/circlecode@1.1.1/dist/circlecode.min.js"><\\/script>
+<script src="https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.5/dist/circlecode.min.js"><\\/script>
 
 <canvas id="circlecode-canvas" width="400" height="400"></canvas>
 
@@ -602,7 +604,8 @@
   renderToCanvas(model, canvas.getContext('2d'), 400, {
     dark: '${dark}',
     light: '${light}',
-    center: '${center}'
+    center: '${center}',
+    bg: '#ffffff'
   });
 
   // 3. Scan & Decode (Pure JavaScript)

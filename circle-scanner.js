@@ -90,7 +90,13 @@ export function toGrayscale(imageData, mode = 'luminance') {
   } else {
     // Fast 32-bit integer luminance weighting: (77*R + 150*G + 29*B) >> 8
     for (let idx = 0; idx < loopEnd; idx += 4) {
-      g[p++] = (data[idx] * 77 + data[idx + 1] * 150 + data[idx + 2] * 29) >> 8;
+      const a = data[idx + 3];
+      if (a === 0) {
+        g[p++] = 255;
+      } else {
+        const lum = (data[idx] * 77 + data[idx + 1] * 150 + data[idx + 2] * 29) >> 8;
+        g[p++] = a < 255 ? ((lum * a) + 255 * (255 - a)) / 255 : lum;
+      }
     }
   }
   return g;
