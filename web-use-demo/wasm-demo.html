@@ -194,7 +194,7 @@
   </div>
 
   <script type="module">
-    import init, { scan_frame_wasm } from './native/rust/pkg/circlecode_core.js';
+    import init, { scan_frame_wasm } from '../native/rust/pkg/circlecode_core.js';
 
     const out = document.getElementById('output');
     const timeVal = document.getElementById('timeVal');
@@ -203,7 +203,7 @@
 
     async function setup() {
       try {
-        await init();
+        await init({ module_or_path: '../native/rust/pkg/circlecode_core_bg.wasm' });
         wasmReady = true;
         out.textContent = '✓ WebAssembly module loaded and ready!\nClick button above to benchmark.';
       } catch (e) {
