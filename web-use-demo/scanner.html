@@ -778,10 +778,20 @@
         return;
       }
       const t0 = performance.now();
-      const res = scanCanvas(currentCanvas, {
-        aggressive: document.getElementById('aggr').checked,
-        scale: parseFloat(document.getElementById('scR').value)
-      });
+      const cxSlider = parseFloat(document.getElementById('cxR').value);
+      const cySlider = parseFloat(document.getElementById('cyR').value);
+      const scSlider = parseFloat(document.getElementById('scR').value);
+      const opts = {
+        aggressive: document.getElementById('aggr').checked
+      };
+      if (cxSlider !== 50 || cySlider !== 50) {
+        opts.cx = currentCanvas.width * (cxSlider / 100);
+        opts.cy = currentCanvas.height * (cySlider / 100);
+      }
+      if (scSlider !== 1.00) {
+        opts.scale = scSlider;
+      }
+      const res = scanCanvas(currentCanvas, opts);
       const t1 = performance.now();
       msStat.textContent = (t1 - t0).toFixed(1) + ' ms';
       if (res.ok) {
