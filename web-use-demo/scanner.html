@@ -470,7 +470,7 @@
         </div>
         <label>Scale <span id="scV">1.00</span></label>
         <input type="range" id="scR" min="0.7" max="1.3" step="0.01" value="1.00">
-        <div class="checkline"><input type="checkbox" id="aggr" style="width:auto"> Aggressive 2–3 bit correction
+        <div class="checkline"><input type="checkbox" id="aggr" style="width:auto" checked> Aggressive 2–3 bit correction
           (recovers worse images, slightly less certain)</div>
         <div class="btns">
           <button id="decodeBtn">Decode image</button>
@@ -487,11 +487,11 @@
     </div>
   </div>
 
-  <!-- Include official CircleCode bundle from CDN (with local fallback) -->
-  <script src="https://cdn.jsdelivr.net/npm/circlecode@1.1.1/dist/circlecode.min.js"></script>
+  <!-- Include CircleCode bundle (local dist with CDN fallback) -->
+  <script src="../dist/circlecode.umd.js"></script>
   <script>
     if (!window.CircleCode) {
-      document.write('<script src="../dist/circlecode.min.js"><\/script>');
+      document.write('<script src="https://cdn.jsdelivr.net/npm/circlecode@1.1.1/dist/circlecode.min.js"><\/script>');
     }
   </script>
 

@@ -951,36 +951,94 @@ function findCenterAndScale(g, w, h) {
     }
   }
 
-  // Centroid & subpixel edge refinement via annulus (ring) search
-  // Symmetrical dark ring (annulus between 0.55*r and 1.05*r) gives true centroid
-  // even if center logo / text is white ("Pay", Apple logo, etc.)
+  // Centroid & subpixel edge refinement via radial boundary circle fitting
+  // Detects the outer rim transition of the center badge across 24 radial rays.
+  // Because rays search strictly at the outer circumference (0.72*r to 1.35*r),
+  // internal brand logos or text ("Code", "Pay", Apple logo, avatars) have ZERO impact on centroid accuracy!
   if (best) {
     const roughX = best.cx, roughY = best.cy, roughR = best.r;
-    let sumX = 0, sumY = 0, count = 0;
-    const thr = bestInMean + (bestOutMean - bestInMean) * 0.45;
-    const rMin = roughR * 0.55;
-    const rMax = roughR * 1.05;
-    const rMin2 = rMin * rMin;
-    const rMax2 = rMax * rMax;
+    const edgePts = [];
+    const numRays = 24;
+    const rStart = roughR * 0.72;
+    const rEnd = roughR * 1.35;
+    const rStep = Math.max(0.5, roughR * 0.02);
 
-    for (let dy = -rMax; dy <= rMax; dy += 2) {
-      for (let dx = -rMax; dx <= rMax; dx += 2) {
-        const d2 = dx * dx + dy * dy;
-        if (d2 >= rMin2 && d2 <= rMax2) {
-          const xi = Math.round(roughX + dx), yi = Math.round(roughY + dy);
-          if (xi >= 0 && xi < w && yi >= 0 && yi < h && g[yi * w + xi] < thr) {
-            sumX += xi;
-            sumY += yi;
-            count++;
+    for (let i = 0; i < numRays; i++) {
+      const ang = (i * 2 * Math.PI) / numRays;
+      const cosA = fastCos(ang), sinA = fastSin(ang);
+      let maxGrad = -1, bestR = roughR;
+
+      for (let r = rStart; r <= rEnd; r += rStep) {
+        const rIn = r - 2, rOut = r + 2;
+        const xIn = (roughX + rIn * cosA + 0.5) | 0;
+        const yIn = (roughY + rIn * sinA + 0.5) | 0;
+        const xOut = (roughX + rOut * cosA + 0.5) | 0;
+        const yOut = (roughY + rOut * sinA + 0.5) | 0;
+
+        if (xIn >= 0 && xIn < w && yIn >= 0 && yIn < h && xOut >= 0 && xOut < w && yOut >= 0 && yOut < h) {
+          const grad = g[yOut * w + xOut] - g[yIn * w + xIn];
+          if (grad > maxGrad) {
+            maxGrad = grad;
+            bestR = r;
           }
         }
       }
+      if (maxGrad > 20) {
+        edgePts.push({
+          x: roughX + bestR * cosA,
+          y: roughY + bestR * sinA
+        });
+      }
     }
 
-    if (count > 20) {
-      const refCX = sumX / count;
-      const refCY = sumY / count;
-      return { cx: refCX, cy: refCY, r: roughR, scale: roughR / CENTER_R, score: bestScore };
+    if (edgePts.length >= 8) {
+      // Algebraic circle fit (Kasa method):
+      // (x - xc)^2 + (y - yc)^2 = R^2  =>  2*x*xc + 2*y*yc + C = x^2 + y^2
+      const N = edgePts.length;
+      let sX = 0, sY = 0, sX2 = 0, sY2 = 0, sXY = 0, sZ = 0, sXZ = 0, sYZ = 0;
+      for (let i = 0; i < N; i++) {
+        const px = edgePts[i].x, py = edgePts[i].y;
+        const pz = px * px + py * py;
+        sX += px; sY += py;
+        sX2 += px * px; sY2 += py * py; sXY += px * py;
+        sZ += pz; sXZ += px * pz; sYZ += py * pz;
+      }
+
+      const A = sX2, B = sXY, C_ = sX;
+      const D = sXY, E = sY2, F = sY;
+      const G_ = sX,  H = sY,  I = N;
+
+      const det = A * (E * I - F * H) - B * (D * I - F * G_) + C_ * (D * H - E * G_);
+      if (Math.abs(det) > 1e-5) {
+        const inv00 = (E * I - F * H) / det;
+        const inv01 = (C_ * H - B * I) / det;
+        const inv02 = (B * F - C_ * E) / det;
+        const inv10 = (F * G_ - D * I) / det;
+        const inv11 = (A * I - C_ * G_) / det;
+        const inv12 = (C_ * D - A * F) / det;
+
+        const twoXc = inv00 * sXZ + inv01 * sYZ + inv02 * sZ;
+        const twoYc = inv10 * sXZ + inv11 * sYZ + inv12 * sZ;
+        const fitXc = twoXc / 2;
+        const fitYc = twoYc / 2;
+
+        let rSum = 0;
+        for (let i = 0; i < N; i++) {
+          rSum += Math.hypot(edgePts[i].x - fitXc, edgePts[i].y - fitYc);
+        }
+        const fitR = rSum / N;
+
+        // Validate that fit is physically plausible (within 35% of rough position)
+        if (Math.hypot(fitXc - roughX, fitYc - roughY) < roughR * 0.35 && fitR > 8 && fitR < Math.min(w, h) * 0.4) {
+          return {
+            cx: fitXc,
+            cy: fitYc,
+            r: fitR,
+            scale: fitR / CENTER_R,
+            score: bestScore
+          };
+        }
+      }
     }
     return best;
   }
