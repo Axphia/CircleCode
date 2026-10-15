@@ -348,7 +348,7 @@
   <div class="container">
     <div class="header-area">
       <h1>Circle Code Scanner</h1>
-      <p>สแกนถอดรหัสโค้ดวงกลมผ่านกล้องสดหรืออัปโหลดภาพ — ตรวจจับการหมุนรอบทิศทาง 360°</p>
+      <p>Decode circular barcodes via live camera stream or image upload — 360° rotation invariant.</p>
     </div>
 
     <div class="wrap">
@@ -360,8 +360,8 @@
           <button class="ghost" id="camStart">Start camera</button>
           <button class="ghost" id="camShot" disabled>Capture</button>
           <button class="ghost" id="camStop" disabled>Stop</button>
-          <button class="ghost" id="camTorch" style="display:none">🔦 ไฟฉาย</button>
-          <button class="ghost" id="camZoom" style="display:none">🔍 ซูม 1x</button>
+          <button class="ghost" id="camTorch" style="display:none">🔦 Torch</button>
+          <button class="ghost" id="camZoom" style="display:none">🔍 Zoom 1x</button>
         </div>
         <div class="camwrap" id="camwrap" style="display:none">
           <video id="video" playsinline muted></video>
@@ -376,11 +376,11 @@
         <div class="mono" id="autoStat">auto: idle — start camera first</div>
 
         <div class="scan-tips">
-          💡 <b>คำแนะนำเพื่อให้สแกนได้เร็วและแม่นยำ:</b><br>
-          • ถือกล้องห่างจากโค้ดประมาณ 15–30 ซม. ให้โค้ดอยู่ภายในวงกลมสีเขียว<br>
-          • หากแสงน้อย ให้กดปุ่ม <b>🔦 ไฟฉาย</b> เพื่อเพิ่มความสว่างและความคมชัด<br>
-          • หากโค้ดมีขนาดเล็กหรืออยู่ไกล ให้กดปุ่ม <b>🔍 ซูม 2x</b><br>
-          • รองรับการหมุนกล้องรอบทิศทาง 360° และกล้องหน้า (Mirrored)
+          💡 <b>Scanning Tips:</b><br>
+          • Hold camera 15–30 cm from code, aligned with the reticle.<br>
+          • In low light, toggle <b>🔦 Torch</b> for enhanced contrast.<br>
+          • For smaller or distant codes, tap <b>🔍 Zoom 2x</b>.<br>
+          • Supports arbitrary 360° camera orientation and mirrored front cameras.
         </div>
 
         <label>2) FINE-TUNE (only if auto-decode fails)</label>
@@ -483,7 +483,7 @@
       const caps = (typeof track.getCapabilities === 'function') ? track.getCapabilities() : {};
       if (caps && caps.torch) {
         torchBtn.style.display = 'inline-flex';
-        torchBtn.textContent = torchOn ? '🔦 ปิดไฟ' : '🔦 ไฟฉาย';
+        torchBtn.textContent = torchOn ? '🔦 Torch Off' : '🔦 Torch';
       }
       zoomBtn.style.display = 'inline-flex';
     }
@@ -494,13 +494,13 @@
       try {
         torchOn = !torchOn;
         await track.applyConstraints({ advanced: [{ torch: torchOn }] });
-        torchBtn.textContent = torchOn ? '🔦 ปิดไฟ' : '🔦 ไฟฉาย';
+        torchBtn.textContent = torchOn ? '🔦 Torch Off' : '🔦 Torch';
       } catch (e) { }
     };
 
     zoomBtn.onclick = () => {
       zoomLevel = (zoomLevel === 1) ? 2 : 1;
-      zoomBtn.textContent = zoomLevel === 2 ? '🔍 ซูม 2x' : '🔍 ซูม 1x';
+      zoomBtn.textContent = zoomLevel === 2 ? '🔍 Zoom 2x' : '🔍 Zoom 1x';
     };
 
     document.getElementById('camStart').onclick = async () => {
@@ -912,10 +912,10 @@
       const m = mid.reduce((a, b) => a + b, 0) / mid.length;
       const vari = mid.reduce((a, b) => a + (b - m) * (b - m), 0) / mid.length;
       let hint = '';
-      if (center > 135) hint = 'เล็งให้วงกลมดำอยู่กลางจอ';
-      else if (eMean < 60) hint = 'มืดเกินไป / ใกล้เกินไป — ถอยออกมานิดนึง';
-      else if (vari < 250) hint = 'ถือกล้องให้นิ่งในระยะ 20-30 ซม.';
-      else hint = 'พบโค้ด — กำลังถอดรหัส…';
+      if (center > 135) hint = 'Center the dark circle in frame';
+      else if (eMean < 60) hint = 'Too dark or too close — step back slightly';
+      else if (vari < 250) hint = 'Hold camera steady at 20–30 cm distance';
+      else hint = 'Code detected — decoding…';
       const present = (center < 135 && eMean > 60 && vari > 250);
       return { present, center, eMean, vari, hint };
     }
@@ -930,7 +930,7 @@
       pendingText = null; pendingCount = 0; emaP = null; lastGuide = null; lastAutoMsg = '';
       const b = document.getElementById('autoBtn');
       b.textContent = 'Auto-scan: ' + (on ? 'ON' : 'OFF'); b.classList.toggle('on', on);
-      setAutoStat(on ? 'กำลังสแกน… ถือโค้ดให้อยู่ในวงกลม' : 'off');
+      setAutoStat(on ? 'Scanning… align code inside reticle' : 'off');
       setGuide(null);
     }
     document.getElementById('autoBtn').onclick = () => {
@@ -939,12 +939,12 @@
     };
     document.getElementById('clearBtn').onclick = () => {
       latchedText = null; pendingText = null; pendingCount = 0; lastGood = null; emaP = null; lastGuide = null; lastAutoMsg = '';
-      setGuide(null); document.getElementById('out').textContent = 'result: เคลียร์ผลลัพธ์แล้ว — พร้อมสแกน'; setAutoStat(autoOn ? 'กำลังสแกน… ถือโค้ดให้อยู่ในวงกลม' : 'idle');
+      setGuide(null); document.getElementById('out').textContent = 'result: cleared — ready to scan'; setAutoStat(autoOn ? 'Scanning… align code inside reticle' : 'idle');
     };
     setInterval(() => {
       if (!autoOn || autoBusy || !stream || !video.videoWidth) return;
       const now = Date.now(); if (now - lastAuto < 100) return; lastAuto = now;
-      if (now - camOnAt < 500) { setAutoStat('กำลังเตรียมกล้อง…'); return; }
+      if (now - camOnAt < 500) { setAutoStat('Preparing camera…'); return; }
       try {
         const S = 480, vw = video.videoWidth, vh = video.videoHeight;
         const cropSide = Math.min(vw, vh) / zoomLevel;
@@ -955,7 +955,7 @@
         for (let i = 0; i < g.length; i++) g[i] = (d[i * 4] + d[i * 4 + 1] + d[i * 4 + 2]) / 3;
 
         let m = 0; for (let i = 0; i < g.length; i += 7) m += g[i]; m /= Math.ceil(g.length / 7);
-        if (m < 35) { emaP = 0; setGuide(false); pendingText = null; pendingCount = 0; setAutoStat('มืดเกินไป — เปิดไฟฉาย 🔦 หรือเพิ่มแสงสว่าง'); return; }
+        if (m < 35) { emaP = 0; setGuide(false); pendingText = null; pendingCount = 0; setAutoStat('Too dark — turn on torch 🔦 or increase lighting'); return; }
 
         // Dynamic badge auto-detection anywhere in camera frame!
         const autoDet = findCenterAndScale(g, S, S);
@@ -1042,16 +1042,16 @@
               drawView(best);
               document.getElementById('out').textContent = 'DECODED: "' + best.text + '"  (' + best.len + ' bytes, rings=' + best.k + ', rot=' + Math.round(best.rot * 180 / Math.PI) + '°' + (best.fixed ? ' [corrected ' + best.fixed + ' bit(s)]' : '') + ')';
               document.getElementById('dbg').textContent = 'auto live @' + new Date().toLocaleTimeString() + ' sep=' + best.sep.toFixed(0) + ' locked';
-              setAutoStat('LOCKED "' + best.text + '" — สแกนสำเร็จ!');
+              setAutoStat('LOCKED "' + best.text + '" — Scan successful!');
               if (fresh || now - lastBeep > 5000) { lastBeep = now; beep(); if (navigator.vibrate) navigator.vibrate(120); }
               lastText = best.text;
             } else {
-              setAutoStat('ตรวจพบ "' + best.text + '"… กำลังยืนยันความถูกต้อง');
+              setAutoStat('Detected "' + best.text + '"… confirming');
             }
           } else {
             if (pendingCount > 0) pendingCount--;
             if (pendingCount === 0) pendingText = null;
-            setAutoStat(autoDet ? 'กำลังจัดตำแหน่งโค้ด… ถือให้นิ่ง' : 'เล็งกล้องไปที่รหัสวงกลม');
+            setAutoStat(autoDet ? 'Aligning code… hold steady' : 'Point camera at circular code');
           }
         }, 10);
       } catch (e) { autoBusy = false; }
