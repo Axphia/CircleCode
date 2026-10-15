@@ -1057,14 +1057,42 @@ export class CircleScanner {
     this.video = videoElement;
 
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: this.options.facingMode,
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
-        audio: false
-      });
+      if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
+        const legacyGUM = navigator.getUserMedia ||
+          navigator.webkitGetUserMedia ||
+          navigator.mozGetUserMedia ||
+          navigator.msGetUserMedia;
+        if (legacyGUM) {
+          this.stream = await new Promise((resolve, reject) => {
+            legacyGUM.call(navigator, {
+              video: {
+                facingMode: this.options.facingMode,
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+              },
+              audio: false
+            }, resolve, reject);
+          });
+        } else {
+          if (typeof window !== 'undefined' && window.isSecureContext === false) {
+            throw new Error(
+              'Camera access is blocked because this page is not in a Secure Context (HTTPS or localhost). ' +
+              'Browsers prohibit camera access over plain HTTP (e.g. http://192.168.x.x). ' +
+              'To use camera on mobile, open over HTTPS (or use an HTTPS tunnel like localtunnel/ngrok).'
+            );
+          }
+          throw new Error('Camera API (navigator.mediaDevices.getUserMedia) is not supported in this browser.');
+        }
+      } else {
+        this.stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: this.options.facingMode,
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false
+        });
+      }
       this.video.srcObject = this.stream;
       await this.video.play();
 
