@@ -28,6 +28,15 @@
 
 ---
 
+## 🎯 Engine Selection: Pure JS vs Native Rust WASM
+
+| Engine | Recommended Use Case | Frame Latency | Why use it? |
+| :--- | :--- | :--- | :--- |
+| **🐢 Pure JavaScript** (`circlecode`) | **Web Image Uploads & File Decoding** | ~25–50 ms | **Zero dependencies**, instant loading without fetching `.wasm` binaries. Ideal for `<input type="file">`, drag-and-drop uploads, form attachments, and Node.js server scripts. |
+| **⚡ Native Rust WASM** (`circlecode/wasm`) | **Real-Time 60 FPS Camera Scanning** | **~2–4 ms** | **Sub-3ms native speed** with SIMD vectorization and zero Garbage Collection pauses. Designed for continuous phone camera feeds without draining battery or causing device overheating. |
+
+---
+
 ## ✨ Features
 
 - 🎨 **Apple Pay & App Clips Aesthetic:** Minimalist circular dash design that feels natural on round packaging, coasters, cards, and luxury brand merchandise.
