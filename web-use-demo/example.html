@@ -223,9 +223,14 @@
     }
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 12px;
       margin-bottom: 20px;
+    }
+    @media (min-width: 600px) {
+      .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
     }
     .stat-card {
       background: #f5f5f7;
@@ -328,6 +333,14 @@
       </div>
 
       <div class="field">
+        <label>Barcode Mode</label>
+        <div class="engine-toggle">
+          <button id="modeLoncleBtn" class="engine-btn active" onclick="setMode('loncle')">LonCle (Connected)</button>
+          <button id="modeCircleBtn" class="engine-btn" onclick="setMode('circle')">Circle (Classic)</button>
+        </div>
+      </div>
+
+      <div class="field">
         <label>Select Colors</label>
         <div class="color-row">
           <div>
@@ -393,8 +406,12 @@
           <div class="stat-lbl">Active Engine</div>
         </div>
         <div class="stat-card">
+          <div class="stat-val" id="modeVal">LonCle</div>
+          <div class="stat-lbl">Barcode Mode</div>
+        </div>
+        <div class="stat-card">
           <div class="stat-val" id="capVal">-- / --</div>
-          <div class="stat-lbl">Payload Used / Cap</div>
+          <div class="stat-lbl">Payload / Cap</div>
         </div>
       </div>
 
@@ -466,7 +483,17 @@
       renderAndDecode();
     };
 
-    // 3. Engine toggle
+    let currentStyle = 'loncle';
+
+    // 3. Mode toggle
+    window.setMode = (mode) => {
+      currentStyle = mode;
+      document.getElementById('modeLoncleBtn').classList.toggle('active', mode === 'loncle');
+      document.getElementById('modeCircleBtn').classList.toggle('active', mode === 'circle');
+      renderAndDecode();
+    };
+
+    // 4. Engine toggle
     window.setEngine = (eng) => {
       currentEngine = eng;
       document.getElementById('useJsBtn').classList.toggle('active', eng === 'js');
@@ -474,7 +501,7 @@
       renderAndDecode();
     };
 
-    // 4. Render and decode
+    // 5. Render and decode
     window.renderAndDecode = async () => {
       const payload = document.getElementById('payloadInput').value || 'Hello';
       const center = document.getElementById('centerInput').value || '';
@@ -497,9 +524,16 @@
       }
 
       document.getElementById('capVal').textContent = currentModel.used + ' / ' + currentModel.cap + ' B (' + rings + ' Rings)';
+      document.getElementById('modeVal').textContent = currentStyle === 'loncle' ? 'LonCle' : 'Circle';
 
-      // Render to 2D Canvas with solid white background to avoid transparent corners
-      renderToCanvas(currentModel, ctx, 400, { dark, light, center, bg: '#ffffff' });
+      // Render to 2D Canvas with selected mode and solid white background
+      renderToCanvas(currentModel, ctx, 400, {
+        style: currentStyle,
+        dark,
+        light,
+        center,
+        bg: '#ffffff'
+      });
 
       // Grab RGBA
       const imgData = ctx.getImageData(0, 0, 400, 400);
@@ -546,10 +580,10 @@
         }
       }
 
-      updateCodePreview(payload, dark, light, center, currentEngine, rings);
+      updateCodePreview(payload, dark, light, center, currentEngine, rings, currentStyle);
     };
 
-    function updateCodePreview(payload, dark, light, center, eng, rings = 5) {
+    function updateCodePreview(payload, dark, light, center, eng, rings = 5, style = 'loncle') {
       let code = '';
       if (eng === 'wasm') {
         code = `<!-- 1. Include CircleCode via CDN for Rendering -->
@@ -563,6 +597,7 @@
   const model = buildModel('${payload}', { rings: ${rings}, density: 0.35 });
   const canvas = document.getElementById('circlecode-canvas');
   renderToCanvas(model, canvas.getContext('2d'), 400, {
+    style: '${style}', // 'loncle' (connected arcs) or 'circle' (classic discrete pills)
     dark: '${dark}',
     light: '${light}',
     center: '${center}',
@@ -602,6 +637,7 @@
   // 2. Render to Canvas with custom colors
   const canvas = document.getElementById('circlecode-canvas');
   renderToCanvas(model, canvas.getContext('2d'), 400, {
+    style: '${style}', // 'loncle' (connected arcs) or 'circle' (classic discrete pills)
     dark: '${dark}',
     light: '${light}',
     center: '${center}',
@@ -632,7 +668,7 @@
 
     window.downloadPNG = () => {
       const a = document.createElement('a');
-      a.download = 'circle-code.png';
+      a.download = `circle-code-${currentStyle}.png`;
       a.href = cv.toDataURL('image/png');
       a.click();
     };
@@ -642,10 +678,10 @@
       const dark = document.getElementById('darkColor').value;
       const light = document.getElementById('lightColor').value;
       const center = document.getElementById('centerInput').value;
-      const svg = renderToSVG(currentModel, { dark, light, center });
+      const svg = renderToSVG(currentModel, { style: currentStyle, dark, light, center, bg: '#ffffff' });
       const blob = new Blob([svg], { type: 'image/svg+xml' });
       const a = document.createElement('a');
-      a.download = 'circle-code.svg';
+      a.download = `circle-code-${currentStyle}.svg`;
       a.href = URL.createObjectURL(blob);
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 2000);
