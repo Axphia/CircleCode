@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Circle Code — Studio</title>
+<style>
+  :root {
+    --bg: #f5f5f7;
+    --card: #ffffff;
+    --text-primary: #1d1d1f;
+    --text-secondary: #86868b;
+    --border: rgba(0, 0, 0, 0.08);
+    --border-light: rgba(0, 0, 0, 0.04);
+    --accent: #0071e3;
+    --radius-lg: 24px;
+    --radius-md: 14px;
+    --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", -system-ui, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    padding: 0 0 60px;
+    text-align: center;
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px;
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+    text-decoration: none;
+  }
+  .nav-brand svg { width: 18px; height: 18px; }
+  .nav-links {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+  }
+  .nav-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.15s;
+  }
+  .nav-links a:hover, .nav-links a.active { color: var(--text-primary); }
+
+  .hero {
+    max-width: 720px;
+    margin: 56px auto 40px;
+    padding: 0 20px;
+  }
+  .badge-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    background: #000;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  }
+  .badge-icon svg { width: 44px; height: 44px; }
+  h1 {
+    font-size: 38px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 12px;
+  }
+  .sub {
+    font-size: 17px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .cards {
+    display: grid;
+    gap: 20px;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+  @media(min-width:640px) { .cards { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); max-width: 940px; } }
+
+  .card {
+    background: var(--card);
+    border-radius: var(--radius-lg);
+    padding: 36px 24px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+  }
+  .card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .card-icon svg { width: 24px; height: 24px; stroke: #000; }
+  .card h2 {
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+  .card p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+  .card-link {
+    margin-top: 24px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .foot {
+    margin-top: 50px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    padding: 0 20px;
+  }
+  code {
+    background: rgba(0,0,0,0.06);
+    border-radius: 6px;
+    padding: 2px 7px;
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="index.html" class="nav-brand">
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+      <circle cx="12" cy="12" r="4" fill="currentColor"/>
+    </svg>
+    Circle Code
+  </a>
+  <div class="nav-links">
+    <a href="generator.html">Generator</a>
+    <a href="scanner.html">JS Scanner</a>
+    <a href="scanner-wasm.html">WASM Scanner</a>
+    <a href="https://github.com/Axphia/CircleCode">Docs</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="badge-icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+      <circle cx="12" cy="12" r="9"/>
+      <circle cx="12" cy="12" r="5" stroke-dasharray="3 3"/>
+      <circle cx="12" cy="12" r="2" fill="#fff"/>
+    </svg>
+  </div>
+  <h1>Circle Code</h1>
+  <p class="sub">Apple Pay and App Clips style circular barcodes encoded with your custom data — generate and scan with subpixel accuracy, 100% in the browser.</p>
+</div>
+
+<div class="cards">
+  <a class="card" href="generator.html">
+    <div>
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="#000"/></svg>
+      </div>
+      <h2>Generator</h2>
+      <p>Generate standard Apple Pay circular barcodes (sharp dark & light dashes). Instantly export high-resolution PNG and scalable vector SVG.</p>
+    </div>
+    <div class="card-link">Launch Generator →</div>
+  </a>
+
+  <a class="card" href="scanner.html">
+    <div>
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      </div>
+      <h2>JS Scanner</h2>
+      <p>Scan and decode via live camera stream or file upload. Features 60 FPS Web Worker decoupling and zero external dependencies.</p>
+    </div>
+    <div class="card-link">Launch JS Scanner →</div>
+  </a>
+
+  <a class="card" href="scanner-wasm.html">
+    <div>
+      <div class="card-icon" style="background: rgba(48, 209, 88, 0.1);">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="#1a9e38"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <h2>WASM Scanner</h2>
+      <p>Blazing-fast native decoding powered by compiled Rust WebAssembly with sub-3ms frame processing for production workloads.</p>
+    </div>
+    <div class="card-link" style="color: #1a9e38;">Launch WASM Scanner ⚡ →</div>
+  </a>
+</div>
+
+<div class="foot">
+  Apple Pay Circular Code Standard (4–14 Rings · Density 0.35 · Checksum Error-Correction)<br>
+  100% Client-side · Zero Server Dependency · Fast & Private
+</div>
+
+</body>
+</html>

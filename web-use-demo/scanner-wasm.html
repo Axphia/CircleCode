@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CircleCode — WebAssembly Live Scanner</title>
+  <style>
+    :root {
+      --bg: #f5f5f7;
+      --card: #ffffff;
+      --text: #1d1d1f;
+      --text-sec: #86868b;
+      --accent: #0071e3;
+      --success: #30d158;
+      --border: rgba(0, 0, 0, 0.08);
+      --radius-lg: 24px;
+      --radius-md: 14px;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 28px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+    }
+
+    .nav-links a {
+      color: var(--text-sec);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .nav-links a:hover,
+    .nav-links a.active {
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 980px;
+      margin: 36px auto 0;
+      padding: 0 20px;
+    }
+
+    .header-area {
+      margin-bottom: 24px;
+    }
+
+    .badge-wasm {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(48, 209, 88, 0.12);
+      color: #1a9e38;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      color: var(--text-sec);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .wrap {
+      display: grid;
+      gap: 24px;
+    }
+
+    @media (min-width: 860px) {
+      .wrap {
+        grid-template-columns: 460px 1fr;
+        align-items: start;
+      }
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .camera-box {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1;
+      background: #000;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .reticle {
+      position: absolute;
+      width: 65%;
+      height: 65%;
+      border: 2px dashed rgba(255, 255, 255, 0.4);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: pulse 2.5s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.4; }
+      50% { transform: scale(1.03); opacity: 0.8; }
+    }
+
+    .hud-stats {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(8px);
+      padding: 6px 12px;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 11px;
+      font-family: ui-monospace, Menlo, monospace;
+      display: flex;
+      gap: 10px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    button {
+      flex: 1;
+      font-family: inherit;
+      cursor: pointer;
+      border: 0;
+      border-radius: 980px;
+      padding: 10px 16px;
+      font-size: 13.5px;
+      font-weight: 600;
+      background: #000;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background-color 0.15s;
+    }
+
+    button.ghost {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .result-box {
+      margin-top: 20px;
+      padding: 16px;
+      background: var(--bg);
+      border-radius: var(--radius-md);
+      min-height: 100px;
+    }
+
+    .result-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-sec);
+      margin-bottom: 6px;
+    }
+
+    .result-payload {
+      font-size: 16px;
+      font-weight: 700;
+      word-break: break-all;
+      color: var(--text);
+    }
+
+    .result-meta {
+      font-size: 12px;
+      color: var(--text-sec);
+      margin-top: 6px;
+    }
+
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      margin-top: 16px;
+      transition: border-color 0.15s;
+    }
+
+    .upload-zone:hover {
+      border-color: var(--accent);
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="nav">
+    <a href="index.html" class="nav-brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
+        <circle cx="12" cy="12" r="9" />
+        <circle cx="12" cy="12" r="3" fill="currentColor" />
+      </svg>
+      CircleCode
+    </a>
+    <div class="nav-links">
+      <a href="generator.html">Generator</a>
+      <a href="scanner.html">JS Scanner</a>
+      <a href="scanner-wasm.html" class="active">WASM Scanner</a>
+      <a href="https://github.com/Axphia/CircleCode">GitHub</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="header-area">
+      <div class="badge-badge badge-wasm">⚡ Rust WebAssembly Engine</div>
+      <h1>Real-Time WASM Circular Scanner</h1>
+      <p>Decodes circular barcodes at maximum native speeds using compiled Rust WebAssembly.</p>
+    </div>
+
+    <div class="wrap">
+      <div class="card">
+        <div class="camera-box">
+          <video id="video" playsinline muted></video>
+          <div class="reticle"></div>
+          <div class="hud-stats">
+            <span id="fpsStat">-- FPS</span>
+            <span id="msStat">-- ms</span>
+            <span id="statusStat">INIT WASM</span>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button id="startBtn">Start Camera</button>
+          <button id="torchBtn" class="ghost" disabled>Torch</button>
+        </div>
+
+        <div class="upload-zone" id="dropZone">
+          <span style="font-size: 13px; font-weight: 500;">Click or Drop image to scan with WASM</span>
+          <input type="file" id="fileInput" accept="image/*" style="display:none;" />
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 12px;">WASM Live Inspector</h2>
+        
+        <div class="result-box">
+          <div class="result-title">Decoded Payload</div>
+          <div class="result-payload" id="resText">Awaiting circular code...</div>
+          <div class="result-meta" id="resMeta">Point camera directly at a circular barcode</div>
+        </div>
+
+        <div style="margin-top: 20px;">
+          <h3 style="font-size: 13px; font-weight: 600; text-transform: uppercase; color: var(--text-sec); margin-bottom: 8px;">Architecture</h3>
+          <ul style="font-size: 13px; color: var(--text-sec); line-height: 1.6; padding-left: 18px;">
+            <li>Zero JavaScript GC pauses during video frames</li>
+            <li>Subpixel Otsu thresholding & K-means cluster analysis in Rust</li>
+            <li>Direct memory access over linear TypedArray buffer</li>
+            <li>Modulo-256 error correction mathematically matching bit deltas</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="workCanvas" style="display:none;"></canvas>
+
+  <script type="module">
+    import init, { scan_frame_wasm } from './native/rust/pkg/circlecode_core.js';
+
+    const video = document.getElementById('video');
+    const startBtn = document.getElementById('startBtn');
+    const torchBtn = document.getElementById('torchBtn');
+    const fpsStat = document.getElementById('fpsStat');
+    const msStat = document.getElementById('msStat');
+    const statusStat = document.getElementById('statusStat');
+    const resText = document.getElementById('resText');
+    const resMeta = document.getElementById('resMeta');
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+
+    const workCanvas = document.getElementById('workCanvas');
+    const workCtx = workCanvas.getContext('2d', { willReadFrequently: true });
+
+    let stream = null;
+    let isScanning = false;
+    let timer = null;
+    let wasmReady = false;
+    let torchOn = false;
+
+    async function setupWasm() {
+      try {
+        await init();
+        wasmReady = true;
+        statusStat.textContent = 'WASM READY';
+      } catch (err) {
+        statusStat.textContent = 'WASM ERR';
+        console.error(err);
+      }
+    }
+
+    async function startCamera() {
+      if (isScanning) {
+        stopCamera();
+        return;
+      }
+
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+        });
+        video.srcObject = stream;
+        await video.play();
+
+        isScanning = true;
+        startBtn.textContent = 'Stop Camera';
+        statusStat.textContent = 'SCANNING';
+
+        // Check torch
+        const track = stream.getVideoTracks()[0];
+        const caps = track.getCapabilities ? track.getCapabilities() : {};
+        if (caps.torch) {
+          torchBtn.disabled = false;
+        }
+
+        timer = setInterval(tick, 70); // ~14 FPS camera decode loop
+      } catch (e) {
+        alert('Could not start camera: ' + e.message);
+      }
+    }
+
+    function stopCamera() {
+      isScanning = false;
+      if (timer) clearInterval(timer);
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      video.srcObject = null;
+      startBtn.textContent = 'Start Camera';
+      statusStat.textContent = 'PAUSED';
+    }
+
+    function tick() {
+      if (!isScanning || !wasmReady || !video.videoWidth) return;
+
+      const vw = video.videoWidth, vh = video.videoHeight;
+      const S = 480;
+      workCanvas.width = S;
+      workCanvas.height = S;
+
+      const side = Math.min(vw, vh);
+      const sx = (vw - side) / 2, sy = (vh - side) / 2;
+      workCtx.drawImage(video, sx, sy, side, side, 0, 0, S, S);
+
+      const imgData = workCtx.getImageData(0, 0, S, S);
+      const t0 = performance.now();
+      const res = scan_frame_wasm(imgData.data, S, S, true);
+      const t1 = performance.now();
+
+      const ms = t1 - t0;
+      msStat.textContent = ms.toFixed(1) + ' ms';
+      fpsStat.textContent = Math.round(1000 / Math.max(ms, 1)) + ' FPS';
+
+      if (res && res.ok) {
+        resText.textContent = res.text;
+        resMeta.textContent = 'Decoded via Rust WASM! (' + res.len + ' bytes, ' + res.rings + ' rings, chk ' + res.chk + ')';
+        statusStat.textContent = 'LOCKED';
+      }
+    }
+
+    // File Upload / Drop
+    dropZone.onclick = () => fileInput.click();
+    fileInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+          workCanvas.width = img.width;
+          workCanvas.height = img.height;
+          workCtx.drawImage(img, 0, 0);
+          const data = workCtx.getImageData(0, 0, img.width, img.height);
+          const t0 = performance.now();
+          const res = scan_frame_wasm(data.data, img.width, img.height, true);
+          const t1 = performance.now();
+          msStat.textContent = (t1 - t0).toFixed(1) + ' ms';
+          if (res && res.ok) {
+            resText.textContent = res.text;
+            resMeta.textContent = 'Decoded static image via WASM (' + (t1 - t0).toFixed(1) + ' ms, rings=' + res.rings + ')';
+          } else {
+            resText.textContent = 'Decode Failed';
+            resMeta.textContent = res.reason || 'No circular code found in image';
+          }
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
+
+    torchBtn.onclick = async () => {
+      if (!stream) return;
+      const track = stream.getVideoTracks()[0];
+      try {
+        torchOn = !torchOn;
+        await track.applyConstraints({ advanced: [{ torch: torchOn }] });
+      } catch (e) {}
+    };
+
+    startBtn.onclick = startCamera;
+    setupWasm();
+  </script>
+</body>
+
+</html>

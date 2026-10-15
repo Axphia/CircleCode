@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CircleCode — Live CDN & Comparison Showcase</title>
+  <style>
+    :root {
+      --bg: #f5f5f7;
+      --card: #ffffff;
+      --text: #1d1d1f;
+      --text-sec: #86868b;
+      --accent: #0071e3;
+      --accent-green: #30d158;
+      --border: rgba(0, 0, 0, 0.08);
+      --radius-lg: 20px;
+      --radius-md: 12px;
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      padding: 30px 20px 60px;
+    }
+    .nav {
+      max-width: 1080px;
+      margin: 0 auto 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 17px;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .cdn-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 113, 227, 0.08);
+      color: var(--accent);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    @media (min-width: 860px) {
+      .container { grid-template-columns: 380px 1fr; }
+    }
+    .card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+    h2 {
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 16px;
+    }
+    .field {
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-sec);
+      margin-bottom: 6px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #d2d2d7;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input[type="text"]:focus {
+      border-color: var(--accent);
+    }
+    .color-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .color-picker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border: 1px solid #d2d2d7;
+      border-radius: var(--radius-md);
+      background: #fff;
+    }
+    .color-picker input[type="color"] {
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      cursor: pointer;
+      background: none;
+    }
+    .color-picker span {
+      font-size: 12.5px;
+      font-family: ui-monospace, monospace;
+      color: var(--text);
+    }
+    .preset-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .chip {
+      padding: 4px 10px;
+      border-radius: 14px;
+      font-size: 11.5px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: #f5f5f7;
+      transition: background 0.15s;
+    }
+    .chip:hover {
+      background: #e5e5ea;
+    }
+    .engine-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: #f0f0f2;
+      border-radius: 10px;
+      padding: 3px;
+      gap: 3px;
+      margin-bottom: 18px;
+    }
+    .engine-btn {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: transparent;
+      color: var(--text-sec);
+      transition: all 0.15s;
+    }
+    .engine-btn.active {
+      background: #fff;
+      color: var(--text);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    .engine-btn.wasm-btn.active {
+      color: #1a9e38;
+    }
+    .btn-main {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      margin-top: 6px;
+    }
+    .btn-main:hover { opacity: 0.9; }
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .btn-sec {
+      flex: 1;
+      background: #f0f0f2;
+      color: var(--text);
+      border: none;
+      padding: 10px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-sec:hover { background: #e5e5ea; }
+    .preview-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: #fafafc;
+      border-radius: var(--radius-md);
+      border: 1px dashed #d2d2d7;
+      margin-bottom: 20px;
+    }
+    canvas {
+      max-width: 320px;
+      width: 100%;
+      height: auto;
+      border-radius: 50%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: #f5f5f7;
+      padding: 14px;
+      border-radius: var(--radius-md);
+      text-align: center;
+    }
+    .stat-val {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .stat-lbl {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-sec);
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+    .code-box {
+      position: relative;
+      background: #1d1d1f;
+      border-radius: var(--radius-md);
+      padding: 18px;
+      overflow-x: auto;
+      margin-top: 14px;
+    }
+    .code-box pre {
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 12.5px;
+      color: #30d158;
+      line-height: 1.5;
+    }
+    .btn-copy {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: background 0.15s;
+    }
+    .btn-copy:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .status-ok { background: rgba(48, 209, 88, 0.12); color: #1a9e38; }
+    .status-err { background: rgba(255, 59, 48, 0.12); color: #ff3b30; }
+  </style>
+
+  <!-- 1. CDN Production Script with Local Fallback -->
+  <script src="https://cdn.jsdelivr.net/npm/circlecode@1.1.0/dist/circlecode.min.js"></script>
+  <script>
+    if (!window.CircleCode) {
+      document.write('<script src="../dist/circlecode.min.js"><\/script>');
+    }
+  </script>
+</head>
+<body>
+
+  <div class="nav">
+    <a href="../index.html" class="brand">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+        <circle cx="12" cy="12" r="4" fill="currentColor"/>
+      </svg>
+      CircleCode Demo
+    </a>
+    <div class="cdn-badge">📦 circlecode@1.1.0 via CDN</div>
+  </div>
+
+  <div class="container">
+    <!-- Left Configuration Panel -->
+    <div class="card">
+      <h2>🎨 Customize Code</h2>
+
+      <div class="field">
+        <label>Payload Text / URL</label>
+        <input type="text" id="payloadInput" value="https://circlecode.js.org">
+      </div>
+
+      <div class="field">
+        <label>Center Logo Text</label>
+        <input type="text" id="centerInput" value="Pay">
+      </div>
+
+      <div class="field">
+        <label>Select Colors</label>
+        <div class="color-row">
+          <div>
+            <div style="font-size:11.5px; color:var(--text-sec); margin-bottom:4px;">Dark Dashes</div>
+            <div class="color-picker">
+              <input type="color" id="darkColor" value="#000000">
+              <span id="darkHex">#000000</span>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11.5px; color:var(--text-sec); margin-bottom:4px;">Light Dashes</div>
+            <div class="color-picker">
+              <input type="color" id="lightColor" value="#8e8e93">
+              <span id="lightHex">#8e8e93</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Presets -->
+        <div class="preset-chips">
+          <div class="chip" onclick="applyPreset('#000000', '#8e8e93')">Apple Classic</div>
+          <div class="chip" onclick="applyPreset('#0071e3', '#9ac8fb')">Ocean Blue</div>
+          <div class="chip" onclick="applyPreset('#30d158', '#b4f0c4')">Emerald</div>
+          <div class="chip" onclick="applyPreset('#ff3b30', '#ffb3af')">Crimson</div>
+          <div class="chip" onclick="applyPreset('#bf5af2', '#e5c2fa')">Purple</div>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:20px;">
+        <label>Scanner Engine for Decoding</label>
+        <div class="engine-toggle">
+          <button id="useJsBtn" class="engine-btn active" onclick="setEngine('js')">Pure JavaScript</button>
+          <button id="useWasmBtn" class="engine-btn wasm-btn" onclick="setEngine('wasm')">⚡ Rust WASM</button>
+        </div>
+      </div>
+
+      <button class="btn-main" onclick="renderAndDecode()">⚡ Render & Run Decode</button>
+
+      <div class="btn-row">
+        <button class="btn-sec" onclick="downloadPNG()">Download PNG</button>
+        <button class="btn-sec" onclick="downloadSVG()">Download SVG</button>
+      </div>
+    </div>
+
+    <!-- Right Preview & Comparison Results -->
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <h2>📊 Real-time Result & Benchmarks</h2>
+        <div id="statusBadge" class="status-badge status-ok">✓ Ready</div>
+      </div>
+
+      <div class="preview-box">
+        <canvas id="cv" width="400" height="400"></canvas>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-val" id="timeVal">-- ms</div>
+          <div class="stat-lbl">Decode Latency</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="engineVal">Pure JS</div>
+          <div class="stat-lbl">Active Engine</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="capVal">-- / --</div>
+          <div class="stat-lbl">Payload Used / Cap</div>
+        </div>
+      </div>
+
+      <!-- Copyable Embed Code -->
+      <label>📋 Production Implementation Code (Copy & Paste)</label>
+      <div class="code-box">
+        <button class="btn-copy" onclick="copyCode()">Copy Code</button>
+        <pre id="codePreview"></pre>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Load WASM engine dynamically from pkg for side-by-side comparison
+    let wasmEngine = null;
+    let wasmReady = false;
+    let currentEngine = 'js';
+    let currentModel = null;
+
+    const cv = document.getElementById('cv');
+    const ctx = cv.getContext('2d');
+
+    // 1. Initialize WASM module
+    async function initWasm() {
+      try {
+        const wasmModule = await import('../native/rust/pkg/circlecode_core.js');
+        await wasmModule.default('../native/rust/pkg/circlecode_core_bg.wasm');
+        wasmEngine = wasmModule;
+        wasmReady = true;
+      } catch (e) {
+        console.warn('WASM fallback mode:', e);
+      }
+    }
+    initWasm();
+
+    // 2. Preset color handler
+    window.applyPreset = (dark, light) => {
+      document.getElementById('darkColor').value = dark;
+      document.getElementById('darkHex').textContent = dark;
+      document.getElementById('lightColor').value = light;
+      document.getElementById('lightHex').textContent = light;
+      renderAndDecode();
+    };
+
+    document.getElementById('darkColor').oninput = (e) => {
+      document.getElementById('darkHex').textContent = e.target.value;
+      renderAndDecode();
+    };
+    document.getElementById('lightColor').oninput = (e) => {
+      document.getElementById('lightHex').textContent = e.target.value;
+      renderAndDecode();
+    };
+
+    // 3. Engine toggle
+    window.setEngine = (eng) => {
+      currentEngine = eng;
+      document.getElementById('useJsBtn').classList.toggle('active', eng === 'js');
+      document.getElementById('useWasmBtn').classList.toggle('active', eng === 'wasm');
+      renderAndDecode();
+    };
+
+    // 4. Render and decode
+    window.renderAndDecode = async () => {
+      const payload = document.getElementById('payloadInput').value || 'Hello';
+      const center = document.getElementById('centerInput').value || '';
+      const dark = document.getElementById('darkColor').value;
+      const light = document.getElementById('lightColor').value;
+
+      // Access from window.CircleCode (CDN loaded)
+      const { buildModel, renderToCanvas, scanImageData } = window.CircleCode;
+
+      currentModel = buildModel(payload, { rings: 5, density: 0.35 });
+      document.getElementById('capVal').textContent = currentModel.used + ' / ' + currentModel.cap + ' B';
+
+      // Render to 2D Canvas
+      renderToCanvas(currentModel, ctx, 400, { dark, light, center });
+
+      // Grab RGBA
+      const imgData = ctx.getImageData(0, 0, 400, 400);
+
+      const statusBadge = document.getElementById('statusBadge');
+      const timeVal = document.getElementById('timeVal');
+      const engineVal = document.getElementById('engineVal');
+
+      if (currentEngine === 'wasm') {
+        if (!wasmReady) {
+          statusBadge.className = 'status-badge status-err';
+          statusBadge.textContent = 'WASM Loading...';
+          return;
+        }
+        engineVal.textContent = 'Rust WASM';
+        const t0 = performance.now();
+        const res = wasmEngine.scan_frame(imgData.data, 400, 400, true);
+        const t1 = performance.now();
+        const elapsed = (t1 - t0).toFixed(2);
+
+        timeVal.textContent = elapsed + ' ms';
+        if (res.ok) {
+          statusBadge.className = 'status-badge status-ok';
+          statusBadge.textContent = '✓ Decoded (' + res.len + ' bytes)';
+        } else {
+          statusBadge.className = 'status-badge status-err';
+          statusBadge.textContent = 'Failed: ' + res.reason;
+        }
+      } else {
+        engineVal.textContent = 'Pure JS';
+        const t0 = performance.now();
+        const res = scanImageData(imgData, { aggressive: true });
+        const t1 = performance.now();
+        const elapsed = (t1 - t0).toFixed(2);
+
+        timeVal.textContent = elapsed + ' ms';
+        if (res.ok) {
+          statusBadge.className = 'status-badge status-ok';
+          statusBadge.textContent = '✓ Decoded (' + res.len + ' bytes)';
+        } else {
+          statusBadge.className = 'status-badge status-err';
+          statusBadge.textContent = 'Failed: ' + res.reason;
+        }
+      }
+
+      updateCodePreview(payload, dark, light, center, currentEngine);
+    };
+
+    function updateCodePreview(payload, dark, light, center, eng) {
+      const code = `<!-- 1. Include CircleCode via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/circlecode@1.1.0/dist/circlecode.min.js"><\\/script>
+
+<canvas id="circlecode-canvas" width="400" height="400"></canvas>
+
+<script>
+  const { buildModel, renderToCanvas, scanCanvas } = window.CircleCode;
+
+  // 1. Generate Model
+  const model = buildModel('${payload}', { rings: 5, density: 0.35 });
+
+  // 2. Render to Canvas with custom colors
+  const canvas = document.getElementById('circlecode-canvas');
+  renderToCanvas(model, canvas.getContext('2d'), 400, {
+    dark: '${dark}',
+    light: '${light}',
+    center: '${center}'
+  });
+
+  // 3. Scan & Decode (${eng === 'wasm' ? 'WebAssembly Accelerated' : 'Pure JavaScript'})
+  const result = scanCanvas(canvas);
+  if (result.ok) {
+    console.log('Decoded Payload:', result.text);
+  }
+<\\/script>`;
+      document.getElementById('codePreview').textContent = code;
+    }
+
+    window.copyCode = async () => {
+      const text = document.getElementById('codePreview').textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+        const btn = document.querySelector('.btn-copy');
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => btn.textContent = 'Copy Code', 2000);
+      } catch (e) {
+        alert('Copied to clipboard');
+      }
+    };
+
+    window.downloadPNG = () => {
+      const a = document.createElement('a');
+      a.download = 'circle-code.png';
+      a.href = cv.toDataURL('image/png');
+      a.click();
+    };
+
+    window.downloadSVG = () => {
+      const { renderToSVG } = window.CircleCode;
+      const dark = document.getElementById('darkColor').value;
+      const light = document.getElementById('lightColor').value;
+      const center = document.getElementById('centerInput').value;
+      const svg = renderToSVG(currentModel, { dark, light, center });
+      const blob = new Blob([svg], { type: 'image/svg+xml' });
+      const a = document.createElement('a');
+      a.download = 'circle-code.svg';
+      a.href = URL.createObjectURL(blob);
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    };
+
+    // Initial render
+    setTimeout(renderAndDecode, 100);
+  </script>
+</body>
+</html>
