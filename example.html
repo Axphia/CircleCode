@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>circle-code.js — usage example</title>
+<style>body{font-family:-apple-system,"Segoe UI",sans-serif;background:#ececee;padding:20px;color:#111}input{padding:8px;width:240px}button{padding:8px 16px}canvas{background:#fff;border-radius:50%}.mono{font-family:monospace;font-size:12px;background:#fff;padding:8px;border-radius:8px;margin-top:8px;word-break:break-all}pre{background:#111;color:#0f0;padding:12px;border-radius:8px;overflow:auto}</style>
+</head>
+<body>
+<h2>circle-code.js example (ES module import)</h2>
+<input id="txt" value="hello js.org">
+<button id="go">Encode + render + decode</button>
+<button id="dl">Download PNG</button>
+<br><br>
+<canvas id="cv" width="400" height="400" style="width:280px;height:280px"></canvas>
+<div class="mono" id="out">…</div>
+<pre>// import { buildModel, renderToCanvas, modelToBits, parsePayloadBits } from './circle-code.js';
+// const m = buildModel('hello js.org', { rings: 5, density: 0.35 });
+// renderToCanvas(m, document.querySelector('canvas').getContext('2d'), 400, { light: '#ffffff' });
+// parsePayloadBits(modelToBits(m)).text === 'hello js.org'</pre>
+<script type="module">
+import { buildModel, renderToCanvas, modelToBits, parsePayloadBits } from './circle-code.js';
+const cv = document.getElementById('cv');
+document.getElementById('go').onclick = () => {
+  const m = buildModel(document.getElementById('txt').value, { rings: 5, density: 0.35 });
+  renderToCanvas(m, cv.getContext('2d'), 400, { light: '#ffffff' });
+  const d = parsePayloadBits(modelToBits(m));
+  document.getElementById('out').textContent = d.ok ? 'decoded: "' + d.text + '" cap=' + m.cap + ' used=' + m.used : 'FAIL: ' + d.reason;
+};
+document.getElementById('dl').onclick = () => {
+  const a = document.createElement('a'); a.download = 'code.png'; a.href = cv.toDataURL(); a.click();
+};
+document.getElementById('go').click();
+</script>
+</body>
+</html>
