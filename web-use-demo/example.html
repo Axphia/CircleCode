@@ -19,7 +19,7 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
+      font-family: system-ui, "Segoe UI", Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
       -webkit-font-smoothing: antialiased;
@@ -361,7 +361,7 @@
 
         <!-- Presets -->
         <div class="preset-chips">
-          <div class="chip" onclick="applyPreset('#000000', '#8e8e93')">Apple Classic</div>
+          <div class="chip" onclick="applyPreset('#000000', '#8e8e93')">Classic Contrast</div>
           <div class="chip" onclick="applyPreset('#0071e3', '#9ac8fb')">Ocean Blue</div>
           <div class="chip" onclick="applyPreset('#30d158', '#b4f0c4')">Emerald</div>
           <div class="chip" onclick="applyPreset('#ff3b30', '#ffb3af')">Crimson</div>
@@ -612,7 +612,7 @@
   // Initialize WebAssembly linear memory module
   await init({ module_or_path: 'https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.6/wasm/circlecode_core_bg.wasm' });
 
-  // Fast zero-copy decode directly from canvas ImageData
+  // Decode RGBA pixels from canvas ImageData
   const canvas = document.getElementById('circlecode-canvas');
   const ctx = canvas.getContext('2d');
   const imgData = ctx.getImageData(0, 0, 400, 400);

@@ -65,8 +65,8 @@ Builds the binary data model and slot allocation for a circular barcode.
 #### Parameters:
 - `payload` (`string`): UTF-8 text or URL to encode.
 - `options` (`object`, optional):
-  - `rings` (`number`, default: `auto`): Number of concentric rings (`4` to `14`). If omitted, automatically selects the smallest ring count that can accommodate the payload.
-  - `density` (`number`, default: `0.35`): Dash frequency per unit radius (Apple standard: `0.35`).
+  - `rings` (`number`, default: `5`): Number of concentric rings (scanner supports `4` to `14`). The library does not select the ring count automatically; pass a larger value when needed. At density `0.35`, five rings hold at most 19 UTF-8 payload bytes. Oversized payloads throw an error.
+  - `density` (`number`, default: `0.35`): Dash frequency per unit radius (default: `0.35`).
   - `mode` (`string`, default: `'data'`): `'data'` or `'art'`.
 
 #### Returns:
@@ -105,11 +105,13 @@ Renders a `CircleCodeModel` to a clean, scalable SVG string.
   - `light` (`string`, default: `'#8e8e93'`): Hex or CSS color for inactive bits (0).
   - `lineWidth` (`number`, default: `7.5`): Stroke width in 400x400 normalized space.
   - `bg` (`string`, default: `'transparent'`): Canvas background color.
-  - `center` (`string | object`, default: `'Pay'`): Text, logo preset (`'Pay'`, `'appclip'`), or image to render inside the center circular badge.
+  - `center` (`string | object`, default: `'Pay'`): Plain text or an image to render inside the center circular badge.
   - `centerBg` (`string`, default: `'#000000'`): Center circular badge background color (`'#000000'`, `'#ffffff'`, or `'transparent'`).
 
 #### Returns:
 - `string`: Valid SVG markup.
+
+Text and attribute values are XML-escaped; characters forbidden in XML 1.0 are replaced with U+FFFD. Center image URLs support relative paths, HTTP(S), blob URLs, and image data URLs (PNG, JPEG, GIF, WebP, AVIF, BMP, ICO, or SVG). Other URL schemes throw an error. SVG accepts `{ dataUrl }`, `{ img }`, or an image element (using `currentSrc` or `src`). Canvas requires a loaded image element or `{ img }`. String values and `{ text }` render literal text. No built-in brand logos are included.
 
 ---
 
@@ -189,7 +191,7 @@ const scanner = new CircleScanner(options);
 
 ## Native WebAssembly API (`circlecode/wasm`)
 
-Compiled from Rust with sub-3ms latency, zero garbage-collection pauses, and SIMD optimization.
+Compiled from Rust using wasm-bindgen. Decode latency depends on hardware, image content, resolution, and the number of search attempts. Run `npm run test:wasm` for local synthetic-image timings; these are smoke tests, not a representative camera benchmark.
 
 ```javascript
 import { ensureWasm, scanFrameWasm } from 'circlecode/wasm';

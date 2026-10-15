@@ -19,9 +19,9 @@ CircleCode is built with a **dual-engine architecture**:
              v                                               v
 +-------------------------+                     +--------------------------+
 |  Pure JS Engine         |                     |  Rust WebAssembly Core   |
-|  - Zero dependencies    |                     |  - Sub-3ms latency       |
-|  - Web Worker decoupled |                     |  - SIMD vectorization    |
-|  - ESM + CJS + UMD      |                     |  - Zero GC pauses        |
+|  - Zero dependencies    |                     |  - wasm-bindgen bridge    |
+|  - Web Worker decoupled |                     |  - RGBA frame input       |
+|  - ESM + CJS + UMD      |                     |  - Rust frame buffers     |
 +-------------------------+                     +--------------------------+
              |                                               |
              +-----------------------+-----------------------+
@@ -37,8 +37,8 @@ CircleCode is built with a **dual-engine architecture**:
 
 | Engine | Best Use Case | Performance & Characteristics |
 | :--- | :--- | :--- |
-| **Pure JavaScript (`circlecode`)** | **Web image uploads, drag-and-drop files, and Node.js backend** | • Zero external dependencies or binary fetches<br>• Runs universally on all browsers & Node environments<br>• Latency: ~25–50 ms per full image scan<br>• Recommended for: `<input type="file">`, photo uploads, forms, and one-off decodes |
-| **Native Rust WebAssembly (`circlecode/wasm`)** | **Real-time 60 FPS camera scanning & mobile video streams** | • Compiled from Rust via LLVM into native bytecode<br>• Sub-3ms latency with SIMD 128-bit vectorization<br>• Linear memory buffer eliminates Garbage Collection (GC) pauses<br>• Low CPU (<10%) prevents smartphone battery drain & device overheating |
+| **Pure JavaScript (`circlecode`)** | **Web image uploads, drag-and-drop files, and Node.js backend** | • Zero external dependencies or binary fetches<br>• Runs universally on all browsers & Node environments<br>• Latency depends on image content and device<br>• Recommended for: `<input type="file">`, photo uploads, forms, and one-off decodes |
+| **Native Rust WebAssembly (`circlecode/wasm`)** | **Camera scanning & mobile video streams** | • Compiled from Rust to WebAssembly<br>• Input pixels are copied into WASM memory<br>• Rust allocates processing buffers; JavaScript glue allocates results<br>• Benchmark latency, CPU use, and thermals on the target device |
 
 ---
 
@@ -100,12 +100,12 @@ where $\text{aspect} \in [0.84, 0.91]$ and $\phi \in [0, \pi]$.
 
 ## 3. Threading Model: Web Worker Decoupling
 
-Live camera feeds stream at 60 frames per second (16.6 ms per frame). Executing heavy computer vision algorithms on the UI thread causes dropped frames and stuttering.
+Camera frame rates vary by device and capture settings. Executing heavy computer vision algorithms on the UI thread causes dropped frames and stuttering.
 
 CircleCode decouples processing using a dedicated Web Worker:
 
 ```
-[Main UI Thread (60 FPS)]                   [Web Worker Thread (Background)]
+[Main UI Thread]                            [Web Worker Thread (Background)]
       │                                                     │
       ├── Capture camera frame (480x480)                    │
       │                                                     │
@@ -130,7 +130,7 @@ CircleCode decouples processing using a dedicated Web Worker:
 
 The native WebAssembly core is compiled from Rust (`circlecode-core`) using `wasm-bindgen` and `wasm-opt`:
 
-- **Binary Size:** 33.7 KB (gzipped / minified).
-- **Zero-Copy Memory:** TypedArrays are read directly from WebAssembly linear memory (`WebAssembly.Memory`).
-- **SIMD Operations:** Utilizes 128-bit vector instructions on supported CPUs for pixel luminosity averaging.
-- **Garbage Collection Immunity:** Zero heap allocations during frame evaluation loop prevents JavaScript garbage collector pauses.
+- **Binary Size:** Printed by `npm run test:wasm`; depends on build and compression settings.
+- **Memory Transfer:** wasm-bindgen copies the input TypedArray into WebAssembly linear memory (`WebAssembly.Memory`).
+- **Pixel Operations:** The Rust source uses scalar loops; this repository does not explicitly configure SIMD.
+- **Allocations:** Rust allocates frame buffers and search data; JavaScript glue allocates result objects. No zero-GC or fixed-latency guarantee is made.

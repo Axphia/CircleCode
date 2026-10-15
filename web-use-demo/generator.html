@@ -24,7 +24,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", -system-ui, "Segoe UI", sans-serif;
+    font-family: system-ui, "Segoe UI", Arial, sans-serif;
     background: var(--bg);
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
@@ -32,7 +32,7 @@
     padding: 0 0 60px;
   }
 
-  /* Apple Minimal Top Nav */
+  /* Minimal Top Nav */
   .nav {
     display: flex;
     align-items: center;
@@ -106,8 +106,8 @@
     line-height: 1.5;
   }
 
-  /* Apple Badge */
-  .apple-badge {
+  /* Standard Badge */
+  .standard-badge {
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -120,7 +120,7 @@
     margin: 18px 0 24px;
     border: 1px solid var(--border-light);
   }
-  .apple-badge .dot {
+  .standard-badge .dot {
     width: 7px;
     height: 7px;
     background: #34c759;
@@ -418,12 +418,12 @@
     line-height: 1.45;
   }
 
-  /* Right Panel: Apple Pay Presentation Sheet */
+  /* Right Panel: Code Preview Sheet */
   .sheet-wrap {
     position: sticky;
     top: 90px;
   }
-  .apple-sheet {
+  .preview-sheet {
     background: #ffffff;
     border-radius: 28px;
     padding: 28px 24px 32px;
@@ -456,14 +456,14 @@
     border-radius: 50%;
     display: block;
   }
-  .apple-sheet h2 {
+  .preview-sheet h2 {
     font-size: 20px;
     font-weight: 700;
     letter-spacing: -0.02em;
     color: var(--text-primary);
     margin-bottom: 6px;
   }
-  .apple-sheet p {
+  .preview-sheet p {
     font-size: 13.5px;
     color: var(--text-secondary);
   }
@@ -512,7 +512,7 @@
         <p>Generate high-precision circular barcodes with 360° scannability — fast, accurate, and elegant.</p>
       </div>
 
-      <div class="apple-badge">
+      <div class="standard-badge">
         <span class="dot"></span>
         <span>Standard: 5 Rings · Density 0.35 · Dual Contrast</span>
       </div>
@@ -540,7 +540,6 @@
         <label>Center Logo Badge</label>
         <div class="segmented-control" id="logoModeSeg">
           <button type="button" class="seg-btn active" data-mode="pay">Pay</button>
-          <button type="button" class="seg-btn" data-mode="appclip">App Icon</button>
           <button type="button" class="seg-btn" data-mode="image">Upload Logo</button>
           <button type="button" class="seg-btn" data-mode="text">Text</button>
         </div>
@@ -697,9 +696,9 @@
       </details>
     </div>
 
-    <!-- Right Panel: Apple Pay Presentation Sheet -->
+    <!-- Right Panel: Code Preview Sheet -->
     <div class="sheet-wrap">
-      <div class="apple-sheet">
+      <div class="preview-sheet">
         <div class="sheet-stage">
           <div class="code-disc">
             <canvas id="cv" width="400" height="400"></canvas>
@@ -720,50 +719,17 @@
  
 <script src="../dist/circlecode.umd.js"></script>
 <script>
+const { buildModel, renderToCanvas, renderToSVG, radii, slotCount, parsePayloadBits } = window.CircleCode;
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d', { willReadFrequently: true });
 let model = null;
 
 // Logo State
-let currentLogoMode = 'pay'; // 'pay', 'appclip', 'image', 'text'
+let currentLogoMode = 'pay'; // 'pay', 'image', 'text'
 let customLogoImg = null;
 let customLogoDataUrl = null;
 
-function xmur3(str){ let h=1779033703^str.length; for(let i=0;i<str.length;i++){ h=Math.imul(h^str.charCodeAt(i),3432918353); h=h<<13|h>>>19; } return function(){ h=Math.imul(h^h>>>16,2246822507); h=Math.imul(h^h>>>13,3266489909); return (h^=h>>>16)>>>0; }; }
-function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
-function rngFrom(s){ const seed=xmur3(s)(); return mulberry32(seed); }
-
 let currentArcStyle = 'loncle';
-
-function getRuns(bits) {
-  const n = bits.length;
-  let allOnes = true;
-  for (let i = 0; i < n; i++) {
-    if (bits[i] !== 1) { allOnes = false; break; }
-  }
-  if (allOnes) return [{ start: 0, len: n, full: true }];
-
-  let firstZero = 0;
-  while (firstZero < n && bits[firstZero] === 1) firstZero++;
-
-  const runs = [];
-  let i = 0;
-  while (i < n) {
-    const idx = (firstZero + i) % n;
-    if (bits[idx] === 1) {
-      const runStart = idx;
-      let len = 0;
-      while (i < n && bits[(firstZero + i) % n] === 1) {
-        len++;
-        i++;
-      }
-      runs.push({ start: runStart, len });
-    } else {
-      i++;
-    }
-  }
-  return runs;
-}
 
 function opts(){
   const bgRadio = document.querySelector('input[name="centerBg"]:checked');
@@ -780,19 +746,20 @@ function opts(){
     centerBg: bgRadio ? bgRadio.value : '#000000'
   };
 }
-function radii(k){
-  const start=55, end=157;
-  if(k===1) return [110];
-  const out=[]; for(let i=0;i<k;i++) out.push(start+(end-start)*i/(k-1));
-  return out;
-}
 function setStatus(msg, cls){
   const el = document.getElementById('status');
   el.textContent = msg;
   el.className = cls || '';
 }
 
+function renderOptions(o){
+  let center = o.centerMode === 'text' ? { text: o.centerText } : o.centerMode === 'pay' ? 'Pay' : o.centerMode;
+  if (o.centerMode === 'image') center = customLogoImg ? { img: customLogoImg, dataUrl: customLogoDataUrl } : { text: o.centerText };
+  return { style: o.style, dark: o.dark, light: o.light, bg: '#ffffff', centerBg: o.centerBg, center };
+}
+
 function buildJsCode(payload,o){
+  const rendering = JSON.stringify(renderOptions(o), (key, value) => key === 'img' ? undefined : value, 2);
   return `import { buildModel, renderToCanvas } from 'https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.6/circle-code.js';
 
 const canvas = document.querySelector('#circle-code');
@@ -805,304 +772,13 @@ const model = buildModel(${JSON.stringify(payload)}, {
   rings: ${o.rings},
   density: ${o.density}
 });
-
-renderToCanvas(model, canvas.getContext('2d'), 400, {
-  style: ${JSON.stringify(o.style || 'loncle')}, // 'circle' (classic) or 'loncle' (connected)
-  dark: ${JSON.stringify(o.dark)},
-  light: ${JSON.stringify(o.light)},
-  center: ${JSON.stringify(o.centerMode === 'text' ? o.centerText : o.centerMode)}
-});`;
-}
-
-function buildModel(payload, o){
-  const bytes = new TextEncoder().encode(payload);
-  const rs = radii(o.rings);
-  const ns = rs.map(r => Math.max(12, Math.floor(r*o.density)));
-  const cap = ns.reduce((a,n)=>a+(n-1),0);
-  let bits = new Array(cap).fill(0);
-  let used = 0, checksum = 0;
-
-  if(o.mode==='data'){
-    bytes.forEach(b=>checksum=(checksum+b)&255);
-    const need = 16 + bytes.length*8 + 8;
-    if(need > cap) return { error: 'Payload requires '+need+' bits, but 5 rings standard fits '+cap+' bits.' };
-    const seq=[];
-    for(let i=15;i>=0;i--) seq.push((bytes.length>>i)&1);
-    bytes.forEach(b=>{ for(let i=7;i>=0;i--) seq.push((b>>i)&1); });
-    for(let i=7;i>=0;i--) seq.push((checksum>>i)&1);
-    const rnd = rngFrom(payload+'#pad');
-    while(seq.length < cap) seq.push(rnd()>0.5?1:0);
-    bits = seq; used = need;
-  } else {
-    const rnd = rngFrom(payload+'#art');
-    bits = bits.map(()=>rnd()>0.5?1:0);
-    used = cap;
-  }
-  const rings=[]; let idx=0;
-  rs.forEach((r,i)=>{
-    const n=ns[i], slots=[];
-    for(let j=0;j<n;j++){
-      if(j===0) slots.push({finder:true, bit:1});
-      else slots.push({finder:false, bit:bits[idx++]});
-    }
-    rings.push({r, n, slots});
-  });
-  return { rings, cap, used, bytes:bytes.length, checksum, payload };
-}
-
-function drawCenterLogo(context, cx, cy, s, o){
-  const mode = o.centerMode;
-
-  // 1. Custom Uploaded Image Logo
-  if (mode === 'image' && customLogoImg) {
-    context.save();
-    context.beginPath();
-    context.arc(cx, cy, 39 * s, 0, Math.PI * 2);
-    context.clip();
-    const targetSize = 64 * s;
-    const aspect = (customLogoImg.width || 1) / (customLogoImg.height || 1);
-    let dw, dh;
-    if (aspect >= 1) {
-      dw = targetSize;
-      dh = targetSize / aspect;
-    } else {
-      dh = targetSize;
-      dw = targetSize * aspect;
-    }
-    context.imageSmoothingEnabled = true;
-    context.imageSmoothingQuality = 'high';
-    context.drawImage(customLogoImg, cx - dw / 2, cy - dh / 2, dw, dh);
-    context.restore();
-    return;
-  }
-
-  // 2. App Clip Preset
-  if (mode === 'appclip') {
-    context.save();
-    context.strokeStyle = o.centerBg === '#ffffff' ? '#000000' : '#ffffff';
-    context.lineWidth = 2.2 * s;
-    context.setLineDash([4 * s, 3.5 * s]);
-    context.beginPath();
-    context.arc(cx, cy, 24 * s, 0, Math.PI * 2);
-    context.stroke();
-    context.setLineDash([]);
-
-    // Center rounded app card
-    context.fillStyle = o.centerBg === '#ffffff' ? '#000000' : '#ffffff';
-    const r = 11 * s;
-    if (typeof context.roundRect === 'function') {
-      context.beginPath();
-      context.roundRect(cx - r, cy - r, r * 2, r * 2, 4 * s);
-      context.fill();
-    } else {
-      context.fillRect(cx - r, cy - r, r * 2, r * 2);
-    }
-
-    // Inner icon symbol
-    context.fillStyle = o.centerBg === '#ffffff' ? '#ffffff' : '#000000';
-    context.beginPath();
-    context.arc(cx, cy, 3.5 * s, 0, Math.PI * 2);
-    context.fill();
-    context.restore();
-    return;
-  }
-
-  // 3. Pay Preset
-  if (mode === 'pay') {
-    const textFill = o.centerBg === '#ffffff' ? '#000000' : '#ffffff';
-    context.fillStyle = textFill;
-    context.font = 'bold ' + Math.round(18 * s) + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-    context.fillText('Pay', cx, cy);
-    return;
-  }
-
-  // 3b. Apple Pay Preset (only if explicitly requested)
-  if (mode === 'apple') {
-    const textFill = o.centerBg === '#ffffff' ? '#000000' : '#ffffff';
-    context.save();
-    context.fillStyle = textFill;
-    context.translate(cx - 23 * s, cy - 9 * s);
-    context.scale(1.15 * s, 1.15 * s);
-    if (typeof Path2D !== 'undefined') {
-      const apple = new Path2D('M15.22 8.44c-.03-2.03 1.66-3.02 1.74-3.07-.95-1.38-2.42-1.57-2.94-1.59-1.25-.13-2.45.74-3.09.74-.64 0-1.62-.72-2.67-.7-1.37.02-2.64.8-3.34 2.03-1.43 2.48-.37 6.16 1.02 8.17.68.98 1.49 2.08 2.55 2.04 1.02-.04 1.41-.66 2.65-.66 1.23 0 1.59.66 2.66.64 1.09-.02 1.78-.99 2.45-1.98.78-1.13 1.1-2.23 1.12-2.29-.02-.01-2.14-.82-2.15-3.33zM13.63 3.19c.56-.68.94-1.63.84-2.58-.81.03-1.8.54-2.38 1.22-.51.6-.96 1.56-.84 2.48.9.07 1.83-.45 2.38-1.12z');
-      context.fill(apple);
-    }
-    context.restore();
-    context.fillStyle = textFill;
-    context.font = 'bold ' + Math.round(18 * s) + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    context.textAlign = 'left';
-    context.textBaseline = 'middle';
-    context.fillText('Pay', cx - 1 * s, cy + 1 * s);
-    return;
-  }
-
-  // 4. Custom Text
-  const text = o.centerText || 'MyPay';
-  const textFill = o.centerBg === '#ffffff' ? '#000000' : '#ffffff';
-  context.fillStyle = textFill;
-  context.font = 'bold ' + Math.round(19 * s) + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-  context.fillText(text, cx, cy);
-}
-
-function drawTo(context, size, m, o){
-  const s = size/400;
-  context.clearRect(0,0,size,size);
-  const cx=size/2, cy=size/2;
-  context.beginPath(); context.fillStyle='#ffffff';
-  context.arc(cx,cy,190*s,0,7); context.fill();
-
-  const isLonCle = o.style === 'loncle' || o.arcStyle === 'loncle' || o.loncle || o.appleStyle;
-
-  if (isLonCle) {
-    // LonCle Mode: connected sweeping arcs with variable lengths
-    m.rings.forEach((rg)=>{
-      const n = rg.n;
-      const slot = Math.PI * 2 / n;
-      const bits = rg.slots.map(sl => (sl.finder || sl.bit === 1) ? 1 : 0);
-      const runs = getRuns(bits);
-      context.strokeStyle = o.dark || '#000000';
-      context.lineWidth = 7.5 * s;
-      context.lineCap = 'round';
-      runs.forEach(({ start, len, full }) => {
-        context.beginPath();
-        if (full) {
-          context.arc(cx, cy, rg.r * s, 0, Math.PI * 2);
-        } else {
-          const a0 = (start / n) * Math.PI * 2 + slot * 0.15;
-          const a1 = a0 + (len - 1) * slot + slot * 0.70;
-          context.arc(cx, cy, rg.r * s, a0, a1);
-        }
-        context.stroke();
-      });
-    });
-  } else {
-    // Circle Mode: classic discrete dashed pills
-    m.rings.forEach((rg,ri)=>{
-      const slot=Math.PI*2/rg.n;
-      rg.slots.forEach((sl,j)=>{
-        const isBit1 = sl.finder || sl.bit === 1;
-        const col = isBit1 ? (o.dark || '#000000') : (o.light || '#8e8e93');
-        const a0=(j/rg.n)*Math.PI*2 + slot*0.28;
-        const a1=a0 + slot*0.44;
-        context.beginPath();
-        context.strokeStyle = col;
-        context.lineWidth=7.5*s;
-        context.lineCap='round';
-        context.arc(cx,cy,rg.r*s,a0,a1);
-        context.stroke();
-      });
-    });
-  }
-
-  // Center circle background
-  const centerBg = o.centerBg || '#000000';
-  if (centerBg !== 'transparent') {
-    context.beginPath();
-    context.fillStyle = centerBg;
-    context.arc(cx, cy, 42 * s, 0, Math.PI * 2);
-    context.fill();
-  }
-  drawCenterLogo(context, cx, cy, s, o);
-}
-
-function modelToSVG(m,o){
-  const cx=200, cy=200;
-  const pol=(r,a)=>[cx+r*Math.cos(a), cy+r*Math.sin(a)];
-  let h='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">';
-  h+='<circle cx="200" cy="200" r="190" fill="#ffffff"/>';
-
-  const isLonCle = o.style === 'loncle' || o.arcStyle === 'loncle' || o.loncle || o.appleStyle;
-
-  if (isLonCle) {
-    // LonCle Mode: connected sweeping arcs with variable lengths
-    m.rings.forEach((rg)=>{
-      const n = rg.n;
-      const slot = Math.PI * 2 / n;
-      const w = 7.5;
-      const bits = rg.slots.map(sl => (sl.finder || sl.bit === 1) ? 1 : 0);
-      const runs = getRuns(bits);
-      runs.forEach(({ start, len, full }) => {
-        if (full) {
-          h += '<circle cx="200" cy="200" r="' + rg.r + '" stroke="' + (o.dark || '#000000') +
-            '" stroke-width="' + w + '" fill="none"/>';
-        } else {
-          const a0 = (start / n) * Math.PI * 2 + slot * 0.15;
-          const a1 = a0 + (len - 1) * slot + slot * 0.70;
-          const [x0, y0] = pol(rg.r, a0), [x1, y1] = pol(rg.r, a1);
-          const largeArc = (a1 - a0) > Math.PI ? 1 : 0;
-          h += '<path d="M ' + x0.toFixed(2) + ' ' + y0.toFixed(2) + ' A ' + rg.r + ' ' + rg.r +
-            ' 0 ' + largeArc + ' 1 ' + x1.toFixed(2) + ' ' + x1.toFixed(2) + '" stroke="' + (o.dark || '#000000') +
-            '" stroke-width="' + w + '" stroke-linecap="round" fill="none"/>';
-        }
-      });
-    });
-  } else {
-    // Circle Mode: classic discrete dashed pills
-    m.rings.forEach((rg,ri)=>{
-      const slot=Math.PI*2/rg.n;
-      const w=7.5;
-      rg.slots.forEach((sl,j)=>{
-        const isBit1 = sl.finder || sl.bit === 1;
-        const col = isBit1 ? (o.dark || '#000000') : (o.light || '#8e8e93');
-        const a0=(j/rg.n)*Math.PI*2 + slot*0.28;
-        const a1=a0 + slot*0.44;
-        const [x0,y0]=pol(rg.r,a0), [x1,y1]=pol(rg.r,a1);
-        h+='<path d="M '+x0.toFixed(2)+' '+y0.toFixed(2)+' A '+rg.r+' '+rg.r+' 0 0 1 '+x1.toFixed(2)+' '+y1.toFixed(2)+'" stroke="'+col+'" stroke-width="'+w+'" stroke-linecap="round" fill="none"/>';
-      });
-    });
-  }
-
-  const centerBg = o.centerBg || '#000000';
-  if (centerBg !== 'transparent') {
-    h+='<circle cx="200" cy="200" r="42" fill="'+centerBg+'"/>';
-  }
-
-  const textFill = centerBg === '#ffffff' ? '#000000' : '#ffffff';
-
-  if (o.centerMode === 'image' && customLogoDataUrl) {
-    const targetSize = 64;
-    const aspect = (customLogoImg && customLogoImg.width) ? (customLogoImg.width / customLogoImg.height) : 1;
-    let dw, dh;
-    if (aspect >= 1) { dw = targetSize; dh = targetSize / aspect; }
-    else { dh = targetSize; dw = targetSize * aspect; }
-    h += '<defs><clipPath id="centerClip"><circle cx="200" cy="200" r="39"/></clipPath></defs>';
-    h += '<image href="' + customLogoDataUrl + '" x="' + (200 - dw/2).toFixed(2) + '" y="' + (200 - dh/2).toFixed(2) + '" width="' + dw.toFixed(2) + '" height="' + dh.toFixed(2) + '" clip-path="url(#centerClip)" preserveAspectRatio="xMidYMid meet"/>';
-  } else if (o.centerMode === 'appclip') {
-    h += '<circle cx="200" cy="200" r="24" stroke="' + textFill + '" stroke-width="2.2" stroke-dasharray="4 3.5" fill="none"/>';
-    h += '<rect x="189" y="189" width="22" height="22" rx="4" fill="' + textFill + '"/>';
-    h += '<circle cx="200" cy="200" r="3.5" fill="' + (centerBg === '#ffffff' ? '#ffffff' : '#000000') + '"/>';
-  } else if (o.centerMode === 'pay') {
-    h += '<text x="200" y="200" fill="' + textFill + '" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="19" font-weight="bold" text-anchor="middle" dominant-baseline="central">Pay</text>';
-  } else if (o.centerMode === 'apple') {
-    h+='<path transform="translate(177, 191) scale(1.15)" d="M15.22 8.44c-.03-2.03 1.66-3.02 1.74-3.07-.95-1.38-2.42-1.57-2.94-1.59-1.25-.13-2.45.74-3.09.74-.64 0-1.62-.72-2.67-.7-1.37.02-2.64.8-3.34 2.03-1.43 2.48-.37 6.16 1.02 8.17.68.98 1.49 2.08 2.55 2.04 1.02-.04 1.41-.66 2.65-.66 1.23 0 1.59.66 2.66.64 1.09-.02 1.78-.99 2.45-1.98.78-1.13 1.1-2.23 1.12-2.29-.02-.01-2.14-.82-2.15-3.33zM13.63 3.19c.56-.68.94-1.63.84-2.58-.81.03-1.8.54-2.38 1.22-.51.6-.96 1.56-.84 2.48.9.07 1.83-.45 2.38-1.12z" fill="'+textFill+'"/>';
-    h+='<text x="199" y="201" fill="'+textFill+'" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="18" font-weight="bold" text-anchor="start" dominant-baseline="central">Pay</text>';
-  } else {
-    const text = o.centerText || 'MyPay';
-    const safe=String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    h+='<text x="200" y="200" fill="'+textFill+'" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="19" font-weight="bold" text-anchor="middle" dominant-baseline="central">'+safe+'</text>';
-  }
-  h+='</svg>';
-  return h;
-}
-
-function decodeModel(m){
-  const flat=[];
-  m.rings.forEach(rg=>rg.slots.forEach(sl=>{ if(!sl.finder) flat.push(sl.bit); }));
-  if(opts().mode==='art') return { ok:false, msg:'art mode — no data stored' };
-  if(flat.length<24) return { ok:false, msg:'no data' };
-  let len=0; for(let i=0;i<16;i++) len=(len<<1)|flat[i];
-  const need=16+len*8+8;
-  if(need>flat.length) return { ok:false, msg:'corrupt header len='+len };
-  const bytes=[];
-  for(let k=0;k<len;k++){ let b=0; for(let i=0;i<8;i++) b=(b<<1)|flat[16+k*8+i]; bytes.push(b); }
-  let chk=0; for(let i=0;i<8;i++) chk=(chk<<1)|flat[16+len*8+i];
-  let sum=0; bytes.forEach(b=>sum=(sum+b)&255);
-  const text=new TextDecoder().decode(new Uint8Array(bytes));
-  return { ok: sum===chk, text, len, sum, chk };
+const rendering = ${rendering};
+${o.centerMode === 'image' && customLogoImg ? `const logo = new Image();
+logo.src = rendering.center.dataUrl;
+await logo.decode();
+rendering.center.img = logo;
+` : ''}
+renderToCanvas(model, canvas.getContext('2d'), 400, rendering);`;
 }
 
 function generate(){
@@ -1113,7 +789,7 @@ function generate(){
   const needBits = 16 + bytes.length*8 + 8;
   while(rings < 9){
     const rs = radii(rings);
-    const ns = rs.map(r => Math.max(12, Math.floor(r * 0.35)));
+    const ns = rs.map(r => slotCount(r, o.density));
     const cap = ns.reduce((a, n) => a + (n - 1), 0);
     if(cap >= needBits) break;
     rings++;
@@ -1121,11 +797,21 @@ function generate(){
   o.rings = rings;
   document.getElementById('rings').value = rings;
 
+  let m;
+  try {
+    m = buildModel(payload,o);
+  } catch (error) {
+    model = null;
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    document.getElementById('sheetImg').removeAttribute('src');
+    document.getElementById('jsOutput').value = '';
+    document.getElementById('info').textContent = '';
+    setStatus(error.message, 'err');
+    return;
+  }
   document.getElementById('jsOutput').value = buildJsCode(payload,o);
-  const m = buildModel(payload,o);
-  if(m.error){ setStatus(m.error,'err'); return; }
   model = m;
-  drawTo(ctx, 400, m, o);
+  renderToCanvas(m, ctx, 400, renderOptions(o));
   document.getElementById('sheetImg').src = cv.toDataURL();
   document.getElementById('info').textContent = 'Capacity: ' + m.used + ' / ' + m.cap + ' bits (' + m.bytes + ' bytes) · ' + rings + ' Rings';
   const modeName = (o.style === 'loncle' || o.arcStyle === 'loncle') ? 'LonCle Mode' : 'Circle Mode';
@@ -1182,7 +868,7 @@ document.querySelectorAll('#themeGrid .theme-chip').forEach(chip => {
       document.getElementById('colorLight').value = document.getElementById('customLight').value;
     } else {
       customWrap.style.display = 'none';
-      if (grayToneGroup) grayToneGroup.style.display = theme === 'apple' ? 'block' : 'none';
+      if (grayToneGroup) grayToneGroup.style.display = theme === 'mono' ? 'block' : 'none';
       document.getElementById('colorDark').value = chip.dataset.dark;
       document.getElementById('colorLight').value = chip.dataset.light;
       
@@ -1274,14 +960,16 @@ document.getElementById('genBtn').onclick = generate;
 
 document.getElementById('dlPng').onclick=()=>{
   if(!model) generate();
+  if(!model) return;
   const size=parseInt(document.getElementById('sizeSel').value);
   const off=document.createElement('canvas'); off.width=size; off.height=size;
-  drawTo(off.getContext('2d'),size,model,opts());
+  renderToCanvas(model,off.getContext('2d'),size,renderOptions(opts()));
   const a=document.createElement('a'); a.download='circle-code-'+size+'.png'; a.href=off.toDataURL(); a.click();
 };
 document.getElementById('dlSvg').onclick=()=>{
   if(!model) generate();
-  const blob=new Blob([modelToSVG(model,opts())],{type:'image/svg+xml'});
+  if(!model) return;
+  const blob=new Blob([renderToSVG(model,renderOptions(opts()))],{type:'image/svg+xml'});
   const a=document.createElement('a'); a.download='circle-code.svg'; a.href=URL.createObjectURL(blob); a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),2000);
 };
@@ -1300,6 +988,7 @@ document.getElementById('dlJsBtn').onclick=()=>{
 };
 document.getElementById('verifyBtn').onclick=()=>{
   if(!model) generate();
+  if(!model) return;
   if (window.CircleCode && typeof window.CircleCode.scanCanvas === 'function') {
     const res = window.CircleCode.scanCanvas(cv, { aggressive: true });
     if (res && res.ok) {
@@ -1307,8 +996,9 @@ document.getElementById('verifyBtn').onclick=()=>{
       return;
     }
   }
-  const d=decodeModel(model);
-  setStatus(d.ok ? '✓ Verification passed: 100% clean decode' : 'Verify failed: '+d.msg, d.ok?'ok':'err');
+  const bits = model.rings.flatMap(ring => ring.slots.filter(slot => !slot.finder).map(slot => slot.bit));
+  const d = opts().mode === 'art' ? { ok: false, reason: 'art mode — no data stored' } : parsePayloadBits(bits);
+  setStatus(d.ok ? '✓ Verification passed: 100% clean decode' : 'Verify failed: '+d.reason, d.ok?'ok':'err');
 };
 
 generate();

@@ -20,7 +20,7 @@ assert.strictEqual(r5[0], 55);
 assert.strictEqual(r5[4], 157);
 console.log('✓ radii() works');
 
-// 2. Test getRuns (Apple-style contiguous arc grouping with circular wrap-around)
+// 2. Test getRuns (contiguous arc grouping with circular wrap-around)
 const runs1 = getRuns([1, 1, 0, 1, 1, 1, 1]);
 assert.strictEqual(runs1.length, 1);
 assert.strictEqual(runs1[0].start, 3);
@@ -48,6 +48,15 @@ const mLong = buildModel(longText, { rings: 9, density: 0.35 });
 assert.strictEqual(mLong.bytes, 37);
 console.log('✓ buildModel(longText) works');
 
+const defaultModel = buildModel('A'.repeat(19));
+assert.strictEqual(defaultModel.rings.length, 5);
+assert.strictEqual(defaultModel.cap, 179);
+assert.throws(() => buildModel('A'.repeat(20)), /Payload too long/);
+assert.strictEqual(buildModel('ก'.repeat(6)).bytes, 18);
+assert.throws(() => buildModel('ก'.repeat(7)), /Payload too long/);
+assert.doesNotThrow(() => buildModel('https://circlecode.js.org', { rings: 7, density: 0.35 }));
+console.log('✓ Default ring count and UTF-8 capacity match the documented limits');
+
 // 4. Test SVG Rendering (Circle and LonCle Modes)
 const svgCircle = renderToSVG(mStd, { style: 'circle', dark: '#000', light: '#8e8e93', center: 'Test Table' });
 assert.ok(svgCircle.startsWith('<svg'));
@@ -58,6 +67,39 @@ const svgLonCle = renderToSVG(mStd, { style: 'loncle', dark: '#000', center: 'Pa
 assert.ok(svgLonCle.startsWith('<svg'));
 assert.ok(svgLonCle.includes('stroke-linecap="round"'));
 console.log('✓ renderToSVG({ style: "loncle" }) works');
+
+const injectedAttribute = '\"><script>alert(1)</script><path onload="alert(1)';
+for (const style of ['circle', 'loncle']) {
+  for (const key of ['dark', 'light', 'bg', 'centerBg', 'lineWidth', 'center']) {
+    const svg = renderToSVG(mStd, { style, [key]: injectedAttribute });
+    assert.ok(!svg.includes('<script>'), `${style}: ${key} must not inject elements`);
+    assert.ok(!svg.includes(' onload="'), `${style}: ${key} must not inject attributes`);
+  }
+}
+for (const url of ['javascript:alert(1)', 'java\nscript:alert(1)', 'data:text/html,<script>alert(1)</script>', 'file:///secret']) {
+  assert.throws(() => renderToSVG(mStd, { center: { dataUrl: url } }), /Unsupported center image URL/);
+}
+for (const url of ['logo.png', 'https://example.com/logo.png', 'blob:https://example.com/id', 'data:image/png;base64,AA==', 'data:image/svg+xml,%3Csvg%2F%3E']) {
+  assert.ok(renderToSVG(mStd, { center: { dataUrl: url } }).includes('<image href="'));
+}
+const imageSvg = renderToSVG(mStd, { center: { dataUrl: 'https://example.com/logo.png?x=" onload="alert(1)&y=2' } });
+assert.ok(imageSvg.includes('x=&quot; onload=&quot;alert(1)&amp;y=2'));
+assert.ok(!imageSvg.includes(' onload="'));
+assert.ok(renderToSVG(mStd, { center: 'Pay' }).includes('>Pay</text>'));
+assert.ok(!renderToSVG(mStd, { center: 'Pay' }).includes('transform="translate(177'));
+for (const center of ['apple', 'appclip']) {
+  const svg = renderToSVG(mStd, { center });
+  assert.ok(svg.includes('>' + center + '</text>'));
+  assert.ok(!svg.includes('<path transform='));
+  assert.ok(!svg.includes('<rect '));
+}
+assert.ok(renderToSVG(mStd, { center: { text: 'apple<&' } }).includes('>apple&lt;&amp;</text>'));
+assert.ok(renderToSVG(mStd, { center: { img: { src: 'https://example.com/logo.png' } } }).includes('<image href="https://example.com/logo.png"'));
+assert.ok(renderToSVG(mStd, { center: { src: 'https://example.com/logo.png', currentSrc: 'https://example.com/logo@2x.png' } }).includes('<image href="https://example.com/logo@2x.png"'));
+assert.throws(() => renderToSVG(mStd, { center: { img: { src: 'javascript:alert(1)' } } }), /Unsupported center image URL/);
+const unicodeSvg = renderToSVG(mStd, { center: 'ก😀\u0000\ud800\ufffe\uffff' });
+assert.ok(unicodeSvg.includes('>ก😀\ufffd\ufffd\ufffd\ufffd</text>'));
+console.log('✓ SVG escaping, image URL validation, and logo presets work');
 
 // 5. Test Synthetic Image Scan Roundtrip (Circle & LonCle Modes)
 function renderSyntheticCode(model, w = 400, h = 400, rot = 0.4, style = 'circle') {

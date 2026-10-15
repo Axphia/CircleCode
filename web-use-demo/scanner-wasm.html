@@ -28,7 +28,7 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", -system-ui, sans-serif;
+      font-family: system-ui, "Segoe UI", Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
@@ -363,7 +363,7 @@
     <div class="header-area">
       <div class="badge-wasm">Full WebAssembly Engine (Rust)</div>
       <h1>High-Performance WASM Circular Scanner</h1>
-      <p>Decodes circular barcodes at maximum native speeds (2–4 ms) using compiled Rust WebAssembly linear memory. Zero mobile heating.</p>
+      <p>Decodes circular barcodes using compiled Rust WebAssembly. Processing time, CPU use, and thermals depend on the device and input.</p>
     </div>
 
     <!-- Insecure Context Warning (shown when accessed via plain HTTP LAN IP) -->
@@ -435,20 +435,20 @@
             <thead>
               <tr>
                 <th>Engine</th>
-                <th>Latency (480p)</th>
+                <th>Demo decode time</th>
                 <th>CPU & Thermals</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td><strong>Rust WASM</strong></td>
-                <td class="strong" id="benchmarkWasm">~3.2 ms</td>
-                <td class="strong">Icy Cold (3% CPU)</td>
+                <td class="strong" id="benchmarkWasm">Run demo to measure</td>
+                <td class="strong">Not measured</td>
               </tr>
               <tr>
                 <td>Pure JavaScript</td>
-                <td>~65.0 ms</td>
-                <td>Hot (85% CPU)</td>
+                <td>Not measured</td>
+                <td>Not measured</td>
               </tr>
             </tbody>
           </table>
@@ -457,10 +457,10 @@
         <div style="margin-top: 22px;">
           <h3 style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-sec); margin-bottom: 8px;">WASM Native Architecture</h3>
           <ul style="font-size: 13px; color: var(--text-sec); line-height: 1.6; padding-left: 18px;">
-            <li>Zero JavaScript garbage collection pauses during live video loop</li>
+            <li>Rust processing buffers with JavaScript input and result bindings</li>
             <li>Symmetrical annulus (ring) center badge detector (immune to white "Pay" logos)</li>
-            <li>SIMD / linear TypedArray memory mapping for instant decode</li>
-            <li>Rotational sweep: 200 trigonometric angle candidates checked in &lt;1.5 ms</li>
+            <li>RGBA pixels copied into WebAssembly linear memory</li>
+            <li>Coarse rotation search with a finer sweep around the best candidate</li>
             <li>Automatic Modulo-256 1-bit and 2-bit error correction</li>
           </ul>
         </div>
@@ -630,7 +630,7 @@
         const caps = (typeof track.getCapabilities === 'function') ? track.getCapabilities() : {};
         torchBtn.disabled = !caps.torch;
 
-        // Blazing 15 FPS camera loop with ~3ms execution time = 95% CPU idle!
+        // Schedule camera scans; actual decode time depends on the input and device.
         timer = setInterval(tick, 66);
       } catch (e) {
         alert('Could not start camera: ' + e.message);
@@ -723,7 +723,7 @@
       renderToCanvas(model, c.getContext('2d'), 400, {
         dark: '#000000',
         light: '#8e8e93',
-        center: 'Pay'
+        center: 'Pay'
       });
 
       // Show preview
@@ -741,7 +741,7 @@
       const ms = t1 - t0;
       msStat.textContent = ms.toFixed(1) + ' ms';
       fpsStat.textContent = Math.round(1000 / Math.max(ms, 1)) + ' FPS';
-      document.getElementById('benchmarkWasm').textContent = ms.toFixed(1) + ' ms (instant)';
+      document.getElementById('benchmarkWasm').textContent = ms.toFixed(1) + ' ms';
 
       if (res && res.ok) {
         onDecodeSuccess(res, 'Demo Benchmark (Rust WASM)');

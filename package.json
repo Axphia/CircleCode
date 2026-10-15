@@ -41,7 +41,7 @@
     }
   },
   "scripts": {
-    "test": "node test/test.js",
+    "test": "node test/test.js && node test/test-generator.js",
     "test:wasm": "node test/test-wasm.js",
     "build": "node scripts/build.js",
     "build:wasm": "cd native/rust && wasm-pack build --target web --release"
@@ -54,8 +54,6 @@
     "circlecode",
     "barcode",
     "circular-barcode",
-    "apple-pay",
-    "app-clips",
     "qr-code",
     "scanner",
     "encoder",

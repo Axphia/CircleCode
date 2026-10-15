@@ -105,8 +105,9 @@ function drawCenterLogo(ctx, cx, cy, s, center, centerBg) {
   const textFill = isWhiteBg ? '#000000' : '#ffffff';
 
   // 1. Image object or image element
-  if (center instanceof Image || (typeof center === 'object' && center.img)) {
-    const img = center instanceof Image ? center : center.img;
+  const isImage = typeof Image !== 'undefined' && center instanceof Image;
+  if (isImage || (typeof center === 'object' && center.img)) {
+    const img = isImage ? center : center.img;
     ctx.save();
     ctx.beginPath();
     ctx.arc(cx, cy, 39 * s, 0, Math.PI * 2);
@@ -123,53 +124,10 @@ function drawCenterLogo(ctx, cx, cy, s, center, centerBg) {
     return;
   }
 
-  // 2. App Clip preset
-  if (center === 'appclip') {
-    ctx.save();
-    ctx.strokeStyle = textFill;
-    ctx.lineWidth = 2.2 * s;
-    ctx.setLineDash([4 * s, 3.5 * s]);
-    ctx.beginPath();
-    ctx.arc(cx, cy, 24 * s, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = textFill;
-    const r = 11 * s;
-    if (typeof ctx.roundRect === 'function') {
-      ctx.beginPath(); ctx.roundRect(cx - r, cy - r, r * 2, r * 2, 4 * s); ctx.fill();
-    } else {
-      ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
-    }
-    ctx.fillStyle = isWhiteBg ? '#ffffff' : '#000000';
-    ctx.beginPath(); ctx.arc(cx, cy, 3.5 * s, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-    return;
-  }
-
-  // 3. Apple Pay preset
-  // 3. Apple Logo Preset (only if explicitly requested with Pay or apple)
-  if (center === 'Pay' || center === 'apple') {
-    ctx.save();
-    ctx.fillStyle = textFill;
-    ctx.translate(cx - 23 * s, cy - 9 * s);
-    ctx.scale(1.15 * s, 1.15 * s);
-    if (typeof Path2D !== 'undefined') {
-      const apple = new Path2D('M15.22 8.44c-.03-2.03 1.66-3.02 1.74-3.07-.95-1.38-2.42-1.57-2.94-1.59-1.25-.13-2.45.74-3.09.74-.64 0-1.62-.72-2.67-.7-1.37.02-2.64.8-3.34 2.03-1.43 2.48-.37 6.16 1.02 8.17.68.98 1.49 2.08 2.55 2.04 1.02-.04 1.41-.66 2.65-.66 1.23 0 1.59.66 2.66.64 1.09-.02 1.78-.99 2.45-1.98.78-1.13 1.1-2.23 1.12-2.29-.02-.01-2.14-.82-2.15-3.33zM13.63 3.19c.56-.68.94-1.63.84-2.58-.81.03-1.8.54-2.38 1.22-.51.6-.96 1.56-.84 2.48.9.07 1.83-.45 2.38-1.12z');
-      ctx.fill(apple);
-    }
-    ctx.restore();
-    ctx.fillStyle = textFill;
-    ctx.font = 'bold ' + Math.round(18 * s) + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('Pay', cx - 1 * s, cy + 1 * s);
-    return;
-  }
-
-  // 4. Custom text
+  // Custom text
   const text = typeof center === 'object' ? (center.text || '') : String(center);
   ctx.fillStyle = textFill;
-  ctx.font = 'bold ' + Math.round(19 * s) + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.font = 'bold ' + Math.round(19 * s) + 'px system-ui, "Segoe UI", Arial, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, cx, cy);
@@ -208,7 +166,7 @@ function getRuns(bits) {
 function renderToCanvas(model, ctx, size, style) {
   const o = Object.assign({ dark: '#000000', light: '#8e8e93', center: 'Pay', centerBg: '#000000' }, style);
   const s = size / 400, cx = size / 2, cy = size / 2;
-  const isLonCle = !!(o.style === 'loncle' || o.loncle || o.lonCle || o.appleStyle || o.connectedArcs || o.merged || o.style === 'apple');
+  const isLonCle = !!(o.style === 'loncle' || o.loncle || o.lonCle || o.connectedArcs || o.merged);
   ctx.clearRect(0, 0, size, size);
   if (o.bg !== 'transparent') {
     ctx.fillStyle = o.bg || '#ffffff';
@@ -263,10 +221,19 @@ function renderToCanvas(model, ctx, size, style) {
   drawCenterLogo(ctx, cx, cy, s, o.center, o.centerBg);
 }
 
+function escapeXml(value) {
+  return String(value).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uD800-\uDFFF\uFFFE\uFFFF]/gu, '\uFFFD')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+}
+
 function renderToSVG(model, style) {
   const o = Object.assign({ dark: '#000000', light: '#8e8e93', center: 'Pay', centerBg: '#000000' }, style);
+  for (const key of ['dark', 'light', 'bg', 'centerBg', 'lineWidth']) {
+    if (o[key]) o[key] = escapeXml(o[key]);
+  }
   const cx = 200, cy = 200;
-  const isLonCle = !!(o.style === 'loncle' || o.loncle || o.lonCle || o.appleStyle || o.connectedArcs || o.merged || o.style === 'apple');
+  const isLonCle = !!(o.style === 'loncle' || o.loncle || o.lonCle || o.connectedArcs || o.merged);
   const pol = (r, a) => [cx + r * Math.cos(a), cy + r * Math.sin(a)];
   let h = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">';
   if (o.bg !== 'transparent') {
@@ -283,14 +250,14 @@ function renderToSVG(model, style) {
       const runs = getRuns(bits);
       runs.forEach(({ start, len, full }) => {
         if (full) {
-          h += '<circle cx="200" cy="200" r="' + rg.r + '" stroke="' + (o.dark || '#000000') +
+          h += '<circle cx="200" cy="200" r="' + escapeXml(rg.r) + '" stroke="' + (o.dark || '#000000') +
             '" stroke-width="' + w + '" fill="none"/>';
         } else {
           const a0 = (start / n) * Math.PI * 2 + slot * DASH_OFF;
           const a1 = a0 + (len - 1) * slot + slot * DASH_LEN;
           const p0 = pol(rg.r, a0), p1 = pol(rg.r, a1);
           const largeArc = (a1 - a0) > Math.PI ? 1 : 0;
-          h += '<path d="M ' + p0[0].toFixed(2) + ' ' + p0[1].toFixed(2) + ' A ' + rg.r + ' ' + rg.r +
+          h += '<path d="M ' + p0[0].toFixed(2) + ' ' + p0[1].toFixed(2) + ' A ' + escapeXml(rg.r) + ' ' + escapeXml(rg.r) +
             ' 0 ' + largeArc + ' 1 ' + p1[0].toFixed(2) + ' ' + p1[1].toFixed(2) + '" stroke="' + (o.dark || '#000000') +
             '" stroke-width="' + w + '" stroke-linecap="round" fill="none"/>';
         }
@@ -306,7 +273,7 @@ function renderToSVG(model, style) {
         const a0 = (j / rg.n) * Math.PI * 2 + slot * DASH_OFF;
         const a1 = a0 + slot * DASH_LEN;
         const p0 = pol(rg.r, a0), p1 = pol(rg.r, a1);
-        h += '<path d="M ' + p0[0].toFixed(2) + ' ' + p0[1].toFixed(2) + ' A ' + rg.r + ' ' + rg.r +
+        h += '<path d="M ' + p0[0].toFixed(2) + ' ' + p0[1].toFixed(2) + ' A ' + escapeXml(rg.r) + ' ' + escapeXml(rg.r) +
           ' 0 0 1 ' + p1[0].toFixed(2) + ' ' + p1[1].toFixed(2) + '" stroke="' + col +
           '" stroke-width="' + w + '" stroke-linecap="round" fill="none"/>';
       });
@@ -319,20 +286,23 @@ function renderToSVG(model, style) {
   }
   const textFill = centerBg === '#ffffff' ? '#000000' : '#ffffff';
 
-  if (typeof o.center === 'object' && o.center.dataUrl) {
+  const image = o.center && typeof o.center === 'object' ? (o.center.img || o.center) : null;
+  const imageSource = image && (o.center.dataUrl || image.currentSrc || image.src);
+  if (imageSource) {
+    const imageUrl = String(imageSource);
+    const protocol = new URL(imageUrl, 'https://circlecode.invalid/').protocol;
+    // Image URLs may be relative, HTTP(S), blob, or image data; executable schemes are rejected.
+    if (!['http:', 'https:', 'blob:'].includes(protocol) &&
+        !(protocol === 'data:' && /^data:image\/(?:png|jpeg|gif|webp|avif|bmp|x-icon|svg\+xml)[;,]/i.test(imageUrl))) {
+      throw new Error('Unsupported center image URL');
+    }
     const targetSize = 64;
     h += '<defs><clipPath id="centerClip"><circle cx="200" cy="200" r="39"/></clipPath></defs>';
-    h += '<image href="' + o.center.dataUrl + '" x="' + (200 - targetSize / 2) + '" y="' + (200 - targetSize / 2) + '" width="' + targetSize + '" height="' + targetSize + '" clip-path="url(#centerClip)" preserveAspectRatio="xMidYMid meet"/>';
-  } else if (o.center === 'appclip') {
-    h += '<circle cx="200" cy="200" r="24" stroke="' + textFill + '" stroke-width="2.2" stroke-dasharray="4 3.5" fill="none"/>';
-    h += '<rect x="189" y="189" width="22" height="22" rx="4" fill="' + textFill + '"/>';
-    h += '<circle cx="200" cy="200" r="3.5" fill="' + (centerBg === '#ffffff' ? '#ffffff' : '#000000') + '"/>';
-  } else if (o.center === 'Pay' || o.center === 'Pay' || o.center === 'apple') {
-    h += '<path transform="translate(177, 191) scale(1.15)" d="M15.22 8.44c-.03-2.03 1.66-3.02 1.74-3.07-.95-1.38-2.42-1.57-2.94-1.59-1.25-.13-2.45.74-3.09.74-.64 0-1.62-.72-2.67-.7-1.37.02-2.64.8-3.34 2.03-1.43 2.48-.37 6.16 1.02 8.17.68.98 1.49 2.08 2.55 2.04 1.02-.04 1.41-.66 2.65-.66 1.23 0 1.59.66 2.66.64 1.09-.02 1.78-.99 2.45-1.98.78-1.13 1.1-2.23 1.12-2.29-.02-.01-2.14-.82-2.15-3.33zM13.63 3.19c.56-.68.94-1.63.84-2.58-.81.03-1.8.54-2.38 1.22-.51.6-.96 1.56-.84 2.48.9.07 1.83-.45 2.38-1.12z" fill="' + textFill + '"/>';
-    h += '<text x="199" y="201" fill="' + textFill + '" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="18" font-weight="bold" text-anchor="start" dominant-baseline="central">Pay</text>';
+    h += '<image href="' + escapeXml(imageUrl) + '" x="' + (200 - targetSize / 2) + '" y="' + (200 - targetSize / 2) + '" width="' + targetSize + '" height="' + targetSize + '" clip-path="url(#centerClip)" preserveAspectRatio="xMidYMid meet"/>';
   } else {
-    const safe = String(o.center).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    h += '<text x="200" y="200" fill="' + textFill + '" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="19" font-weight="bold" text-anchor="middle" dominant-baseline="central">' + safe + '</text>';
+    const text = o.center && typeof o.center === 'object' ? o.center.text : o.center;
+    const safe = escapeXml(text || '');
+    h += '<text x="200" y="200" fill="' + textFill + '" font-family="system-ui,Segoe UI,Arial,sans-serif" font-size="19" font-weight="bold" text-anchor="middle" dominant-baseline="central">' + safe + '</text>';
   }
   h += '</svg>';
   return h;
@@ -487,7 +457,7 @@ if (typeof window !== 'undefined') window.CircleCode = CircleCode;
   // --- Scanner ---
   /* Circle Code Scanner v1.0.0 — dependency-free JavaScript circular code decoder.
  *
- * Scans Apple Pay-style circular codes from images, canvases, and live camera streams.
+ * Scans CircleCode circular barcodes from images, canvases, and live camera streams.
  * Works 100% client-side in the browser or headless in Node.js.
  *
  * ES Module:
@@ -1065,7 +1035,7 @@ function findCenterAndScale(g, w, h) {
   // Centroid & subpixel edge refinement via radial boundary circle fitting
   // Detects the outer rim transition of the center badge across 24 radial rays.
   // Because rays search strictly at the outer circumference (0.72*r to 1.35*r),
-  // internal brand logos or text ("Code", "Pay", Apple logo, avatars) have ZERO impact on centroid accuracy!
+  // internal brand logos or text ("Code", "Pay", icons, avatars) have ZERO impact on centroid accuracy!
   if (best) {
     const roughX = best.cx, roughY = best.cy, roughR = best.r;
     const edgePts = [];

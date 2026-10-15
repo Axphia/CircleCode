@@ -21,7 +21,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", -system-ui, "Segoe UI", sans-serif;
+    font-family: system-ui, "Segoe UI", Arial, sans-serif;
     background: var(--bg);
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
@@ -222,7 +222,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
       </div>
       <h2>JS Scanner</h2>
-      <p>Scan and decode via live camera stream or file upload. Features 60 FPS Web Worker decoupling and zero external dependencies.</p>
+      <p>Scan and decode via live camera stream or file upload. Features background decoding with a Web Worker and zero external dependencies.</p>
     </div>
     <div class="card-link">Launch JS Scanner →</div>
   </a>
@@ -233,7 +233,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="#1a9e38"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
       </div>
       <h2>WASM Scanner</h2>
-      <p>Blazing-fast native decoding powered by compiled Rust WebAssembly with sub-3ms frame processing for production workloads.</p>
+      <p>Decode with compiled Rust WebAssembly and measure processing time on the current device.</p>
     </div>
     <div class="card-link" style="color: #1a9e38;">Launch WASM Scanner →</div>
   </a>

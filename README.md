@@ -47,8 +47,10 @@ Both modes preserve exact angular slot center alignment, allowing the same scann
 
 | Engine | Recommended Use Case | Frame Latency | Why use it? |
 | :--- | :--- | :--- | :--- |
-| **Pure JavaScript** (`circlecode`) | **Web Image Uploads & File Decoding** | ~25–50 ms | **Zero dependencies**, instant loading without fetching `.wasm` binaries. Ideal for `<input type="file">`, drag-and-drop uploads, form attachments, and Node.js server scripts. |
-| **Native Rust WASM** (`circlecode/wasm`) | **Real-Time 60 FPS Camera Scanning** | **~2–4 ms** | **Sub-3ms native speed** with SIMD vectorization and zero Garbage Collection pauses. Designed for continuous phone camera feeds without draining battery or causing device overheating. |
+| **Pure JavaScript** (`circlecode`) | **Web Image Uploads & File Decoding** | Device-dependent | **Zero dependencies**, without fetching `.wasm` binaries. Suitable for file uploads, static images, and Node.js scripts. |
+| **Native Rust WASM** (`circlecode/wasm`) | **Camera Scanning** | Device-dependent | Compiled Rust decoder. Measure both engines on the target device; speed, CPU use, and thermals depend on the workload. |
+
+Run `npm run test:wasm` for local synthetic-image timings. These are single-run correctness checks, not a representative benchmark or a camera/UI FPS guarantee. See [measurement guidance](native/README.md#measuring-performance).
 
 ---
 
@@ -56,8 +58,8 @@ Both modes preserve exact angular slot center alignment, allowing the same scann
 
 - **Dual Visual Modes (Circle & LonCle):** Choose between classic discrete pill dashes or fluid, variable-length sweeping connected ribbons.
 - **Zero Dependencies:** Pure vanilla JavaScript default. Runs out-of-the-box in Node.js, modern browsers, PWAs, or embedded webviews.
-- **Native WebAssembly Acceleration (`circlecode/wasm`):** Compiled from Rust for sub-3ms frame processing and 300+ FPS decoding.
-- **Non-Blocking Web Worker:** Dedicated background worker (`scanner-worker.js`) decouples CPU-heavy decoding from the UI thread, ensuring silky smooth 60 FPS camera previews.
+- **Native WebAssembly Decoder (`circlecode/wasm`):** An alternative decoder compiled from Rust; measure performance on the target device.
+- **Non-Blocking Web Worker:** Dedicated background worker (`scanner-worker.js`) decouples CPU-heavy decoding from the UI thread so the interface can remain responsive.
 - **Perspective & Tilt Recovery:** Automatically corrects for camera angles (15°–30° tilt) and elliptical distortion.
 - **Subpixel 360° Scanning Engine:** Dual-centroid edge detection, scale-aware radial search (`dr = 2.2 * scale`), and hybrid Otsu/K-means thresholding for extreme reliability under shadows and glare.
 - **Live Camera & Mobile Features:** Integrated torch (flashlight) toggle, digital zoom crop, and 1-frame instant lock when checksum matches.
@@ -190,7 +192,7 @@ const videoElement = document.getElementById('cameraVideo');
 
 const scanner = new CircleScanner({
   fps: 12,
-  useWorker: true, // Run frame decoding in background worker (60 FPS UI)
+  useWorker: true, // Run frame decoding in a background worker
   workerUrl: 'scanner-worker.js',
   perspective: true,
   facingMode: 'environment',
@@ -211,25 +213,26 @@ if (scanner.hasTorch()) {
 
 ---
 
-### 3. Native Rust WebAssembly (WASM) Scanner (Real-Time 60 FPS Mobile Camera)
+### 3. Native Rust WebAssembly (WASM) Scanner
 
-For maximum performance on continuous mobile video streams, use the compiled Rust WebAssembly core:
+The compiled Rust WebAssembly core provides an alternative decoder for camera frames. Benchmark it on the target device before choosing an engine:
 
 ```javascript
 import { initWasm, scanFrameWasm } from 'circlecode/wasm';
 
-// 1. Initialize WebAssembly runtime (sub-35 KB binary)
+// 1. Initialize WebAssembly runtime
 await initWasm();
 
-// 2. Scan continuous camera video frames at native speed (~2-4 ms per frame)
-// Pass: grayscale Uint8Array or RGBA pixel buffer, width, height, aggressiveFlag
-const result = scanFrameWasm(grayscalePixelBuffer, 480, 480, true);
+// 2. Decode an RGBA pixel buffer (width * height * 4 bytes)
+const start = performance.now();
+const result = scanFrameWasm(rgbaPixelBuffer, 480, 480, true);
+const elapsedMs = performance.now() - start;
 
 if (result.ok) {
   console.log('WASM instant lock:', result.text);
   console.log('Payload length:', result.len, 'bytes');
   console.log('Rings detected:', result.rings);
-  console.log('Latency:', result.ms, 'ms');
+  console.log('Latency:', elapsedMs, 'ms');
 }
 ```
 
@@ -258,7 +261,7 @@ const svg = renderToSVG(model, { dark: '#0071e3', light: '#ffffff' });
 | **Standard Density** | `0.35` | Dash density parameter ($d = 0.35$) |
 | **Ring Counts** | `4` to `14` | Dynamically expandable for payloads up to 50+ bytes |
 | **Checksum** | `Modulo-256 Sum` | 8-bit checksum with 1–2 bit mathematical error recovery |
-| **Camera Latency** | `~2–4 ms` | Sub-3ms frame processing cycle via compiled Rust WASM |
+| **Camera Latency** | Device-dependent | Decode time is separate from camera/UI FPS; measure on the target device |
 
 ---
 

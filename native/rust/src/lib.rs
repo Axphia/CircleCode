@@ -594,7 +594,7 @@ pub fn find_center(g: &[f32], w: usize, h: usize) -> Option<(f32, f32, f32)> {
 
     // Centroid refinement via annulus (ring) search
     // Symmetrical outer ring between 0.55*r and 1.05*r provides the exact center
-    // completely immune to white logos/text ("Pay", Apple logo, icons) in the center
+    // completely immune to white logos/text ("Pay", custom logos, icons) in the center
     if let Some((rough_x, rough_y, rough_r)) = best {
         let mut sum_x = 0.0;
         let mut sum_y = 0.0;

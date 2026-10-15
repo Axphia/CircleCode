@@ -4,15 +4,13 @@ High-performance native core for CircleCode, built in Rust and compiled directly
 
 ---
 
-## Performance Highlights
+## Measuring Performance
 
-| Metric | Pure JavaScript | Rust WebAssembly (`circlecode/wasm`) |
-| :--- | :--- | :--- |
-| **Decode Latency (400x400 Frame)** | ~18.5 ms | **3.01 ms** (6x faster) |
-| **Decode Latency (800x800 Frame)** | ~68.0 ms | **25.4 ms** (2.7x faster) |
-| **Max Throughput** | ~54 FPS | **300+ FPS** |
-| **WASM Binary Size** | — | **33.7 KB** (gzipped) |
-| **Garbage Collection Pauses** | Occasional | **Zero (Immune to GC)** |
+Run `npm run test:wasm` to time decoding of the included 400x400 and 800x800 synthetic images. The command prints the binary size and elapsed time on the current machine. These are correctness smoke tests with single-run timings, not a representative benchmark or an FPS guarantee.
+
+Compare engines on the same device and inputs, after warm-up, with repeated samples and real camera images (including failed scans). Report median and tail latency separately from camera/UI frame rate. CPU use, battery impact, and thermal behavior require device measurements.
+
+The wasm-bindgen bridge copies the input into WASM memory; Rust allocates frame-processing buffers and the bridge allocates JavaScript result objects. This path is not zero-copy or free of JavaScript garbage collection. No explicit SIMD implementation is configured in this repository.
 
 ---
 

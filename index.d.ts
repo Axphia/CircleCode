@@ -32,16 +32,15 @@ export interface RenderOptions {
   dark?: string;
   light?: string;
   bg?: string;
-  style?: 'circle' | 'loncle' | 'discrete' | 'apple';
+  style?: 'circle' | 'loncle' | 'discrete';
   loncle?: boolean;
   lonCle?: boolean;
   lineWidth?: number;
-  center?: string | HTMLImageElement | { img: HTMLImageElement; dataUrl?: string };
+  center?: string | HTMLImageElement | { img: HTMLImageElement; dataUrl?: string } | { dataUrl: string } | { text: string };
   centerBg?: string;
   title?: string;
   sub?: string;
   // Backward compatibility aliases
-  appleStyle?: boolean;
   connectedArcs?: boolean;
   merged?: boolean;
 }

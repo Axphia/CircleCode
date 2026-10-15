@@ -41,7 +41,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
+      font-family: system-ui, "Segoe UI", Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
       -webkit-font-smoothing: antialiased;
@@ -1099,8 +1099,8 @@
           </tr>
           <tr>
             <td><b>Decoding Latency</b></td>
-            <td>~20 ms – 35 ms</td>
-            <td><b>~1.5 ms – 3 ms</b> (15x faster)</td>
+            <td>Device-dependent</td>
+            <td>Device-dependent; benchmark locally</td>
           </tr>
           <tr>
             <td><b>External Dependencies</b></td>
@@ -1109,8 +1109,8 @@
           </tr>
           <tr>
             <td><b>CPU & Battery Impact</b></td>
-            <td>Moderate on continuous video loops</td>
-            <td><b>Minimal (&lt;8% CPU)</b>, prevents device heating</td>
+            <td>Depends on device and workload</td>
+            <td>Requires device measurements</td>
           </tr>
           <tr>
             <td><b>Ideal Environment</b></td>
@@ -1142,7 +1142,7 @@ npm install @axphia/circlecode@1.1.6</div>
           <div class="code-box"><span class="code-kw">import</span> { buildModel, renderToSVG, renderToCanvas } <span class="code-kw">from</span> <span class="code-str">'@axphia/circlecode'</span>;
 
 <span class="code-comment">// 1. Build circular code model</span>
-<span class="code-kw">const</span> model = <span class="code-fn">buildModel</span>(<span class="code-str">'https://circlecode.js.org'</span>, { rings: 5, density: 0.35 });
+<span class="code-kw">const</span> model = <span class="code-fn">buildModel</span>(<span class="code-str">'https://circlecode.js.org'</span>, { rings: 7, density: 0.35 });
 
 <span class="code-comment">// 2. Export vector SVG in LonCle mode (connected sweeping arcs)</span>
 <span class="code-kw">const</span> svg = <span class="code-fn">renderToSVG</span>(model, {
@@ -1181,8 +1181,8 @@ npm install @axphia/circlecode@1.1.6</div>
 
       <!-- 3. WASM Scanner -->
       <div style="margin-top: 24px;">
-        <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">3. Native WebAssembly Scanner (Real-Time 60 FPS Mobile Camera)</h4>
-        <p style="font-size: 13px; color: var(--text-sec); margin-bottom: 8px;">Sub-3ms Rust WASM core with zero garbage collection pauses and minimal battery usage:</p>
+        <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">3. Native WebAssembly Scanner</h4>
+        <p style="font-size: 13px; color: var(--text-sec); margin-bottom: 8px;">Rust WASM decoder; measure latency and resource use on the target device:</p>
         <div class="code-box-wrapper">
           <button class="btn-copy-code" onclick="copySnippet(this)">Copy</button>
           <div class="code-box"><span class="code-kw">import</span> init, { scan_frame_wasm } <span class="code-kw">from</span> <span class="code-str">'https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.6/wasm/circlecode_core.js'</span>;
@@ -1190,7 +1190,7 @@ npm install @axphia/circlecode@1.1.6</div>
 <span class="code-comment">// 1. Initialize WebAssembly core</span>
 <span class="code-kw">await</span> <span class="code-fn">init</span>({ module_or_path: <span class="code-str">'https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.6/wasm/circlecode_core_bg.wasm'</span> });
 
-<span class="code-comment">// 2. Scan continuous camera video frames at native speed (~1.5 - 3 ms)</span>
+<span class="code-comment">// 2. Decode an RGBA camera frame</span>
 <span class="code-kw">const</span> result = <span class="code-fn">scan_frame_wasm</span>(rgbaPixelData, 400, 400, <span class="code-kw">true</span>);
 <span class="code-kw">if</span> (result.ok) {
   console.log(<span class="code-str">'WASM instant lock:'</span>, result.text);
@@ -1241,7 +1241,7 @@ npm install @axphia/circlecode@1.1.6</div>
       <div class="launchpad-grid">
         <!-- Card 1: WASM Scanner -->
         <a href="web-use-demo/scanner-wasm.html" class="lp-card">
-          <span class="lp-tag lp-tag-wasm">Real-time 60 FPS</span>
+          <span class="lp-tag lp-tag-wasm">Rust WebAssembly</span>
           <div>
             <div class="lp-icon" style="background: rgba(48, 209, 88, 0.1);">
               <svg viewBox="0 0 24 24" fill="none" stroke="#1a9e38" stroke-width="2">
@@ -1249,7 +1249,7 @@ npm install @axphia/circlecode@1.1.6</div>
               </svg>
             </div>
             <h3>Full WASM Scanner</h3>
-            <p>Built with compiled Native Rust WebAssembly. Sub-3ms latency, zero garbage collection pauses, audio chimes, haptics, flashlight torch, and reticle tracking.</p>
+            <p>Built with compiled Rust WebAssembly, audio chimes, haptics, flashlight torch, and reticle tracking. Decode latency depends on the device and image.</p>
           </div>
           <span class="lp-link" style="color: #1a9e38;">Launch WASM Scanner →</span>
         </a>

@@ -1,6 +1,6 @@
 /* Circle Code Scanner v1.0.0 — dependency-free JavaScript circular code decoder.
  *
- * Scans Apple Pay-style circular codes from images, canvases, and live camera streams.
+ * Scans CircleCode circular barcodes from images, canvases, and live camera streams.
  * Works 100% client-side in the browser or headless in Node.js.
  *
  * ES Module:
@@ -585,7 +585,7 @@ export function findCenterAndScale(g, w, h) {
   // Centroid & subpixel edge refinement via radial boundary circle fitting
   // Detects the outer rim transition of the center badge across 24 radial rays.
   // Because rays search strictly at the outer circumference (0.72*r to 1.35*r),
-  // internal brand logos or text ("Code", "Pay", Apple logo, avatars) have ZERO impact on centroid accuracy!
+  // internal brand logos or text ("Code", "Pay", icons, avatars) have ZERO impact on centroid accuracy!
   if (best) {
     const roughX = best.cx, roughY = best.cy, roughR = best.r;
     const edgePts = [];

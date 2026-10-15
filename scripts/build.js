@@ -13,10 +13,12 @@ if (!fs.existsSync(distDir)) {
 console.log('Building CircleCode UMD bundle...');
 
 const encoderCode = fs.readFileSync(path.resolve(root, 'circle-code.js'), 'utf8')
+  .replace(/\r\n/g, '\n')
   .replace(/export\s+default\s+[^;]+;/g, '')
   .replace(/^export\s+/gm, '');
 
 let scannerCode = fs.readFileSync(path.resolve(root, 'circle-scanner.js'), 'utf8')
+  .replace(/\r\n/g, '\n')
   .replace(/export\s+default\s+[^;]+;/g, '')
   .replace(/^export\s+/gm, '');
 

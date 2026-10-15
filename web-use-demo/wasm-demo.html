@@ -23,7 +23,7 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      font-family: system-ui, "Segoe UI", Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
       padding: 40px 20px;
@@ -171,7 +171,7 @@
   <div class="container">
     <div class="badge">Rust + WebAssembly</div>
     <h1>CircleCode WASM Engine</h1>
-    <p>High-performance native WebAssembly core compiled from Rust with zero JavaScript garbage collection pauses.</p>
+    <p>WebAssembly decoder compiled from Rust. This demo measures one decode on this device; camera performance may differ.</p>
 
     <button id="runBtn" class="btn">Run WASM Benchmark (400x400 Frame)</button>
 
@@ -181,12 +181,12 @@
         <div class="stat-lbl">Decode Latency</div>
       </div>
       <div class="stat-card">
-        <div class="stat-val">33.7 KB</div>
+        <div class="stat-val">Build-dependent</div>
         <div class="stat-lbl">WASM Binary Size</div>
       </div>
       <div class="stat-card">
         <div class="stat-val" id="fpsVal">--</div>
-        <div class="stat-lbl">Max Throughput</div>
+        <div class="stat-lbl">Estimated Decode Rate</div>
       </div>
     </div>
 
