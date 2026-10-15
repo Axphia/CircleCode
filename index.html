@@ -190,59 +190,123 @@
       position: relative;
     }
 
-    /* Animated Concentric Radar Centerpiece */
+    /* 3D Hero Stage */
     .hero-radar-stage {
       position: relative;
-      width: 260px;
-      height: 260px;
-      margin: 0 auto 32px;
+      width: 320px;
+      height: 320px;
+      margin: 0 auto 28px;
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-    .radar-orbit {
-      position: absolute;
-      border-radius: 50%;
-      border: 1px dashed rgba(0, 113, 227, 0.25);
-      pointer-events: none;
-    }
-    .radar-orbit-1 {
-      inset: -12px;
-      border-color: rgba(48, 209, 88, 0.3);
-      animation: spinClockwise 35s linear infinite;
-    }
-    .radar-orbit-2 {
-      inset: -28px;
-      border: 1.5px dashed rgba(0, 113, 227, 0.3);
-      animation: spinCounterClockwise 50s linear infinite;
-    }
-    .radar-orbit-3 {
-      inset: -44px;
-      border: 1px solid rgba(0, 113, 227, 0.12);
-      animation: pulseRings 4s ease-in-out infinite;
-    }
-    @keyframes spinClockwise { 100% { transform: rotate(360deg); } }
-    @keyframes spinCounterClockwise { 100% { transform: rotate(-360deg); } }
-    @keyframes pulseRings {
-      0%, 100% { transform: scale(1); opacity: 0.5; }
-      50% { transform: scale(1.04); opacity: 0.9; }
+      perspective: 1200px;
+      transform-style: preserve-3d;
+      user-select: none;
     }
 
-    /* Interactive Animated Barcode Canvas */
-    .hero-canvas-wrapper {
-      position: relative;
+    /* 3D Dynamic Floor Shadow */
+    .hero-3d-floor-shadow {
+      position: absolute;
+      bottom: 8px;
       width: 220px;
-      height: 220px;
+      height: 48px;
+      background: radial-gradient(ellipse at center, rgba(0, 113, 227, 0.4) 0%, rgba(15, 23, 42, 0.25) 45%, transparent 75%);
       border-radius: 50%;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0,0,0,0.06);
-      background: #ffffff;
-      cursor: pointer;
-      overflow: hidden;
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s;
+      filter: blur(14px);
+      transform: rotateX(75deg) translateZ(-40px);
+      animation: shadowBreathe 5s ease-in-out infinite;
+      pointer-events: none;
+      transition: transform 0.2s ease, opacity 0.2s ease;
     }
-    .hero-canvas-wrapper:hover {
-      transform: scale(1.05);
-      box-shadow: 0 24px 60px rgba(0, 113, 227, 0.22);
+    @keyframes shadowBreathe {
+      0%, 100% { transform: rotateX(75deg) translateZ(-40px) scale(1); opacity: 0.55; }
+      50% { transform: rotateX(75deg) translateZ(-40px) scale(0.78); opacity: 0.28; filter: blur(20px); }
+    }
+
+    /* 3D Floating Coin Container */
+    .hero-3d-coin {
+      position: relative;
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      transform-style: preserve-3d;
+      animation: float3D 6s ease-in-out infinite;
+      cursor: grab;
+      transition: transform 0.15s ease-out;
+    }
+    .hero-3d-coin.is-dragging {
+      cursor: grabbing;
+      animation: none !important;
+    }
+    .hero-3d-coin.flip-anim {
+      animation: flip3D 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    }
+
+    @keyframes float3D {
+      0% {
+        transform: translateY(0px) rotateX(20deg) rotateY(-18deg) rotateZ(0deg);
+      }
+      50% {
+        transform: translateY(-24px) rotateX(26deg) rotateY(16deg) rotateZ(4deg);
+      }
+      100% {
+        transform: translateY(0px) rotateX(20deg) rotateY(-18deg) rotateZ(0deg);
+      }
+    }
+
+    @keyframes flip3D {
+      0% { transform: translateY(-10px) rotateX(20deg) rotateY(0deg) scale(0.95); }
+      50% { transform: translateY(-30px) rotateX(30deg) rotateY(180deg) scale(1.1); }
+      100% { transform: translateY(0px) rotateX(20deg) rotateY(360deg) scale(1); }
+    }
+
+    /* 3D Extruded Coin Rim / Edge */
+    .hero-3d-rim {
+      position: absolute;
+      inset: -8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 35%, #0071e3 70%, #1e293b 100%);
+      box-shadow: 
+        0 35px 70px rgba(0, 113, 227, 0.3),
+        0 18px 30px rgba(0, 0, 0, 0.18),
+        inset 0 3px 6px rgba(255, 255, 255, 0.95),
+        inset 0 -5px 12px rgba(0, 0, 0, 0.25);
+      transform: translateZ(-16px);
+      pointer-events: none;
+    }
+
+    /* 3D Concentric Orbit Rings */
+    .radar-orbit-3d-1 {
+      position: absolute;
+      inset: -24px;
+      border-radius: 50%;
+      border: 1.5px dashed rgba(0, 113, 227, 0.45);
+      transform: translateZ(12px);
+      animation: spinClockwise 28s linear infinite;
+      pointer-events: none;
+    }
+    .radar-orbit-3d-2 {
+      position: absolute;
+      inset: -46px;
+      border-radius: 50%;
+      border: 1px dotted rgba(48, 209, 88, 0.5);
+      transform: translateZ(28px);
+      animation: spinCounterClockwise 40s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes spinClockwise { 100% { transform: rotate(360deg); } }
+    @keyframes spinCounterClockwise { 100% { transform: rotate(-360deg); } }
+
+    /* 3D Barcode Canvas Disc */
+    .hero-canvas-plate {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: #ffffff;
+      transform: translateZ(18px);
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     }
     #heroCanvas {
       width: 100%;
@@ -250,16 +314,90 @@
       display: block;
       border-radius: 50%;
     }
-    .radar-scanner-beam {
+
+    /* 3D Holographic Radar Laser Sweep */
+    .radar-scanner-beam-3d {
       position: absolute;
       inset: 0;
       border-radius: 50%;
-      background: conic-gradient(from 0deg, rgba(0, 113, 227, 0.35) 0deg, rgba(48, 209, 88, 0.08) 45deg, transparent 90deg);
+      background: conic-gradient(from 0deg, rgba(0, 113, 227, 0.45) 0deg, rgba(48, 209, 88, 0.15) 50deg, transparent 100deg);
+      transform: translateZ(32px);
       pointer-events: none;
       animation: radarSweep 3.2s linear infinite;
     }
     @keyframes radarSweep {
       100% { transform: rotate(360deg); }
+    }
+
+    /* 3D Specular Glass Glare */
+    .hero-3d-glare {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.1) 45%, transparent 70%);
+      transform: translateZ(38px);
+      pointer-events: none;
+    }
+
+    /* 3D Extruded Center Badge */
+    .hero-3d-center-badge {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 62px;
+      height: 62px;
+      margin-top: -31px;
+      margin-left: -31px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #2d3748, #000000);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      transform: translateZ(50px);
+      box-shadow: 
+        0 14px 28px rgba(0, 0, 0, 0.45),
+        0 4px 8px rgba(0, 0, 0, 0.3),
+        inset 0 1.5px 3px rgba(255, 255, 255, 0.4);
+      pointer-events: none;
+      transition: transform 0.2s ease;
+    }
+
+    /* Down Arrow & Smooth Scroll Animations */
+    html {
+      scroll-behavior: smooth;
+    }
+    .down-arrow {
+      display: inline-block;
+      margin-left: 3px;
+      font-weight: 700;
+      animation: bounceDownArrow 2s infinite ease-in-out;
+      transition: transform 0.2s ease;
+    }
+    @keyframes bounceDownArrow {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(4px); }
+    }
+    .tp-btn:hover .down-arrow {
+      transform: translateY(5px) scale(1.2);
+    }
+    /* Target section animated highlight upon scrolling down */
+    :target {
+      scroll-margin-top: 80px;
+      animation: sectionSpotlight 1.6s ease-out;
+    }
+    @keyframes sectionSpotlight {
+      0% {
+        box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.4), var(--shadow-hover);
+        transform: scale(1.01);
+      }
+      100% {
+        box-shadow: var(--shadow-card);
+        transform: scale(1);
+      }
     }
 
     /* Mode Switcher Pill in Hero */
@@ -760,15 +898,24 @@
         Dual-Mode Circular Barcode Standard: Circle &amp; LonCle v1.1.6
       </div>
 
-      <!-- Centerpiece Animated Holographic Barcode Stage -->
-      <div class="hero-radar-stage">
-        <div class="radar-orbit radar-orbit-1"></div>
-        <div class="radar-orbit radar-orbit-2"></div>
-        <div class="radar-orbit radar-orbit-3"></div>
+      <!-- Centerpiece 3D Floating Holographic Barcode Stage -->
+      <div class="hero-radar-stage" id="hero3DStage">
+        <!-- 3D Dynamic Floor Shadow -->
+        <div class="hero-3d-floor-shadow" id="hero3DShadow"></div>
 
-        <div class="hero-canvas-wrapper" onclick="toggleHeroAnimation()" title="Click to switch barcode style animation">
-          <canvas id="heroCanvas" width="440" height="440"></canvas>
-          <div class="radar-scanner-beam"></div>
+        <!-- 3D Interactive Coin Container -->
+        <div class="hero-3d-coin" id="hero3DCoin" onclick="toggleHeroAnimation()" title="Click to flip style, or drag to tilt in 3D">
+          <div class="hero-3d-rim"></div>
+          <div class="radar-orbit-3d-1"></div>
+          <div class="radar-orbit-3d-2"></div>
+          
+          <div class="hero-canvas-plate">
+            <canvas id="heroCanvas" width="440" height="440"></canvas>
+          </div>
+          
+          <div class="radar-scanner-beam-3d"></div>
+          <div class="hero-3d-glare"></div>
+          <div class="hero-3d-center-badge" id="heroCenterBadge">LonCle</div>
         </div>
       </div>
 
@@ -787,19 +934,19 @@
         Decode across full 360° orientations with subpixel computer vision directly in web browsers and mobile apps.
       </p>
 
-      <!-- Hero Quick Navigation -->
+      <!-- Hero Quick Navigation with Animated Down Arrows -->
       <div class="tp-actions">
         <a href="#howItWorks" class="tp-btn tp-btn-secondary">
-          How It Works ↓
+          How It Works <span class="down-arrow">↓</span>
         </a>
         <a href="#mathSpec" class="tp-btn tp-btn-secondary">
-          Math Specification ↓
+          Math Specification <span class="down-arrow">↓</span>
         </a>
         <a href="#engineCompare" class="tp-btn tp-btn-secondary">
-          Compare Engines ↓
+          Compare Engines <span class="down-arrow">↓</span>
         </a>
         <a href="#demosLaunchpad" class="tp-btn tp-btn-primary">
-          Teleport to Demos ↓
+          Teleport to Demos <span class="down-arrow">↓</span>
         </a>
       </div>
       <div style="font-size: 12.5px; color: var(--text-sec); margin-top: 14px;">
@@ -1232,21 +1379,110 @@ npm install @axphia/circlecode@1.1.6</div>
         style: currentHeroMode,
         dark: '#0071e3',
         light: '#9ac8fb',
-        center: 'Circle',
+        center: '',
         bg: '#ffffff'
       });
 
       heroCtx.restore();
 
-      // Slow elegant rotation: 0.0035 radians per frame (~1 rev every 30s)
+      // Slow continuous rotation around Z axis
       heroRotation += 0.0035;
       heroAnimFrameId = requestAnimationFrame(drawHeroFrame);
+    }
+
+    // 3D Parallax & Interactive Mouse Tilt
+    const stage = document.getElementById('hero3DStage');
+    const coin = document.getElementById('hero3DCoin');
+    const shadow = document.getElementById('hero3DShadow');
+    const badge = document.getElementById('heroCenterBadge');
+
+    let isHovering = false;
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let currentRotX = 20, currentRotY = -18;
+    let targetRotX = 20, targetRotY = -18;
+
+    if (stage && coin) {
+      stage.addEventListener('mouseenter', () => {
+        isHovering = true;
+        coin.style.animation = 'none';
+      });
+
+      stage.addEventListener('mousemove', (e) => {
+        if (!isHovering) return;
+        const rect = stage.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+
+        targetRotY = (x / (rect.width / 2)) * 34;
+        targetRotX = -(y / (rect.height / 2)) * 30 + 15;
+      });
+
+      stage.addEventListener('mouseleave', () => {
+        isHovering = false;
+        targetRotX = 20;
+        targetRotY = -18;
+        setTimeout(() => {
+          if (!isHovering && !isDragging) {
+            coin.style.animation = 'float3D 6s ease-in-out infinite';
+          }
+        }, 700);
+      });
+
+      // Drag to rotate in 3D
+      coin.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        coin.classList.add('is-dragging');
+        startX = e.clientX;
+        startY = e.clientY;
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        startX = e.clientX;
+        startY = e.clientY;
+
+        targetRotY += dx * 0.55;
+        targetRotX -= dy * 0.55;
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (isDragging) {
+          isDragging = false;
+          coin.classList.remove('is-dragging');
+        }
+      });
+
+      // Smooth Physics Loop for 3D Tilt
+      function update3DTilt() {
+        if (isHovering || isDragging) {
+          currentRotX += (targetRotX - currentRotX) * 0.12;
+          currentRotY += (targetRotY - currentRotY) * 0.12;
+          coin.style.transform = `translateY(-14px) rotateX(${currentRotX.toFixed(2)}deg) rotateY(${currentRotY.toFixed(2)}deg)`;
+          if (shadow) {
+            shadow.style.transform = `rotateX(75deg) translateZ(-40px) scale(${1 - Math.abs(currentRotX) * 0.005})`;
+          }
+        }
+        requestAnimationFrame(update3DTilt);
+      }
+      requestAnimationFrame(update3DTilt);
     }
 
     window.switchHeroMode = (mode) => {
       currentHeroMode = mode;
       document.getElementById('heroModeLoncle').classList.toggle('active', mode === 'loncle');
       document.getElementById('heroModeCircle').classList.toggle('active', mode === 'circle');
+      if (badge) {
+        badge.textContent = mode === 'loncle' ? 'LonCle' : 'Circle';
+      }
+      if (coin) {
+        coin.classList.remove('flip-anim');
+        void coin.offsetWidth; // Trigger reflow
+        coin.classList.add('flip-anim');
+        setTimeout(() => coin.classList.remove('flip-anim'), 700);
+      }
     };
 
     window.toggleHeroAnimation = () => {
