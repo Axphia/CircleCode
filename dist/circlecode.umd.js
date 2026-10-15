@@ -909,49 +909,64 @@ function tryConfigMirrored(g, w, h, cx, cy, scale, k, density, rot, aggressive) 
 }
 
 function findCenterAndScale(g, w, h) {
-  let best = null, bestScore = -1;
-  const step = 8;
+  let best = null, bestScore = -1, bestInMean = 0, bestOutMean = 0;
+  const step = 6;
   const minDim = Math.min(w, h);
-  const maxBadgeR = Math.min(180, Math.floor(minDim * 0.28));
-  const minBadgeR = 14;
+  const maxBadgeR = Math.min(180, Math.floor(minDim * 0.30));
+  const minBadgeR = 12;
 
-  for (let y = 30; y < h - 30; y += step) {
-    for (let x = 30; x < w - 30; x += step) {
-      // Fast center bailout: CircleCode center MUST be dark (<90)
-      if (g[y * w + x] > 90) continue;
-
-      for (let r = minBadgeR; r <= maxBadgeR; r += 5) {
+  for (let y = 24; y < h - 24; y += step) {
+    for (let x = 24; x < w - 24; x += step) {
+      for (let r = minBadgeR; r <= maxBadgeR; r += 4) {
         const gapR = 1.15 * r;
         if (x - gapR < 2 || y - gapR < 2 || x + gapR >= w - 2 || y + gapR >= h - 2) continue;
 
-        let inSum = 0, outSum = 0;
+        // Fast 4-point pre-check on inner rim (0.80 * r)
+        const in4 = sample(g, w, h, x, y, 0.80 * r, 0) +
+                    sample(g, w, h, x, y, 0.80 * r, Math.PI / 2) +
+                    sample(g, w, h, x, y, 0.80 * r, Math.PI) +
+                    sample(g, w, h, x, y, 0.80 * r, Math.PI * 1.5);
+        if (in4 > 4 * 165) continue; // Skip quickly if outer rim is not dark
+
+        let inSum = in4, outSum = 0;
+        for (let a = 1; a < 8; a += 2) {
+          const th = a * Math.PI / 4;
+          inSum += sample(g, w, h, x, y, 0.80 * r, th);
+        }
         for (let a = 0; a < 8; a++) {
           const th = a * Math.PI / 4;
-          inSum += sample(g, w, h, x, y, 0.82 * r, th);
-          outSum += sample(g, w, h, x, y, 1.10 * r, th);
+          outSum += sample(g, w, h, x, y, 1.12 * r, th);
         }
         const inMean = inSum / 8;
         const outMean = outSum / 8;
         const diff = outMean - inMean;
 
-        if (diff > bestScore && diff > 20 && outMean > inMean * 1.18) {
+        if (diff > bestScore && diff > 18 && outMean > inMean * 1.15 && inMean < 165) {
           bestScore = diff;
+          bestInMean = inMean;
+          bestOutMean = outMean;
           best = { cx: x, cy: y, r, scale: r / CENTER_R, score: diff };
         }
       }
     }
   }
 
-  // Centroid & subpixel edge refinement
+  // Centroid & subpixel edge refinement via annulus (ring) search
+  // Symmetrical dark ring (annulus between 0.55*r and 1.05*r) gives true centroid
+  // even if center logo / text is white ("Pay", Apple logo, etc.)
   if (best) {
     const roughX = best.cx, roughY = best.cy, roughR = best.r;
     let sumX = 0, sumY = 0, count = 0;
-    const thr = (bestScore > 50) ? (sample(g, w, h, roughX, roughY, 0, 0) + bestScore * 0.5) : 115;
-    const searchR = roughR * 1.06;
+    const thr = bestInMean + (bestOutMean - bestInMean) * 0.45;
+    const rMin = roughR * 0.55;
+    const rMax = roughR * 1.05;
+    const rMin2 = rMin * rMin;
+    const rMax2 = rMax * rMax;
 
-    for (let dy = -searchR; dy <= searchR; dy += 2) {
-      for (let dx = -searchR; dx <= searchR; dx += 2) {
-        if (dx * dx + dy * dy <= searchR * searchR) {
+    for (let dy = -rMax; dy <= rMax; dy += 2) {
+      for (let dx = -rMax; dx <= rMax; dx += 2) {
+        const d2 = dx * dx + dy * dy;
+        if (d2 >= rMin2 && d2 <= rMax2) {
           const xi = Math.round(roughX + dx), yi = Math.round(roughY + dy);
           if (xi >= 0 && xi < w && yi >= 0 && yi < h && g[yi * w + xi] < thr) {
             sumX += xi;
@@ -965,8 +980,7 @@ function findCenterAndScale(g, w, h) {
     if (count > 20) {
       const refCX = sumX / count;
       const refCY = sumY / count;
-      const refR = Math.sqrt((count * 4) / Math.PI);
-      return { cx: refCX, cy: refCY, r: refR, scale: refR / CENTER_R, score: bestScore };
+      return { cx: refCX, cy: refCY, r: roughR, scale: roughR / CENTER_R, score: bestScore };
     }
     return best;
   }
@@ -1320,6 +1334,10 @@ class CircleScanner {
     return this.setTorch(!this.torchOn);
   }
 
+  setWasmEngine(wasmEngine) {
+    this.options.wasmEngine = wasmEngine;
+  }
+
   _tick() {
     if (!this.isScanning || !this.video || !this.video.videoWidth || this.isProcessing) return;
 
@@ -1349,10 +1367,15 @@ class CircleScanner {
 
     this.isProcessing = true;
     const t0 = performance.now();
-    const res = scanImageData(imgData, {
-      aggressive: this.options.aggressive,
-      perspective: this.options.perspective
-    });
+    let res;
+    if (this.options.wasmEngine && typeof this.options.wasmEngine.scan_frame_wasm === 'function') {
+      res = this.options.wasmEngine.scan_frame_wasm(imgData.data, S, S, this.options.aggressive !== false);
+    } else {
+      res = scanImageData(imgData, {
+        aggressive: this.options.aggressive,
+        perspective: this.options.perspective
+      });
+    }
     const t1 = performance.now();
     this.isProcessing = false;
 

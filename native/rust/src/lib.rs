@@ -530,53 +530,77 @@ pub fn to_grayscale(rgba: &[u8], len: usize) -> Vec<f32> {
 
 pub fn find_center(g: &[f32], w: usize, h: usize) -> Option<(f32, f32, f32)> {
     let mut best_score = 0.0f32;
+    let mut best_in_mean = 0.0f32;
+    let mut best_out_mean = 0.0f32;
     let mut best = None;
 
-    let step = 8;
+    let step = 6;
     let min_dim = w.min(h);
 
-    for y in (30..h.saturating_sub(30)).step_by(step) {
-        for x in (30..w.saturating_sub(30)).step_by(step) {
-            let center_val = g[y * w + x];
-            if center_val > 90.0 {
-                continue;
-            }
-
-            for r_int in (18..min_dim / 3).step_by(6) {
+    for y in (24..h.saturating_sub(24)).step_by(step) {
+        for x in (24..w.saturating_sub(24)).step_by(step) {
+            for r_int in (12..min_dim / 3).step_by(4) {
                 let r = r_int as f32;
-                let mut in_sum = 0.0;
-                let mut out_sum = 0.0;
+                let gap_r = 1.15 * r;
+                let x_f = x as f32;
+                let y_f = y as f32;
+                if x_f - gap_r < 2.0 || y_f - gap_r < 2.0 || x_f + gap_r >= (w as f32) - 2.0 || y_f + gap_r >= (h as f32) - 2.0 {
+                    continue;
+                }
 
+                // Fast 4-point check on outer badge rim (0.80 * r)
+                let in4 = sample(g, w, h, x_f, y_f, 0.80 * r, 0.0, 1.0, 0.0) +
+                          sample(g, w, h, x_f, y_f, 0.80 * r, std::f32::consts::FRAC_PI_2, 1.0, 0.0) +
+                          sample(g, w, h, x_f, y_f, 0.80 * r, std::f32::consts::PI, 1.0, 0.0) +
+                          sample(g, w, h, x_f, y_f, 0.80 * r, std::f32::consts::PI * 1.5, 1.0, 0.0);
+                if in4 > 4.0 * 165.0 {
+                    continue;
+                }
+
+                let mut in_sum = in4;
+                for a in [1, 3, 5, 7] {
+                    let th = (a as f32) * std::f32::consts::PI / 4.0;
+                    in_sum += sample(g, w, h, x_f, y_f, 0.80 * r, th, 1.0, 0.0);
+                }
+
+                let mut out_sum = 0.0;
                 for a in 0..8 {
                     let th = (a as f32) * std::f32::consts::PI / 4.0;
-                    in_sum += sample(g, w, h, x as f32, y as f32, 0.82 * r, th, 1.0, 0.0);
-                    out_sum += sample(g, w, h, x as f32, y as f32, 1.10 * r, th, 1.0, 0.0);
+                    out_sum += sample(g, w, h, x_f, y_f, 1.12 * r, th, 1.0, 0.0);
                 }
 
                 let in_mean = in_sum / 8.0;
                 let out_mean = out_sum / 8.0;
                 let diff = out_mean - in_mean;
 
-                if diff > best_score && diff > 22.0 && out_mean > in_mean * 1.18 {
+                if diff > best_score && diff > 18.0 && out_mean > in_mean * 1.15 && in_mean < 165.0 {
                     best_score = diff;
-                    best = Some((x as f32, y as f32, r));
+                    best_in_mean = in_mean;
+                    best_out_mean = out_mean;
+                    best = Some((x_f, y_f, r));
                 }
             }
         }
     }
 
-    // Centroid refinement
+    // Centroid refinement via annulus (ring) search
+    // Symmetrical outer ring between 0.55*r and 1.05*r provides the exact center
+    // completely immune to white logos/text ("Pay", Apple logo, icons) in the center
     if let Some((rough_x, rough_y, rough_r)) = best {
         let mut sum_x = 0.0;
         let mut sum_y = 0.0;
         let mut count = 0;
-        let thr = 115.0f32;
-        let search_r = rough_r * 1.06;
+        let thr = best_in_mean + (best_out_mean - best_in_mean) * 0.45;
+        let r_min = rough_r * 0.55;
+        let r_max = rough_r * 1.05;
+        let r_min2 = r_min * r_min;
+        let r_max2 = r_max * r_max;
 
-        let r_limit = search_r.ceil() as isize;
+        let r_limit = r_max.ceil() as isize;
         for dy in -r_limit..=r_limit {
             for dx in -r_limit..=r_limit {
-                if ((dx * dx + dy * dy) as f32) <= search_r * search_r {
+                let d2 = (dx * dx + dy * dy) as f32;
+                if d2 >= r_min2 && d2 <= r_max2 {
                     let xi = (rough_x.round() as isize) + dx;
                     let yi = (rough_y.round() as isize) + dy;
                     if xi >= 0 && yi >= 0 && (xi as usize) < w && (yi as usize) < h {
@@ -590,11 +614,10 @@ pub fn find_center(g: &[f32], w: usize, h: usize) -> Option<(f32, f32, f32)> {
             }
         }
 
-        if count > 40 {
+        if count > 20 {
             let ref_cx = sum_x / (count as f32);
             let ref_cy = sum_y / (count as f32);
-            let ref_r = ((count as f32) / std::f32::consts::PI).sqrt();
-            return Some((ref_cx, ref_cy, ref_r));
+            return Some((ref_cx, ref_cy, rough_r));
         }
     }
 
