@@ -1,0 +1,298 @@
+[
+  {
+    "name": "circle-clean",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\circle-clean.png",
+    "expected": true,
+    "group": "clean",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "circle-size-240",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\circle-size-240.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 240,
+    "height": 240
+  },
+  {
+    "name": "circle-size-320",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\circle-size-320.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 320,
+    "height": 320
+  },
+  {
+    "name": "circle-size-800",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\circle-size-800.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 800,
+    "height": 800
+  },
+  {
+    "name": "circle-rotate-17",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\circle-rotate-17.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "circle-rotate-89",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\circle-rotate-89.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "circle-rotate-181",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\circle-rotate-181.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "circle-rotate-271",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\circle-rotate-271.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "circle-mirror",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\circle-mirror.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "circle-inverted",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\circle-inverted.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "circle-mirror-inverted-rotate",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\circle-mirror-inverted-rotate.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "circle-blur-0.7",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\circle-blur-0.7.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "circle-blur-1.2",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\circle-blur-1.2.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "circle-jpeg-35",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\circle-jpeg-35.jpg",
+    "expected": true,
+    "group": "degraded",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "circle-scratch",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\circle-scratch.png",
+    "expected": null,
+    "group": "exploratory",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "circle-occluded",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\circle-occluded.png",
+    "expected": false,
+    "group": "negative",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "circle-damaged",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\circle-damaged.png",
+    "expected": true,
+    "group": "damaged",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "loncle-clean",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\loncle-clean.png",
+    "expected": true,
+    "group": "clean",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "loncle-size-240",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\loncle-size-240.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 240,
+    "height": 240
+  },
+  {
+    "name": "loncle-size-320",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\loncle-size-320.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 320,
+    "height": 320
+  },
+  {
+    "name": "loncle-size-800",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\loncle-size-800.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 800,
+    "height": 800
+  },
+  {
+    "name": "loncle-rotate-17",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\loncle-rotate-17.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "loncle-rotate-89",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\loncle-rotate-89.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "loncle-rotate-181",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\loncle-rotate-181.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "loncle-rotate-271",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\loncle-rotate-271.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "loncle-mirror",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\loncle-mirror.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "loncle-inverted",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\loncle-inverted.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "loncle-mirror-inverted-rotate",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\loncle-mirror-inverted-rotate.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "loncle-blur-0.7",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\loncle-blur-0.7.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "loncle-blur-1.2",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\loncle-blur-1.2.png",
+    "expected": true,
+    "group": "degraded",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "loncle-jpeg-35",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\loncle-jpeg-35.jpg",
+    "expected": true,
+    "group": "degraded",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "loncle-scratch",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\loncle-scratch.png",
+    "expected": null,
+    "group": "exploratory",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "loncle-occluded",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\loncle-occluded.png",
+    "expected": false,
+    "group": "negative",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "loncle-damaged",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\loncle-damaged.png",
+    "expected": true,
+    "group": "damaged",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "blank-white",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\blank-white.png",
+    "expected": false,
+    "group": "negative",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "blank-black",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\blank-black.png",
+    "expected": false,
+    "group": "negative",
+    "width": 480,
+    "height": 480
+  },
+  {
+    "name": "random-noise",
+    "file": "C:\\Users\\SystemAdmin\\Documents\\Default Project\\circle-code-site\\test\\ecc-prototype\\outputs\\optical\\random-noise.png",
+    "expected": false,
+    "group": "negative",
+    "width": 240,
+    "height": 240
+  }
+]

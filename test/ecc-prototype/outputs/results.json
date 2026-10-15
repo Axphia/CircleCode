@@ -1,0 +1,15 @@
+{
+  "experimental": true,
+  "format": "CC version 2.1, mode packing, CRC32/ISO-HDLC, shortened RS GF(256), 8 parity bytes",
+  "payload": "Table-24",
+  "ringCount": 7,
+  "frameBytes": 31,
+  "maxPayloadBytes": 14,
+  "sampleCorruptedBytes": 4,
+  "sampleFlippedBits": 32,
+  "singleBitCases": 248,
+  "rsStressCases": 2000,
+  "selectedOverLimitCasesRejected": 200,
+  "crc32GuardVerified": true,
+  "opticalScannerTested": false
+}

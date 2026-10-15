@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#075d50">
+  <meta name="description" content="สแกน CircleCode V2 และ V2.1 จากกล้องมือถือหรือภาพ ด้วย JavaScript และ Rust/WASM โดยประมวลผลในเครื่อง">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; worker-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>CircleCode Scanner</title>
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="./"><span aria-hidden="true">◎</span> CircleCode <small>Scanner</small></a><span class="chip">V2 / V2.1</span></header>
+  <main>
+    <div class="intro"><p class="eyebrow">CAMERA TO DATA</p><h1>สแกน CircleCode<br><span>จากกล้องหรือรูปภาพ</span></h1><p>วางโค้ดให้ครบวงและตรงกับกล้อง ภาพประมวลผลในเครื่องโดยไม่ส่งขึ้นเซิร์ฟเวอร์</p></div>
+    <div class="workspace">
+      <section class="scan-card" aria-labelledby="camera-title">
+        <div class="section-heading"><h2 id="camera-title">พื้นที่สแกน</h2><span class="live-indicator" id="camera-state">กล้องปิดอยู่</span></div>
+        <div class="viewfinder" id="viewfinder">
+          <div class="empty-state" id="empty-state"><span class="scan-symbol" aria-hidden="true">◎</span><strong>เปิดกล้องเพื่อเริ่มสแกน</strong><p>หรือเลือกภาพ CircleCode จากเครื่อง</p></div>
+          <video id="video" playsinline muted hidden aria-label="ภาพจากกล้อง"></video>
+          <canvas id="preview" width="640" height="640" hidden role="img" aria-label="ภาพที่ส่งให้ตัวอ่าน"></canvas>
+          <div class="guide" id="guide" hidden aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <span class="source-label" id="source-label" hidden></span>
+        </div>
+        <div class="camera-actions"><button id="start" class="button primary" type="button">เปิดกล้อง</button><button id="choose-image" class="button secondary" type="button">เลือกภาพ</button><input id="file" type="file" accept="image/png,image/jpeg,image/webp" hidden aria-label="เลือกไฟล์ภาพ"></div>
+        <div class="secondary-actions"><button id="stop" type="button" disabled>หยุดกล้อง</button><button id="switch" type="button" disabled>สลับกล้อง</button><button id="sample" type="button">ลองภาพตัวอย่าง</button></div>
+        <p class="status" id="status" role="status" aria-live="polite">พร้อมสแกน · รองรับ PNG, JPEG และ WebP ไม่เกิน 10 MB</p>
+        <noscript><p class="error">ต้องเปิด JavaScript เพื่อใช้งานตัวสแกน</p></noscript>
+        <p id="boot-error" class="error">กำลังโหลดตัวอ่าน หากข้อความนี้ไม่หาย ให้เปิดผ่าน HTTP server หรือ HTTPS แล้วโหลดหน้าใหม่</p>
+      </section>
+      <aside class="details">
+        <section class="result-card" aria-labelledby="result-title"><div class="section-heading"><div><p class="eyebrow">DECODED DATA</p><h2 id="result-title">ผลการอ่าน</h2></div><span class="chip neutral" id="result-state">รอข้อมูล</span></div>
+          <label for="result">ข้อมูลที่อ่านได้</label><textarea id="result" readonly rows="4" placeholder="ข้อความหรือไบต์ฐานสิบหกจะแสดงที่นี่" spellcheck="false"></textarea>
+          <p class="result-note" id="result-note">ข้อมูลที่อ่านได้จะแสดงเป็นข้อความ ลิงก์ไม่ถูกเปิดอัตโนมัติ</p>
+          <div class="result-actions"><button id="copy" class="button secondary" type="button" disabled>คัดลอกข้อมูล</button><button id="download" class="button secondary" type="button" hidden>บันทึกไบนารี</button></div>
+          <dl class="metrics"><div><dt>ตัวอ่านที่ใช้</dt><dd id="actual-engine">—</dd></div><div><dt>โหมดข้อมูล</dt><dd id="mode">—</dd></div><div><dt>จำนวนวง</dt><dd id="detected-rings">—</dd></div><div><dt>แก้ข้อมูลเสีย</dt><dd id="corrected">—</dd></div></dl>
+          <p class="timing" id="timing">ผลกล้องต้องตรงกัน 2 เฟรมก่อนยอมรับ</p>
+        </section>
+        <section class="settings-card" aria-labelledby="settings-title"><p class="eyebrow">SCAN SETTINGS</p><h2 id="settings-title">การตั้งค่าตัวอ่าน</h2><div class="field-row"><div><label for="engine">เครื่องมืออ่านภาพ</label><select id="engine"><option value="auto">อัตโนมัติ / Rust + JS สำรอง</option><option value="rust">Rust / WebAssembly</option><option value="js">JavaScript</option></select></div><div><label for="rings">จำนวนวงในภาพ</label><select id="rings"><option value="0">ค้นหาอัตโนมัติ</option>4</select></div></div><p class="small">หยุดกล้องเมื่อสลับแท็บหรือออกจากหน้า · ภาพเอียงมาก เบลอ หรือถูกปิดทับอาจอ่านไม่ได้</p></section>
+        <div class="privacy-note"><span aria-hidden="true">◉</span><p><strong>ภาพอยู่ในเครื่อง</strong><br>ไม่บันทึกประวัติและไม่ส่งภาพสแกนขึ้นเซิร์ฟเวอร์</p></div>
+      </aside>
+    </div>
+    <footer><span>CircleCode · JavaScript + Rust / WASM</span><p>รองรับกรอบ V2 / V2.1 · ยังไม่รองรับ V1 ในหน้านี้ · CRC32 ตรวจความผิดพลาด ไม่ใช่การยืนยันผู้สร้างข้อมูล</p></footer>
+  </main>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

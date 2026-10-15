@@ -1,0 +1,12 @@
+{
+  "name": "circlecode-v2-test",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node run-more-tests.js && node run-web-tests.js && node run-wasm-tests.js && node run-camera-tests.js",
+    "build:scanner": "node scanner-web/build.mjs",
+    "build:wasm": "wasm-pack build native/rust --target web --release && node scripts/sync-wasm.mjs",
+    "preview": "node scanner-web/serve.mjs",
+    "lab": "node serve.mjs"
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "workerProtocol": true,
+  "legacyV2Optical": true,
+  "results": [
+    {
+      "mode": "numeric",
+      "style": "circle",
+      "damaged": false,
+      "correctedBytes": 0
+    },
+    {
+      "mode": "numeric",
+      "style": "circle",
+      "damaged": true,
+      "correctedBytes": 4
+    },
+    {
+      "mode": "numeric",
+      "style": "loncle",
+      "damaged": false,
+      "correctedBytes": 0
+    },
+    {
+      "mode": "numeric",
+      "style": "loncle",
+      "damaged": true,
+      "correctedBytes": 4
+    },
+    {
+      "mode": "alphanumeric",
+      "style": "circle",
+      "damaged": false,
+      "correctedBytes": 0
+    },
+    {
+      "mode": "alphanumeric",
+      "style": "circle",
+      "damaged": true,
+      "correctedBytes": 4
+    },
+    {
+      "mode": "alphanumeric",
+      "style": "loncle",
+      "damaged": false,
+      "correctedBytes": 0
+    },
+    {
+      "mode": "alphanumeric",
+      "style": "loncle",
+      "damaged": true,
+      "correctedBytes": 4
+    },
+    {
+      "mode": "utf8",
+      "style": "circle",
+      "damaged": false,
+      "correctedBytes": 0
+    },
+    {
+      "mode": "utf8",
+      "style": "circle",
+      "damaged": true,
+      "correctedBytes": 4
+    },
+    {
+      "mode": "utf8",
+      "style": "loncle",
+      "damaged": false,
+      "correctedBytes": 0
+    },
+    {
+      "mode": "utf8",
+      "style": "loncle",
+      "damaged": true,
+      "correctedBytes": 4
+    },
+    {
+      "mode": "binary",
+      "style": "circle",
+      "damaged": false,
+      "correctedBytes": 0
+    },
+    {
+      "mode": "binary",
+      "style": "circle",
+      "damaged": true,
+      "correctedBytes": 4
+    },
+    {
+      "mode": "binary",
+      "style": "loncle",
+      "damaged": false,
+      "correctedBytes": 0
+    },
+    {
+      "mode": "binary",
+      "style": "loncle",
+      "damaged": true,
+      "correctedBytes": 4
+    }
+  ]
+}

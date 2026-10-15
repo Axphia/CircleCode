@@ -1,0 +1,16 @@
+{
+  "format": "2.1",
+  "numericVectorChecked": true,
+  "alphanumericPairs": 2025,
+  "numericGroups": 1000,
+  "capacityCases": 956,
+  "recoveryCases": 400,
+  "arbitraryByteValues": 256,
+  "legacyV2Readable": true,
+  "sevenRingCapacity": {
+    "utf8": 14,
+    "numeric": 33,
+    "alphanumeric": 20,
+    "binary": 14
+  }
+}

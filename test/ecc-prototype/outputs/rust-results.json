@@ -1,0 +1,193 @@
+{
+  "frames": 2000,
+  "rejectedRandom": 200,
+  "optical": [
+    {
+      "name": "circle-clean",
+      "ok": true,
+      "ms": 24
+    },
+    {
+      "name": "circle-size-240",
+      "ok": true,
+      "ms": 4
+    },
+    {
+      "name": "circle-size-320",
+      "ok": true,
+      "ms": 9
+    },
+    {
+      "name": "circle-size-800",
+      "ok": true,
+      "ms": 27
+    },
+    {
+      "name": "circle-rotate-17",
+      "ok": true,
+      "ms": 15
+    },
+    {
+      "name": "circle-rotate-89",
+      "ok": true,
+      "ms": 16
+    },
+    {
+      "name": "circle-rotate-181",
+      "ok": true,
+      "ms": 15
+    },
+    {
+      "name": "circle-rotate-271",
+      "ok": true,
+      "ms": 15
+    },
+    {
+      "name": "circle-mirror",
+      "ok": true,
+      "ms": 16
+    },
+    {
+      "name": "circle-inverted",
+      "ok": true,
+      "ms": 58
+    },
+    {
+      "name": "circle-mirror-inverted-rotate",
+      "ok": true,
+      "ms": 60
+    },
+    {
+      "name": "circle-blur-0.7",
+      "ok": true,
+      "ms": 18
+    },
+    {
+      "name": "circle-blur-1.2",
+      "ok": true,
+      "ms": 18
+    },
+    {
+      "name": "circle-jpeg-35",
+      "ok": true,
+      "ms": 16
+    },
+    {
+      "name": "circle-scratch",
+      "ok": true,
+      "ms": 15
+    },
+    {
+      "name": "circle-occluded",
+      "ok": false,
+      "ms": 75
+    },
+    {
+      "name": "circle-damaged",
+      "ok": true,
+      "ms": 15
+    },
+    {
+      "name": "loncle-clean",
+      "ok": true,
+      "ms": 12
+    },
+    {
+      "name": "loncle-size-240",
+      "ok": true,
+      "ms": 3
+    },
+    {
+      "name": "loncle-size-320",
+      "ok": true,
+      "ms": 7
+    },
+    {
+      "name": "loncle-size-800",
+      "ok": true,
+      "ms": 22
+    },
+    {
+      "name": "loncle-rotate-17",
+      "ok": true,
+      "ms": 12
+    },
+    {
+      "name": "loncle-rotate-89",
+      "ok": true,
+      "ms": 12
+    },
+    {
+      "name": "loncle-rotate-181",
+      "ok": true,
+      "ms": 12
+    },
+    {
+      "name": "loncle-rotate-271",
+      "ok": true,
+      "ms": 12
+    },
+    {
+      "name": "loncle-mirror",
+      "ok": true,
+      "ms": 13
+    },
+    {
+      "name": "loncle-inverted",
+      "ok": true,
+      "ms": 54
+    },
+    {
+      "name": "loncle-mirror-inverted-rotate",
+      "ok": true,
+      "ms": 57
+    },
+    {
+      "name": "loncle-blur-0.7",
+      "ok": true,
+      "ms": 17
+    },
+    {
+      "name": "loncle-blur-1.2",
+      "ok": true,
+      "ms": 15
+    },
+    {
+      "name": "loncle-jpeg-35",
+      "ok": true,
+      "ms": 12
+    },
+    {
+      "name": "loncle-scratch",
+      "ok": true,
+      "ms": 12
+    },
+    {
+      "name": "loncle-occluded",
+      "ok": false,
+      "ms": 72
+    },
+    {
+      "name": "loncle-damaged",
+      "ok": true,
+      "ms": 14
+    },
+    {
+      "name": "blank-white",
+      "ok": false,
+      "ms": 42
+    },
+    {
+      "name": "blank-black",
+      "ok": false,
+      "ms": 44
+    },
+    {
+      "name": "random-noise",
+      "ok": false,
+      "ms": 48
+    }
+  ],
+  "modeImages": 8,
+  "automaticRings": 11
+}
