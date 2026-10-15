@@ -270,6 +270,47 @@
     font-size: 12.5px;
     color: var(--text-secondary);
   }
+
+  /* Theme Grid Styles */
+  .theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .theme-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid #d2d2d7;
+    border-radius: 12px;
+    padding: 7px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+  }
+  .theme-chip:hover {
+    border-color: var(--accent);
+    background: #fafafa;
+  }
+  .theme-chip.active {
+    border-color: var(--accent);
+    background: rgba(0, 113, 227, 0.06);
+    color: var(--accent);
+    font-weight: 600;
+    box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.15);
+  }
+  .theme-preview {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
   .bg-options label {
     display: inline-flex;
     align-items: center;
@@ -521,8 +562,61 @@
         </div>
       </div>
 
+      <!-- Color Theme Preset Selector -->
       <div class="form-group">
-        <label>Inactive Dash Color (Bit 0 Tone)</label>
+        <label>Color Theme</label>
+        <div class="theme-grid" id="themeGrid">
+          <button type="button" class="theme-chip active" data-theme="apple" data-dark="#000000" data-light="#8e8e93" data-bg="#000000">
+            <span class="theme-preview" style="background: linear-gradient(135deg, #000000 50%, #8e8e93 50%);"></span>
+            <span>Apple Classic</span>
+          </button>
+          <button type="button" class="theme-chip" data-theme="blue" data-dark="#0071e3" data-light="#b9d9fc" data-bg="#0071e3">
+            <span class="theme-preview" style="background: linear-gradient(135deg, #0071e3 50%, #b9d9fc 50%);"></span>
+            <span>Ocean Blue</span>
+          </button>
+          <button type="button" class="theme-chip" data-theme="emerald" data-dark="#1a9e38" data-light="#b8f2c3" data-bg="#1a9e38">
+            <span class="theme-preview" style="background: linear-gradient(135deg, #1a9e38 50%, #b8f2c3 50%);"></span>
+            <span>Emerald Mint</span>
+          </button>
+          <button type="button" class="theme-chip" data-theme="midnight" data-dark="#18181b" data-light="#52525b" data-bg="#18181b">
+            <span class="theme-preview" style="background: linear-gradient(135deg, #18181b 50%, #52525b 50%);"></span>
+            <span>Midnight</span>
+          </button>
+          <button type="button" class="theme-chip" data-theme="sunset" data-dark="#e05a10" data-light="#fed7aa" data-bg="#e05a10">
+            <span class="theme-preview" style="background: linear-gradient(135deg, #e05a10 50%, #fed7aa 50%);"></span>
+            <span>Sunset Amber</span>
+          </button>
+          <button type="button" class="theme-chip" data-theme="sakura" data-dark="#d92b65" data-light="#fbcfe8" data-bg="#d92b65">
+            <span class="theme-preview" style="background: linear-gradient(135deg, #d92b65 50%, #fbcfe8 50%);"></span>
+            <span>Sakura Rose</span>
+          </button>
+          <button type="button" class="theme-chip" data-theme="cyber" data-dark="#7928ca" data-light="#ff0080" data-bg="#110022">
+            <span class="theme-preview" style="background: linear-gradient(135deg, #7928ca 50%, #ff0080 50%);"></span>
+            <span>Cyberpunk</span>
+          </button>
+          <button type="button" class="theme-chip" data-theme="custom">
+            <span class="theme-preview" style="background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);"></span>
+            <span>Custom...</span>
+          </button>
+        </div>
+
+        <!-- Custom Color Pickers -->
+        <div id="customColorWrap" style="display:none; margin-top:12px; padding:12px; background:var(--bg); border-radius:var(--radius-md); border:1px solid var(--border-light);">
+          <div class="row">
+            <div>
+              <label style="font-size:11px; margin-bottom:4px;">Active Dash (Bit 1)</label>
+              <input type="color" id="customDark" value="#000000" style="width:100%; height:38px; border:none; border-radius:8px; cursor:pointer; background:none;">
+            </div>
+            <div>
+              <label style="font-size:11px; margin-bottom:4px;">Inactive Dash (Bit 0)</label>
+              <input type="color" id="customLight" value="#8e8e93" style="width:100%; height:38px; border:none; border-radius:8px; cursor:pointer; background:none;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group" id="grayToneGroup">
+        <label>Inactive Dash Contrast (Bit 0 Tone)</label>
         <div class="segmented-control" id="grayToneSeg">
           <button type="button" class="seg-btn active" data-gray="#8e8e93">Dark Gray (Apple)</button>
           <button type="button" class="seg-btn" data-gray="#aeaeb2">Medium Gray</button>
@@ -939,6 +1033,53 @@ document.querySelectorAll('#grayToneSeg .seg-btn').forEach(btn => {
     document.getElementById('colorLight').value = btn.dataset.gray;
     generate();
   });
+});
+
+// Theme Selection Handling
+document.querySelectorAll('#themeGrid .theme-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#themeGrid .theme-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+
+    const theme = chip.dataset.theme;
+    const customWrap = document.getElementById('customColorWrap');
+    const grayToneGroup = document.getElementById('grayToneGroup');
+
+    if (theme === 'custom') {
+      customWrap.style.display = 'block';
+      if (grayToneGroup) grayToneGroup.style.display = 'none';
+      document.getElementById('colorDark').value = document.getElementById('customDark').value;
+      document.getElementById('colorLight').value = document.getElementById('customLight').value;
+    } else {
+      customWrap.style.display = 'none';
+      if (grayToneGroup) grayToneGroup.style.display = theme === 'apple' ? 'block' : 'none';
+      document.getElementById('colorDark').value = chip.dataset.dark;
+      document.getElementById('colorLight').value = chip.dataset.light;
+      
+      // Update centerBg if matching
+      if (chip.dataset.bg) {
+        const bgInput = document.querySelector(`input[name="centerBg"][value="${chip.dataset.bg}"]`);
+        if (bgInput) {
+          bgInput.checked = true;
+        } else {
+          // If custom color, set dark as center bg
+          const defaultBlack = document.querySelector('input[name="centerBg"][value="#000000"]');
+          if (defaultBlack && chip.dataset.bg === '#000000') defaultBlack.checked = true;
+        }
+      }
+    }
+    generate();
+  });
+});
+
+document.getElementById('customDark').addEventListener('input', (e) => {
+  document.getElementById('colorDark').value = e.target.value;
+  generate();
+});
+
+document.getElementById('customLight').addEventListener('input', (e) => {
+  document.getElementById('colorLight').value = e.target.value;
+  generate();
 });
 
 // Logo File Upload Handling

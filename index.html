@@ -6,6 +6,12 @@
   <title>CircleCode — Elegant Circular Barcode Standard for Web & Mobile</title>
   <meta name="description" content="High-performance, dependency-free circular barcode codec inspired by Apple Pay & App Clips. Encode data into concentric arcs and decode across 360° rotations at native speed.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='10' fill='none' stroke='%230071e3' stroke-width='2'/><circle cx='12' cy='12' r='4' fill='%230071e3'/></svg>">
+  
+  <!-- KaTeX for Mathematical Formulas -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
+
   <style>
     :root {
       --bg: #f5f5f7;
@@ -24,6 +30,35 @@
       --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.03);
       --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
       --shadow-hover: 0 14px 40px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Math Card Styles */
+    .math-card {
+      background: #fafafa;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 22px 24px;
+    }
+    .math-card h4 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .math-formula {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px 14px;
+      background: #ffffff;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      font-size: 15px;
+      margin: 12px 0;
+      overflow-x: auto;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -468,6 +503,9 @@
         <a href="#howItWorks" class="tp-btn tp-btn-secondary">
           🔍 How It Works ↓
         </a>
+        <a href="#mathSpec" class="tp-btn tp-btn-secondary">
+          📐 Math Spec ↓
+        </a>
         <a href="#engineCompare" class="tp-btn tp-btn-secondary">
           ⚖️ Compare Engines ↓
         </a>
@@ -509,6 +547,114 @@
           <h4>Checksum & Error Recovery</h4>
           <p>Every payload includes a 16-bit header, length byte, and Modulo-256 checksum with aggressive 1–3 bit recovery for low-contrast or partially shadowed codes.</p>
         </div>
+      </div>
+    </section>
+
+    <!-- 📐 Mathematical Specification & Algorithmic Foundations -->
+    <section class="how-box" id="mathSpec">
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <div class="badge-pill">📐 Rigorous Formal Specification</div>
+          <h2 class="section-title">Mathematical &amp; Algorithmic Foundations</h2>
+        </div>
+        <div style="display: flex; gap: 10px; font-size: 13px; font-weight: 600;">
+          <a href="docs/SPECIFICATION.md" style="color: var(--accent); text-decoration: none;">SPECIFICATION.md ↗</a>
+          <span style="color: var(--border);">•</span>
+          <a href="docs/ARCHITECTURE.md" style="color: var(--accent); text-decoration: none;">ARCHITECTURE.md ↗</a>
+          <span style="color: var(--border);">•</span>
+          <a href="docs/API.md" style="color: var(--accent); text-decoration: none;">API.md ↗</a>
+        </div>
+      </div>
+      <p class="section-desc" style="margin-top: 6px;">
+        Mathematical formulations governing concentric ring distributions, slot allocation, 360° rotational alignment, subpixel spatial moments, and elliptical inverse coordinate transforms.
+      </p>
+
+      <div style="display: grid; gap: 20px; margin-top: 24px;">
+        
+        <!-- Formula 1: Concentric Radii Distribution -->
+        <div class="math-card">
+          <h4>1. Concentric Radii Distribution ($r_i$)</h4>
+          <p style="font-size: 13px; color: var(--text-sec); margin-top: 6px;">
+            A CircleCode barcode is normalized to an outer boundary disc of radius $R_{\text{disc}} = 190$ with a center branding badge of radius $r_{\text{badge}} = 42$. For $k$ rings ($k \in [4, 14]$), each ring $i \in [0, k-1]$ is mapped uniformly between $r_{\text{start}} = 55$ and $r_{\text{end}} = 157$:
+          </p>
+          <div class="math-formula">
+            $$r_i = 55 + (157 - 55) \times \frac{i}{k - 1}, \quad \text{for } i \in [0, k - 1]$$
+          </div>
+          <div style="font-size: 12.5px; color: var(--text-sec);">
+            • Standard 5-ring configuration: $r_0 = 55.0$, $r_1 = 80.5$, $r_2 = 106.0$, $r_3 = 131.5$, $r_4 = 157.0$.
+          </div>
+        </div>
+
+        <!-- Formula 2: Angular Slot Count & Dash Allocation -->
+        <div class="math-card">
+          <h4>2. Angular Slot Allocation ($n_i$) &amp; Dash Width</h4>
+          <p style="font-size: 13px; color: var(--text-sec); margin-top: 6px;">
+            To maintain equal physical bit density across expanding ring perimeters, the angular slot count $n_i$ grows proportionally to radius $r_i$ with constant density factor $d = 0.35$:
+          </p>
+          <div class="math-formula">
+            $$n_i = \max\left(12, \; \lfloor r_i \times 0.35 \rfloor\right), \qquad \Delta\theta_i = \frac{2\pi}{n_i}$$
+          </div>
+          <p style="font-size: 13px; color: var(--text-sec);">
+            Each slot subtends angle $\Delta\theta_i$. The physical dash stroke spans an angular active zone:
+          </p>
+          <div class="math-formula">
+            $$\theta_{\text{dash}} \in \left[j \Delta\theta_i + 0.28\Delta\theta_i, \;\; j \Delta\theta_i + 0.72\Delta\theta_i\right] \quad (\text{active width} = 0.44\Delta\theta_i)$$
+          </div>
+        </div>
+
+        <!-- Formula 3: 360° Finder Alignment Minimization -->
+        <div class="math-card">
+          <h4>3. 360° Rotational Alignment ($\theta_0$)</h4>
+          <p style="font-size: 13px; color: var(--text-sec); margin-top: 6px;">
+            Slot $0$ across every ring is reserved as a continuous radial finder spoke. The decoder sweeps the entire $360^\circ$ circle in $1.8^\circ$ angular increments ($M = 200$ samples) to find rotation angle $\theta_0$ that minimizes aggregate luminance:
+          </p>
+          <div class="math-formula">
+            $$\theta_0 = \arg\min_{\theta \in [0, 2\pi)} \frac{1}{k} \sum_{i=0}^{k-1} \text{Luminance}(r_i, \theta)$$
+          </div>
+        </div>
+
+        <!-- Formula 4: Subpixel Centroid Localization -->
+        <div class="math-card">
+          <h4>4. Subpixel Centroid &amp; Scale Estimation</h4>
+          <p style="font-size: 13px; color: var(--text-sec); margin-top: 6px;">
+            The dark center badge ($R = 42$) is localized via annular contrast differential operator, followed by subpixel first-order spatial moments:
+          </p>
+          <div class="math-formula">
+            $$\text{Score} = \text{Mean}_{\text{out}}(1.10 \times r) - \text{Mean}_{\text{in}}(0.82 \times r)$$
+          </div>
+          <div class="math-formula">
+            $$c_x = \frac{1}{N}\sum_{p=1}^N x_p, \qquad c_y = \frac{1}{N}\sum_{p=1}^N y_p, \qquad r_{\text{refined}} = \sqrt{\frac{N}{\pi}}$$
+          </div>
+        </div>
+
+        <!-- Formula 5: Perspective & Tilt Recovery Matrix -->
+        <div class="math-card">
+          <h4>5. Perspective Tilt Recovery (Inverse Coordinate Transformation)</h4>
+          <p style="font-size: 13px; color: var(--text-sec); margin-top: 6px;">
+            Oblique camera angles compress circular geometries into ellipses along tilt angle $\phi$. The decoder normalizes perspective via 2D rotation and aspect ratio correction:
+          </p>
+          <div class="math-formula">
+            $$\begin{bmatrix} u \\ v \end{bmatrix} = \begin{bmatrix} \cos\phi & \sin\phi \\ -\sin\phi & \cos\phi \end{bmatrix} \begin{bmatrix} x_r \\ y_r \end{bmatrix}, \qquad v' = v \times \text{aspect}$$
+          </div>
+          <div class="math-formula">
+            $$\begin{bmatrix} x_r' \\ y_r' \end{bmatrix} = \begin{bmatrix} \cos\phi & -\sin\phi \\ \sin\phi & \cos\phi \end{bmatrix} \begin{bmatrix} u \\ v' \end{bmatrix}, \quad \text{where } \text{aspect} \in [0.84, 0.91]$$
+          </div>
+        </div>
+
+        <!-- Formula 6: Binary Framing & Modulo-256 Checksum -->
+        <div class="math-card">
+          <h4>6. Binary Framing, Checksum &amp; Error Correction</h4>
+          <p style="font-size: 13px; color: var(--text-sec); margin-top: 6px;">
+            The bitstream begins with a 16-bit big-endian length header $L$, followed by $8L$ data bits (UTF-8) and an 8-bit modulo-256 checksum:
+          </p>
+          <div class="math-formula">
+            $$L = \sum_{j=0}^{15} \text{Bits}[j] \cdot 2^{15 - j}, \qquad \text{chk} = \left(\sum_{q=0}^{L-1} \text{byte}_q\right) \pmod{256}$$
+          </div>
+          <p style="font-size: 13px; color: var(--text-sec);">
+            If $\Delta = (\text{chk}_{\text{expected}} - \text{chk}_{\text{actual}}) \pmod{256} = \pm 2^p$ matches a single bit discrepancy, CircleCode repairs the bit flip deterministically in $O(L)$ time.
+          </p>
+        </div>
+
       </div>
     </section>
 
