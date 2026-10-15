@@ -54,6 +54,18 @@
     text-decoration: none;
   }
   .nav-brand svg { width: 18px; height: 18px; }
+  .nav-links {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+  }
+  .nav-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.15s;
+  }
+  .nav-links a:hover, .nav-links a.active { color: var(--text-primary); }
 
   .hero {
     max-width: 720px;
@@ -170,8 +182,14 @@
       <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
       <circle cx="12" cy="12" r="4" fill="currentColor"/>
     </svg>
-    Circle Code Studio
+    Circle Code
   </a>
+  <div class="nav-links">
+    <a href="generator.html">Generator</a>
+    <a href="scanner.html">JS Scanner</a>
+    <a href="scanner-wasm.html">WASM Scanner</a>
+    <a href="https://github.com/Axphia/CircleCode">Docs</a>
+  </div>
 </nav>
 
 <div class="hero">

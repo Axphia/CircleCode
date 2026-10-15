@@ -117,12 +117,57 @@
       font-size: 13px;
       margin-top: 24px;
       overflow-x: auto;
-      line-height: 1.4;
+    .nav {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding: 0 4px;
     }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .nav-brand svg { width: 18px; height: 18px; }
+    .nav-links {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+    }
+    .nav-links a {
+      color: var(--text-sec);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--text); }
   </style>
 </head>
 
 <body>
+  <nav class="nav">
+    <a href="index.html" class="nav-brand">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+        <circle cx="12" cy="12" r="4" fill="currentColor"/>
+      </svg>
+      Circle Code
+    </a>
+    <div class="nav-links">
+      <a href="generator.html">Generator</a>
+      <a href="scanner.html">JS Scanner</a>
+      <a href="scanner-wasm.html">WASM Scanner</a>
+      <a href="https://github.com/Axphia/CircleCode">Docs</a>
+    </div>
+  </nav>
+
   <div class="container">
     <div class="badge">🦀 Rust + WebAssembly</div>
     <h1>CircleCode WASM Engine</h1>
