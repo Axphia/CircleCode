@@ -1,8 +1,9 @@
 # CircleCode
 
 <p align="center">
-  <img src="https://circlecode.js.org/CNAME" alt="CircleCode Logo" style="display:none;" />
-  <h2 align="center">High-performance, dependency-free circular barcode codec for Browser and Node.js</h2>
+  <img src="images/logo.png" alt="CircleCode Logo" width="160" style="border-radius: 28px; box-shadow: 0 10px 30px rgba(0, 113, 227, 0.25);" />
+</p>
+<h2 align="center">High-performance, dependency-free circular barcode codec for Browser and Node.js</h2>
   <p align="center">
     Generate elegant circular barcodes in dual modes (<b>Circle</b> discrete dashes &amp; <b>LonCle</b> connected sweeping arcs) with custom center branding, and scan them across full 360° rotations at native speeds.
   </p>
