@@ -36,15 +36,19 @@ A CircleCode barcode is normalized to an outer boundary disc of radius **`R = 19
 For `k` concentric rings:
 - If `k == 1`: `r = 110`
 - If `k > 1`: For ring index `i ∈ [0, k - 1]`:
-  $$\text{radius}(i) = 55 + (157 - 55) \times \frac{i}{k - 1}$$
+  ```text
+  radius(i) = 55 + (157 - 55) × (i / (k - 1))
+  ```
 
 ---
 
 ## 2. Slot Allocation & Dash Geometry
 
-Each ring `i` is divided into $n_i$ angular slots:
-$$n_i = \max\left(12, \; \lfloor r_i \times \text{density} \rfloor\right)$$
-where the standard **`density = 0.35`**.
+Each ring `i` is divided into `n_i` angular slots:
+```text
+n_i = max(12, ⌊r_i × density⌋)
+```
+where standard **`density = 0.35`**.
 
 ### Standard 5-Ring Slot Distribution:
 | Ring Index | Radius ($r_i$) | Slot Count ($n_i$) | Data Capacity ($n_i - 1$) |
@@ -57,10 +61,10 @@ where the standard **`density = 0.35`**.
 | **Total** | — | **184 slots** | **179 data bits** (22.3 bytes) |
 
 ### Dash Dimensions within a Slot:
-Each slot subtends an angle $\Delta \theta = \frac{2\pi}{n_i}$.
-- **Dash Body:** spans from $0.28 \times \Delta \theta$ to $0.72 \times \Delta \theta$ (width: $0.44 \times \Delta \theta$).
-- **Dash Stroke Thickness:** $w = 5.2$ units ($dr = \pm 2.6$).
-- **Sampling Median Taps:** sampled at slot center with offset $\pm 0.14 \times \Delta \theta$.
+Each slot subtends an angle `Δθ = 2π / n_i`.
+- **Dash Body:** spans from `0.28 × Δθ` to `0.72 × Δθ` (width: `0.44 × Δθ`).
+- **Dash Stroke Thickness:** `w = 5.2` units (`dr = ±2.6`).
+- **Sampling Median Taps:** sampled at slot center with offset `±0.14 × Δθ`.
 
 ---
 
@@ -69,13 +73,13 @@ Each slot subtends an angle $\Delta \theta = \frac{2\pi}{n_i}$.
 Slot `0` on **every ring** is reserved as an alignment **Finder Dash**:
 - Finder slot `0` is **always active (solid black)** across all rings.
 - When aligned, the finder dashes form a straight radial spoke pointing from the center badge outward.
-- **360° Orientation Invariance:** The decoder sweeps 360° in $1.8^\circ$ steps to find the rotation angle $\theta_0$ that minimizes the aggregate luminance across all ring finders.
+- **360° Orientation Invariance:** The decoder sweeps 360° in `1.8°` steps to find the rotation angle `θ_0` that minimizes the aggregate luminance across all ring finders.
 
 ---
 
 ## 4. Binary Framing & Header Structure
 
-All data bits are streamed from Ring 0 to Ring $k-1$, and within each ring from Slot 1 to Slot $n_i - 1$:
+All data bits are streamed from Ring 0 to Ring `k - 1`, and within each ring from Slot 1 to Slot `n_i - 1`:
 
 ```
 +-------------------+-----------------------------+-------------------+
@@ -87,14 +91,16 @@ All data bits are streamed from Ring 0 to Ring $k-1$, and within each ring from 
 
 ### 16-Bit Length Header:
 - Stored in big-endian bit order: `Bits[0]` (MSB) to `Bits[15]` (LSB).
-- Value represents the byte count $L$ of the payload string.
+- Value represents the byte count `L` of the payload string.
 
 ### Payload Data:
 - Encoded as raw UTF-8 octets, MSB first.
 
 ### Checksum Byte:
 - 8-bit checksum evaluated as the modulo-256 sum of all payload octets:
-  $$\text{chk} = \left(\sum_{q=0}^{L-1} \text{byte}_q\right) \pmod{256}$$
+  ```text
+  chk = (Σ byte_q) mod 256  [for q = 0 to L - 1]
+  ```
 
 ---
 
@@ -103,15 +109,24 @@ All data bits are streamed from Ring 0 to Ring $k-1$, and within each ring from 
 When surface scratches, camera noise, or glare cause bit flips:
 
 1. **Syndrome Delta Evaluation:**
-   $$\Delta = (\text{chk} - \text{sum}) \pmod{256}$$
+   ```text
+   Δ = (chk - sum) mod 256
+   ```
 2. **Confidence-Sorted Bit Pool:**
-   For every bit $i$, its distance from the Otsu threshold defines its confidence:
-   $$\text{conf}_i = |v_i - \text{threshold}_{ri}|$$
+   For every bit `i`, its distance from the Otsu threshold defines its confidence:
+   ```text
+   conf_i = |v_i - threshold_ri|
+   ```
    Bits with lowest confidence (nearest to the decision boundary) are prioritized.
 3. **1-Bit Repair:**
-   A bit flip at position $b$ causes a change of $\pm 2^b$. If an ambiguous bit satisfies:
-   $$\text{bit}_i = 0 \implies \Delta = 2^b \quad \text{or} \quad \text{bit}_i = 1 \implies \Delta = -2^b \pmod{256}$$
+   A bit flip at position `b` causes a change of `±2^b`. If an ambiguous bit satisfies:
+   ```text
+   bit_i == 0  ⟹  Δ = 2^b
+   bit_i == 1  ⟹  Δ = -2^b (mod 256)
+   ```
    the bit is repaired.
 4. **2-Bit Repair (Aggressive Mode):**
-   Evaluates pairs of weak bits $(i_a, i_b)$ whose combined weights satisfy:
-   $$(\pm 2^{b_a} \pm 2^{b_b}) \equiv \Delta \pmod{256}$$
+   Evaluates pairs of weak bits `(i_a, i_b)` whose combined weights satisfy:
+   ```text
+   (±2^(b_a) ± 2^(b_b)) ≡ Δ (mod 256)
+   ```

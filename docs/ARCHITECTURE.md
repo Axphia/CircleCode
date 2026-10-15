@@ -68,18 +68,37 @@ Raw RGBA buffers are converted into a flattened `Float32Array` of luminance valu
 
 ### Stage 2: Subpixel Center & Scale Localization
 The black circular center badge (`r = 42`) provides an anchor that is invariant to orientation.
-- The detector sweeps an annular contrast operator:
-  $$\text{Score} = \text{Mean}_{\text{out}}(1.10 \times r) - \text{Mean}_{\text{in}}(0.82 \times r)$$
-- Pixels inside the badge are extracted, and first-order spatial moments compute the refined center:
-  $$c_x = \frac{\sum x_i}{N}, \quad c_y = \frac{\sum y_i}{N}, \quad r_{\text{refined}} = \sqrt{\frac{N}{\pi}}$$
+
+- **Annular contrast operator:**
+  ```text
+  Score = Mean_out(1.10 × r) - Mean_in(0.82 × r)
+  ```
+- **First-order spatial moments for subpixel center refinement:**
+  ```text
+  c_x = (Σ x_i) / N
+  c_y = (Σ y_i) / N
+  r_refined = √(N / π)
+  ```
 
 ### Stage 3: Perspective & Tilt Compensation
 When captured at an oblique angle, circular codes distort into ellipses.
-The sampling engine applies inverse coordinate transformation:
-$$\begin{pmatrix} u \\ v \end{pmatrix} = \begin{pmatrix} \cos\phi & \sin\phi \\ -\sin\phi & \cos\phi \end{pmatrix} \begin{pmatrix} x_r \\ y_r \end{pmatrix}$$
-$$v' = v \times \text{aspect}$$
-$$\begin{pmatrix} x_r' \\ y_r' \end{pmatrix} = \begin{pmatrix} \cos\phi & -\sin\phi \\ \sin\phi & \cos\phi \end{pmatrix} \begin{pmatrix} u \\ v' \end{pmatrix}$$
-where $\text{aspect} \in [0.84, 0.91]$ and $\phi \in [0, \pi]$.
+The sampling engine applies an inverse coordinate transformation:
+
+1. **Rotate to ellipse axis:**
+   ```text
+   u =  cos(φ) · x_r + sin(φ) · y_r
+   v = -sin(φ) · x_r + cos(φ) · y_r
+   ```
+2. **Scale along the minor axis:**
+   ```text
+   v' = v × aspect
+   ```
+3. **Rotate back to code coordinates:**
+   ```text
+   x_r' = cos(φ) · u - sin(φ) · v'
+   y_r' = sin(φ) · u + cos(φ) · v'
+   ```
+   *where `aspect ∈ [0.84, 0.91]` and `φ ∈ [0, π]`.*
 
 ---
 
