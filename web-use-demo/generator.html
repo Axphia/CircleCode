@@ -509,7 +509,7 @@
     <div class="panel">
       <div class="header">
         <h1>Circle Code Generator</h1>
-        <p>สร้างบาร์โค้ดทรงกลมความแม่นยำสูง รองรับการสแกน 360° รอบทิศทาง — รวดเร็ว แม่นยำ และสวยงาม</p>
+        <p>Generate high-precision circular barcodes with 360° scannability — fast, accurate, and elegant.</p>
       </div>
 
       <div class="apple-badge">
@@ -522,16 +522,16 @@
         <textarea id="payload" placeholder="e.g. user-12345 or https://example.com">user-12345</textarea>
       </div>
 
-      <!-- Barcode Style: Circle (ดั้งเดิม) vs LonCle (เส้นสั้น-ยาว) -->
+      <!-- Barcode Style: Circle (Classic) vs LonCle (Connected Arcs) -->
       <div class="form-group">
-        <label>โหมดบาร์โค้ด (Barcode Mode)</label>
+        <label>Barcode Mode</label>
         <div class="segmented-control" id="arcStyleSeg">
-          <button type="button" class="seg-btn" data-style="circle">Circle (ดั้งเดิม)</button>
-          <button type="button" class="seg-btn active" data-style="loncle">LonCle (เส้นสั้น-ยาว)</button>
+          <button type="button" class="seg-btn" data-style="circle">Circle (Classic)</button>
+          <button type="button" class="seg-btn active" data-style="loncle">LonCle (Connected)</button>
         </div>
         <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 6px; line-height: 1.4;">
-          <strong>Circle:</strong> โหมดดั้งเดิม เส้นประแคปซูลแยกแต่ละบิต (Discrete Dashes)<br>
-          <strong>LonCle:</strong> โหมดเส้นโค้งสั้น-ยาวต่อเนื่องตามชุดข้อมูล (Connected Sweeping Arcs)
+          <strong>Circle:</strong> Classic mode with discrete dashed pills for each individual bit.<br>
+          <strong>LonCle:</strong> Connected mode with sweeping variable-length arcs for contiguous 1-bits.
         </div>
       </div>
 
@@ -807,7 +807,7 @@ const model = buildModel(${JSON.stringify(payload)}, {
 });
 
 renderToCanvas(model, canvas.getContext('2d'), 400, {
-  style: ${JSON.stringify(o.style || 'loncle')}, // 'circle' (ดั้งเดิม) หรือ 'loncle' (เส้นสั้น-ยาว)
+  style: ${JSON.stringify(o.style || 'loncle')}, // 'circle' (classic) or 'loncle' (connected)
   dark: ${JSON.stringify(o.dark)},
   light: ${JSON.stringify(o.light)},
   center: ${JSON.stringify(o.centerMode === 'text' ? o.centerText : o.centerMode)}

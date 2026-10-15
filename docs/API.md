@@ -98,8 +98,8 @@ Renders a `CircleCodeModel` to a clean, scalable SVG string.
 #### Parameters:
 - `model` (`CircleCodeModel`): Object returned by `buildModel`.
   - `style` (`'circle' | 'loncle'`, default: `'circle'`):
-    - `'circle'`: โหมดดั้งเดิม แท่งขีดแคปซูลแยกชิ้นเดี่ยว (Classic discrete dashed pills).
-    - `'loncle'`: โหมด LonCle เส้นโค้งสั้น-ยาวต่อเนื่อง เชื่อมต่อบิต 1 ที่ติดกัน (Connected variable-length sweeping arcs).
+    - `'circle'`: Classic discrete mode with individual dashed pills for each bit.
+    - `'loncle'`: LonCle mode with continuous sweeping variable-length arcs merging contiguous 1-bits.
   - `loncle` (`boolean`, optional): Convenience shortcut for `style: 'loncle'`.
   - `dark` (`string`, default: `'#000000'`): Hex or CSS color for active bits (1) and center badge.
   - `light` (`string`, default: `'#8e8e93'`): Hex or CSS color for inactive bits (0).
