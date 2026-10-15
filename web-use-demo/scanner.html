@@ -471,12 +471,16 @@
       <div class="card">
         <div class="small">PREVIEW + SAMPLE OVERLAY (green=1, yellow=0)</div>
         <canvas id="view" width="600" height="600"></canvas>
-        <div class="mono" id="out">result: no image yet</div>
-        <div class="mono" id="dbg">debug: —</div  <!-- Include official CircleCode bundle from CDN (with local fallback) -->
+        <div class="mono" id="dbg">debug: —</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Include official CircleCode bundle from CDN (with local fallback) -->
   <script src="https://cdn.jsdelivr.net/npm/circlecode@1.1.1/dist/circlecode.min.js"></script>
   <script>
     if (!window.CircleCode) {
-      document.write('<script src="../dist/circlecode.min.js"><\\/script>');
+      document.write('<script src="../dist/circlecode.min.js"><\/script>');
     }
   </script>
 

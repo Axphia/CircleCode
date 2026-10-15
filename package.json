@@ -15,7 +15,8 @@
     "circle-scanner.js",
     "scanner-worker.js",
     "dist",
-    "wasm"
+    "wasm",
+    "native/rust/pkg"
   ],
   "exports": {
     ".": {

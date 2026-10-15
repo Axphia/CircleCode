@@ -295,7 +295,7 @@
   <script src="../dist/circlecode.min.js"></script>
   <script>
     if (!window.CircleCode) {
-      document.write('<script src="https://cdn.jsdelivr.net/npm/circlecode@1.1.0/dist/circlecode.min.js"><\/script>');
+      document.write('<script src="https://cdn.jsdelivr.net/npm/circlecode@1.1.1/dist/circlecode.min.js"><\/script>');
     }
   </script>
 </head>
@@ -309,7 +309,7 @@
       </svg>
       CircleCode Demo
     </a>
-    <div class="cdn-badge">📦 circlecode@1.1.0 via CDN</div>
+    <div class="cdn-badge">📦 circlecode@1.1.1 via CDN</div>
   </div>
 
   <div class="container">
@@ -420,8 +420,14 @@
     // 1. Initialize WASM module with modern object parameter
     async function initWasm() {
       try {
-        const wasmModule = await import('../native/rust/pkg/circlecode_core.js');
-        await wasmModule.default({ module_or_path: '../native/rust/pkg/circlecode_core_bg.wasm' });
+        let wasmModule;
+        try {
+          wasmModule = await import('../wasm/circlecode_core.js');
+          await wasmModule.default({ module_or_path: '../wasm/circlecode_core_bg.wasm' });
+        } catch (localErr) {
+          wasmModule = await import('https://cdn.jsdelivr.net/npm/circlecode@1.1.1/wasm/circlecode_core.js');
+          await wasmModule.default({ module_or_path: 'https://cdn.jsdelivr.net/npm/circlecode@1.1.1/wasm/circlecode_core_bg.wasm' });
+        }
         wasmEngine = wasmModule;
         wasmReady = true;
       } catch (e) {
@@ -564,10 +570,10 @@
 
 <!-- 3. Load & Run Rust WebAssembly Scanner Engine -->
 <script type="module">
-  import init, { scan_frame_wasm } from 'https://cdn.jsdelivr.net/npm/circlecode@1.1.1/native/rust/pkg/circlecode_core.js';
+  import init, { scan_frame_wasm } from 'https://cdn.jsdelivr.net/npm/circlecode@1.1.1/wasm/circlecode_core.js';
 
   // Initialize WebAssembly linear memory module
-  await init({ module_or_path: 'https://cdn.jsdelivr.net/npm/circlecode@1.1.1/native/rust/pkg/circlecode_core_bg.wasm' });
+  await init({ module_or_path: 'https://cdn.jsdelivr.net/npm/circlecode@1.1.1/wasm/circlecode_core_bg.wasm' });
 
   // Fast zero-copy decode directly from canvas ImageData
   const canvas = document.getElementById('circlecode-canvas');
