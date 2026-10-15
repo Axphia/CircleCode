@@ -1,7 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export function scan_frame_wasm(rgba: Uint8Array, width: number, height: number, _aggressive: boolean): any;
+export function scan_frame_wasm(rgba: Uint8Array, width: number, height: number, aggressive: boolean): any;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 

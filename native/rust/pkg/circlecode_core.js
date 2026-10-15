@@ -4,13 +4,13 @@
  * @param {Uint8Array} rgba
  * @param {number} width
  * @param {number} height
- * @param {boolean} _aggressive
+ * @param {boolean} aggressive
  * @returns {any}
  */
-export function scan_frame_wasm(rgba, width, height, _aggressive) {
+export function scan_frame_wasm(rgba, width, height, aggressive) {
     const ptr0 = passArray8ToWasm0(rgba, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.scan_frame_wasm(ptr0, len0, width, height, _aggressive);
+    const ret = wasm.scan_frame_wasm(ptr0, len0, width, height, aggressive);
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }
@@ -37,8 +37,15 @@ function __wbg_get_imports() {
             const ret = new Object();
             return ret;
         },
+        __wbg_new_ee2291f50781bf1d: function() {
+            const ret = new Array();
+            return ret;
+        },
         __wbg_set_6be42768c690e380: function(arg0, arg1, arg2) {
             arg0[arg1] = arg2;
+        },
+        __wbg_set_bea140a88be9b277: function(arg0, arg1, arg2) {
+            arg0[arg1 >>> 0] = arg2;
         },
         __wbindgen_generic_0000000000000001: function(arg0) {
             // Cast intrinsic for `F64 -> Externref`.

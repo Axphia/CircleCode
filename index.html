@@ -94,7 +94,7 @@
     margin: 0 auto;
     padding: 0 20px;
   }
-  @media(min-width:640px) { .cards { grid-template-columns: 1fr 1fr; } }
+  @media(min-width:640px) { .cards { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); max-width: 940px; } }
 
   .card {
     background: var(--card);
@@ -203,10 +203,21 @@
       <div class="card-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
       </div>
-      <h2>Scanner</h2>
-      <p>สแกนถอดรหัสผ่านกล้องสดหรืออัปโหลดรูปภาพ รองรับการหมุนรอบทิศและกล้องหน้า พร้อมระบบแก้ไขความคลาดเคลื่อน</p>
+      <h2>JS Scanner</h2>
+      <p>สแกนถอดรหัสผ่านกล้องสดหรืออัปโหลดรูปภาพ รองรับ Web Worker 60 FPS ไร้ Dependencies</p>
     </div>
     <div class="card-link">เปิดใช้งาน Scanner →</div>
+  </a>
+
+  <a class="card" href="scanner-wasm.html">
+    <div>
+      <div class="card-icon" style="background: rgba(48, 209, 88, 0.1);">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="#1a9e38"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <h2>WASM Scanner</h2>
+      <p>สแกนเร็วระดับ Native ด้วย Rust WebAssembly ถอดรหัสระดับ ~3ms ต่อเฟรม เหมาะสำหรับ Production</p>
+    </div>
+    <div class="card-link" style="color: #1a9e38;">เปิดใช้งาน WASM Scanner ⚡ →</div>
   </a>
 </div>
 
