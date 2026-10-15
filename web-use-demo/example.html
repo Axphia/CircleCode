@@ -417,11 +417,11 @@
     const cv = document.getElementById('cv');
     const ctx = cv.getContext('2d');
 
-    // 1. Initialize WASM module
+    // 1. Initialize WASM module with modern object parameter
     async function initWasm() {
       try {
         const wasmModule = await import('../native/rust/pkg/circlecode_core.js');
-        await wasmModule.default('../native/rust/pkg/circlecode_core_bg.wasm');
+        await wasmModule.default({ module_or_path: '../native/rust/pkg/circlecode_core_bg.wasm' });
         wasmEngine = wasmModule;
         wasmReady = true;
       } catch (e) {
@@ -429,6 +429,18 @@
       }
     }
     initWasm();
+
+    // Helper: auto-detect minimum rings required to hold payload
+    function getRequiredRings(payloadBytesLen, density = 0.35) {
+      const needBits = 16 + payloadBytesLen * 8 + 8;
+      const { radii, slotCount } = window.CircleCode;
+      for (let k = 4; k <= 14; k++) {
+        const rs = radii(k);
+        const cap = rs.reduce((acc, r) => acc + (slotCount(r, density) - 1), 0);
+        if (cap >= needBits) return k;
+      }
+      return 14;
+    }
 
     // 2. Preset color handler
     window.applyPreset = (dark, light) => {
@@ -466,8 +478,19 @@
       // Access from window.CircleCode (CDN loaded)
       const { buildModel, renderToCanvas, scanImageData } = window.CircleCode;
 
-      currentModel = buildModel(payload, { rings: 5, density: 0.35 });
-      document.getElementById('capVal').textContent = currentModel.used + ' / ' + currentModel.cap + ' B';
+      // Automatically compute required ring count so long URLs/text never exceed capacity!
+      const bytesLen = new TextEncoder().encode(payload).length;
+      const rings = getRequiredRings(bytesLen, 0.35);
+
+      try {
+        currentModel = buildModel(payload, { rings, density: 0.35 });
+      } catch (err) {
+        document.getElementById('statusBadge').className = 'status-badge status-err';
+        document.getElementById('statusBadge').textContent = err.message;
+        return;
+      }
+
+      document.getElementById('capVal').textContent = currentModel.used + ' / ' + currentModel.cap + ' B (' + rings + ' Rings)';
 
       // Render to 2D Canvas
       renderToCanvas(currentModel, ctx, 400, { dark, light, center });
@@ -485,9 +508,9 @@
           statusBadge.textContent = 'WASM Loading...';
           return;
         }
-        engineVal.textContent = 'Rust WASM';
+        const scanFn = wasmEngine.scan_frame_wasm || wasmEngine.scan_frame;
         const t0 = performance.now();
-        const res = wasmEngine.scan_frame(imgData.data, 400, 400, true);
+        const res = scanFn(imgData.data, 400, 400, true);
         const t1 = performance.now();
         const elapsed = (t1 - t0).toFixed(2);
 
@@ -516,10 +539,10 @@
         }
       }
 
-      updateCodePreview(payload, dark, light, center, currentEngine);
+      updateCodePreview(payload, dark, light, center, currentEngine, rings);
     };
 
-    function updateCodePreview(payload, dark, light, center, eng) {
+    function updateCodePreview(payload, dark, light, center, eng, rings = 5) {
       const code = `<!-- 1. Include CircleCode via CDN -->
 <script src="https://cdn.jsdelivr.net/npm/circlecode@1.1.0/dist/circlecode.min.js"><\\/script>
 
@@ -528,8 +551,8 @@
 <script>
   const { buildModel, renderToCanvas, scanCanvas } = window.CircleCode;
 
-  // 1. Generate Model
-  const model = buildModel('${payload}', { rings: 5, density: 0.35 });
+  // 1. Generate Model (${rings} rings tailored for this payload length)
+  const model = buildModel('${payload}', { rings: ${rings}, density: 0.35 });
 
   // 2. Render to Canvas with custom colors
   const canvas = document.getElementById('circlecode-canvas');
