@@ -36,16 +36,17 @@ const umdBundle = `/**
  * (c) 2026 Axphia Project. MIT License.
  */
 (function (root, factory) {
+  var exports = factory();
   if (typeof define === 'function' && define.amd) {
-    define([], factory);
+    define([], function () { return exports; });
   } else if (typeof module === 'object' && module.exports) {
-    module.exports = factory();
-  } else {
-    var exports = factory();
+    module.exports = exports;
+  }
+  if (typeof root !== 'undefined' && root) {
     root.CircleCode = exports;
     root.CircleScanner = exports.CircleScanner;
   }
-}(typeof self !== 'undefined' ? self : this, function () {
+}(typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : (typeof self !== 'undefined' ? self : this)), function () {
   'use strict';
 
   // --- Encoder ---

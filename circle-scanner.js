@@ -707,6 +707,45 @@ export function scanImageData(imageData, options = {}) {
   const w = imageData.width;
   const h = imageData.height;
 
+  // Auto-downsample ultra high-res images (> 600px) directly in pure JS (for 10x faster execution and robust decoding)
+  const maxDim = options.maxScanDimension || 600;
+  if ((w > maxDim || h > maxDim) && imageData.data) {
+    const sc = Math.min(maxDim / w, maxDim / h);
+    const targetW = Math.round(w * sc);
+    const targetH = Math.round(h * sc);
+    const downData = new Uint8ClampedArray(targetW * targetH * 4);
+    const srcData = imageData.data;
+    const invSc = 1 / sc;
+    for (let dy = 0; dy < targetH; dy++) {
+      const sy = Math.min(h - 1, Math.round(dy * invSc));
+      const rowOffset = dy * targetW * 4;
+      const srcRowOffset = sy * w * 4;
+      for (let dx = 0; dx < targetW; dx++) {
+        const sx = Math.min(w - 1, Math.round(dx * invSc));
+        const dstIdx = rowOffset + dx * 4;
+        const srcIdx = srcRowOffset + sx * 4;
+        downData[dstIdx] = srcData[srcIdx];
+        downData[dstIdx + 1] = srcData[srcIdx + 1];
+        downData[dstIdx + 2] = srcData[srcIdx + 2];
+        downData[dstIdx + 3] = srcData[srcIdx + 3];
+      }
+    }
+    const downOpts = { ...options };
+    if (options.cx !== undefined) downOpts.cx = options.cx * sc;
+    if (options.cy !== undefined) downOpts.cy = options.cy * sc;
+    if (options.scale !== undefined) downOpts.scale = options.scale * sc;
+    const res = scanImageData({ data: downData, width: targetW, height: targetH }, downOpts);
+    if (res && res.ok && res.cx !== undefined) {
+      return {
+        ...res,
+        cx: res.cx / sc,
+        cy: res.cy / sc,
+        scale: res.scale / sc
+      };
+    }
+    return res;
+  }
+
   // 1. Primary pass with standard luminance
   const gLum = toGrayscale(imageData, 'luminance');
   let res = _scanGrayscaleBuffer(gLum, w, h, options);
