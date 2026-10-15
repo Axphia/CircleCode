@@ -463,30 +463,152 @@
         Decode across full 360° orientations with subpixel accuracy directly in the client.
       </p>
 
-      <!-- Instant Teleport Buttons -->
+      <!-- Hero Quick Navigation -->
       <div class="tp-actions">
-        <a href="web-use-demo/scanner-wasm.html" class="tp-btn tp-btn-wasm" id="tpWasmBtn">
-          ⚡ Teleport to WASM Scanner (Real-time Camera)
+        <a href="#howItWorks" class="tp-btn tp-btn-secondary">
+          🔍 How It Works ↓
         </a>
-        <a href="web-use-demo/scanner.html" class="tp-btn tp-btn-primary" id="tpJsBtn">
-          🐢 Teleport to JS Scanner (Image Uploads)
+        <a href="#engineCompare" class="tp-btn tp-btn-secondary">
+          ⚖️ Compare Engines ↓
         </a>
-        <a href="web-use-demo/generator.html" class="tp-btn tp-btn-secondary" id="tpGenBtn">
-          🎨 Teleport to Generator
-        </a>
-        <a href="web-use-demo/example.html" class="tp-btn tp-btn-secondary" id="tpShowcaseBtn">
-          🧪 Comparison & CDN Hub
+        <a href="#demosLaunchpad" class="tp-btn tp-btn-primary">
+          🚀 Teleport to Demos ↓
         </a>
       </div>
-      <div style="font-size: 12.5px; color: var(--text-sec);">
+      <div style="font-size: 12.5px; color: var(--text-sec); margin-top: 14px;">
         Zero installation required to test. All demos run client-side in your browser.
       </div>
     </section>
 
-    <!-- Teleport Launchpad Cards -->
-    <section>
-      <h2 class="section-title">🚀 Web Demos Launchpad</h2>
-      <p class="section-desc">Click any card to teleport directly into the interactive apps in <code>web-use-demo/</code>:</p>
+    <!-- How It Works Deep Dive -->
+    <section class="how-box" id="howItWorks">
+      <h2 class="section-title">🔍 How CircleCode Works</h2>
+      <p class="section-desc">CircleCode combines circular geometry with subpixel computer vision:</p>
+
+      <div class="step-grid">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <h4>Concentric Arc Geometry</h4>
+          <p>Data bits are distributed across concentric rings (4 to 14 rings). Each ring has a calculated radius, slot count, and fixed angular dash spacing ($0.35$ density).</p>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <h4>Finder Spoke & Centroid</h4>
+          <p>A reference dark finder spoke at $0^\circ$ and a dark center badge ($R=42$) anchor the barcode in 2D space, allowing 360° omnidirectional detection.</p>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <h4>Perspective & Tilt Recovery</h4>
+          <p>When photographed from an angle, circles distort into ellipses. The decoder computes spatial moments to normalize perspective tilt before reading bits.</p>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <h4>Checksum & Error Recovery</h4>
+          <p>Every payload includes a 16-bit header, length byte, and Modulo-256 checksum with aggressive 1–3 bit recovery for low-contrast or partially shadowed codes.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Engine Selection: Pure JS vs Native Rust WASM -->
+    <section class="compare-box" id="engineCompare">
+      <h2 class="section-title">⚖️ Which Engine Should You Use?</h2>
+      <p class="section-desc">Choose the right engine for your application's requirements:</p>
+
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>🐢 Pure JavaScript (<code>circlecode</code>)</th>
+            <th>⚡ Native Rust WASM (<code>circlecode/wasm</code>)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>Best Use Case</b></td>
+            <td><span class="compare-badge cb-js">Web Image Uploads & Forms</span></td>
+            <td><span class="compare-badge cb-wasm">Real-Time Mobile Camera Scanning</span></td>
+          </tr>
+          <tr>
+            <td><b>Decoding Latency</b></td>
+            <td>~25 ms – 50 ms</td>
+            <td><b>~2 ms – 4 ms</b> (15x faster)</td>
+          </tr>
+          <tr>
+            <td><b>External Dependencies</b></td>
+            <td><b>Zero</b> (runs everywhere out-of-the-box)</td>
+            <td>Requires <code>circlecode_core.wasm</code> binary</td>
+          </tr>
+          <tr>
+            <td><b>CPU & Battery Impact</b></td>
+            <td>High on continuous 60 FPS video loops</td>
+            <td><b>Minimal (&lt;10% CPU)</b>, prevents phone heating</td>
+          </tr>
+          <tr>
+            <td><b>Ideal Environment</b></td>
+            <td>Drag & drop file upload, Node.js, static files</td>
+            <td>Live smartphone camera feed, kiosks, PWAs</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Quick Installation -->
+    <section class="how-box" id="quickInstall">
+      <h2 class="section-title">📦 Quick Installation</h2>
+      <p class="section-desc">Install from npm or include the standalone UMD bundle:</p>
+
+      <div class="code-box">
+<span class="code-comment"># Install from NPM Registry</span>
+npm install circlecode
+
+<span class="code-comment"># Or install from GitHub Packages (Axphia scope)</span>
+npm install @axphia/circlecode --registry=https://npm.pkg.github.com
+      </div>
+
+      <div class="code-box" style="margin-top: 14px;">
+<span class="code-comment">// In your JavaScript / TypeScript application</span>
+<span class="code-kw">import</span> { buildModel, renderToSVG, scanCanvas } <span class="code-kw">from</span> <span class="code-str">'circlecode'</span>;
+
+<span class="code-comment">// 1. Generate circular barcode SVG</span>
+<span class="code-kw">const</span> model = <span class="code-fn">buildModel</span>(<span class="code-str">'Table-24'</span>);
+<span class="code-kw">const</span> svg = <span class="code-fn">renderToSVG</span>(model, { dark: <span class="code-str">'#0071e3'</span>, light: <span class="code-str">'#ffffff'</span> });
+
+<span class="code-comment">// 2. Decode from an HTML canvas</span>
+<span class="code-kw">const</span> result = <span class="code-fn">scanCanvas</span>(canvas);
+<span class="code-kw">if</span> (result.ok) {
+  console.log(<span class="code-str">'Decoded payload:'</span>, result.text);
+}
+      </div>
+    </section>
+
+    <!-- Teleport Launchpad Cards (MOVED TO BOTTOM) -->
+    <section id="demosLaunchpad" style="margin-bottom: 64px;">
+      <div style="text-align: center; margin-bottom: 28px;">
+        <div class="badge-pill">🚀 Live Interactive Showcase</div>
+        <h2 class="section-title">Teleport to Web Demos</h2>
+        <p class="section-desc" style="max-width: 600px; margin: 0 auto 20px;">
+          Experience CircleCode live in action. Select a tool to teleport directly into the <code>web-use-demo/</code> environment:
+        </p>
+
+        <!-- Instant Teleport Buttons -->
+        <div class="tp-actions" style="margin-bottom: 30px;">
+          <a href="web-use-demo/scanner-wasm.html" class="tp-btn tp-btn-wasm" id="tpWasmBtn">
+            ⚡ WASM Camera Scanner
+          </a>
+          <a href="web-use-demo/scanner.html" class="tp-btn tp-btn-primary" id="tpJsBtn">
+            🐢 JS Upload Scanner
+          </a>
+          <a href="web-use-demo/generator.html" class="tp-btn tp-btn-secondary" id="tpGenBtn">
+            🎨 Barcode Generator
+          </a>
+          <a href="web-use-demo/example.html" class="tp-btn tp-btn-secondary" id="tpShowcaseBtn">
+            🧪 CDN & Comparison Hub
+          </a>
+        </div>
+      </div>
 
       <div class="launchpad-grid">
         <!-- Card 1: WASM Scanner -->
@@ -551,110 +673,6 @@
           </div>
           <span class="lp-link">Open Comparison Hub →</span>
         </a>
-      </div>
-    </section>
-
-    <!-- How It Works Deep Dive -->
-    <section class="how-box">
-      <h2 class="section-title">🔍 How CircleCode Works</h2>
-      <p class="section-desc">CircleCode combines circular geometry with subpixel computer vision:</p>
-
-      <div class="step-grid">
-        <div class="step-item">
-          <div class="step-num">1</div>
-          <h4>Concentric Arc Geometry</h4>
-          <p>Data bits are distributed across concentric rings (4 to 14 rings). Each ring has a calculated radius, slot count, and fixed angular dash spacing ($0.35$ density).</p>
-        </div>
-
-        <div class="step-item">
-          <div class="step-num">2</div>
-          <h4>Finder Spoke & Centroid</h4>
-          <p>A reference dark finder spoke at $0^\circ$ and a dark center badge ($R=42$) anchor the barcode in 2D space, allowing 360° omnidirectional detection.</p>
-        </div>
-
-        <div class="step-item">
-          <div class="step-num">3</div>
-          <h4>Perspective & Tilt Recovery</h4>
-          <p>When photographed from an angle, circles distort into ellipses. The decoder computes spatial moments to normalize perspective tilt before reading bits.</p>
-        </div>
-
-        <div class="step-item">
-          <div class="step-num">4</div>
-          <h4>Checksum & Error Recovery</h4>
-          <p>Every payload includes a 16-bit header, length byte, and Modulo-256 checksum with aggressive 1–3 bit recovery for low-contrast or partially shadowed codes.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Engine Selection: Pure JS vs Native Rust WASM -->
-    <section class="compare-box">
-      <h2 class="section-title">⚖️ Which Engine Should You Use?</h2>
-      <p class="section-desc">Choose the right engine for your application's requirements:</p>
-
-      <table class="compare-table">
-        <thead>
-          <tr>
-            <th>Feature</th>
-            <th>🐢 Pure JavaScript (<code>circlecode</code>)</th>
-            <th>⚡ Native Rust WASM (<code>circlecode/wasm</code>)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><b>Best Use Case</b></td>
-            <td><span class="compare-badge cb-js">Web Image Uploads & Forms</span></td>
-            <td><span class="compare-badge cb-wasm">Real-Time Mobile Camera Scanning</span></td>
-          </tr>
-          <tr>
-            <td><b>Decoding Latency</b></td>
-            <td>~25 ms – 50 ms</td>
-            <td><b>~2 ms – 4 ms</b> (15x faster)</td>
-          </tr>
-          <tr>
-            <td><b>External Dependencies</b></td>
-            <td><b>Zero</b> (runs everywhere out-of-the-box)</td>
-            <td>Requires <code>circlecode_core.wasm</code> binary</td>
-          </tr>
-          <tr>
-            <td><b>CPU & Battery Impact</b></td>
-            <td>High on continuous 60 FPS video loops</td>
-            <td><b>Minimal (&lt;10% CPU)</b>, prevents phone heating</td>
-          </tr>
-          <tr>
-            <td><b>Ideal Environment</b></td>
-            <td>Drag & drop file upload, Node.js, static files</td>
-            <td>Live smartphone camera feed, kiosks, PWAs</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <!-- Quick Installation -->
-    <section class="how-box">
-      <h2 class="section-title">📦 Quick Installation</h2>
-      <p class="section-desc">Install from npm or include the standalone UMD bundle:</p>
-
-      <div class="code-box">
-<span class="code-comment"># Install from NPM Registry</span>
-npm install circlecode
-
-<span class="code-comment"># Or install from GitHub Packages (Axphia scope)</span>
-npm install @axphia/circlecode --registry=https://npm.pkg.github.com
-      </div>
-
-      <div class="code-box" style="margin-top: 14px;">
-<span class="code-comment">// In your JavaScript / TypeScript application</span>
-<span class="code-kw">import</span> { buildModel, renderToSVG, scanCanvas } <span class="code-kw">from</span> <span class="code-str">'circlecode'</span>;
-
-<span class="code-comment">// 1. Generate circular barcode SVG</span>
-<span class="code-kw">const</span> model = <span class="code-fn">buildModel</span>(<span class="code-str">'Table-24'</span>);
-<span class="code-kw">const</span> svg = <span class="code-fn">renderToSVG</span>(model, { dark: <span class="code-str">'#0071e3'</span>, light: <span class="code-str">'#ffffff'</span> });
-
-<span class="code-comment">// 2. Decode from an HTML canvas</span>
-<span class="code-kw">const</span> result = <span class="code-fn">scanCanvas</span>(canvas);
-<span class="code-kw">if</span> (result.ok) {
-  console.log(<span class="code-str">'Decoded payload:'</span>, result.text);
-}
       </div>
     </section>
 
