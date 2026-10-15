@@ -300,7 +300,7 @@
   <script src="../dist/circlecode.min.js"></script>
   <script>
     if (!window.CircleCode) {
-      document.write('<script src="https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.5/dist/circlecode.min.js"><\/script>');
+      document.write('<script src="https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.6/dist/circlecode.min.js"><\/script>');
     }
   </script>
 </head>
@@ -314,7 +314,7 @@
       </svg>
       CircleCode Demo
     </a>
-    <div class="cdn-badge">@axphia/circlecode@1.1.5 via CDN</div>
+    <div class="cdn-badge">@axphia/circlecode@1.1.6 via CDN</div>
   </div>
 
   <div class="container">
@@ -442,8 +442,8 @@
           wasmModule = await import('../wasm/circlecode_core.js');
           await wasmModule.default({ module_or_path: '../wasm/circlecode_core_bg.wasm' });
         } catch (localErr) {
-          wasmModule = await import('https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.5/wasm/circlecode_core.js');
-          await wasmModule.default({ module_or_path: 'https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.5/wasm/circlecode_core_bg.wasm' });
+          wasmModule = await import('https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.6/wasm/circlecode_core.js');
+          await wasmModule.default({ module_or_path: 'https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.6/wasm/circlecode_core_bg.wasm' });
         }
         wasmEngine = wasmModule;
         wasmReady = true;
@@ -587,7 +587,7 @@
       let code = '';
       if (eng === 'wasm') {
         code = `<!-- 1. Include CircleCode via CDN for Rendering -->
-<script src="https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.5/dist/circlecode.min.js"><\\/script>
+<script src="https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.6/dist/circlecode.min.js"><\\/script>
 
 <canvas id="circlecode-canvas" width="400" height="400"></canvas>
 
@@ -607,10 +607,10 @@
 
 <!-- 3. Load & Run Rust WebAssembly Scanner Engine -->
 <script type="module">
-  import init, { scan_frame_wasm } from 'https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.5/wasm/circlecode_core.js';
+  import init, { scan_frame_wasm } from 'https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.6/wasm/circlecode_core.js';
 
   // Initialize WebAssembly linear memory module
-  await init({ module_or_path: 'https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.5/wasm/circlecode_core_bg.wasm' });
+  await init({ module_or_path: 'https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.6/wasm/circlecode_core_bg.wasm' });
 
   // Fast zero-copy decode directly from canvas ImageData
   const canvas = document.getElementById('circlecode-canvas');
@@ -624,7 +624,7 @@
 <\\/script>`;
       } else {
         code = `<!-- 1. Include CircleCode via CDN -->
-<script src="https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.5/dist/circlecode.min.js"><\\/script>
+<script src="https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.6/dist/circlecode.min.js"><\\/script>
 
 <canvas id="circlecode-canvas" width="400" height="400"></canvas>
 

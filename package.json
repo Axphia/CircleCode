@@ -1,6 +1,6 @@
 {
   "name": "@axphia/circlecode",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "High-performance, dependency-free circular barcode encoder & decoder with native WebAssembly acceleration for Browser and Node.js.",
   "type": "module",
   "main": "./index.cjs",

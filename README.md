@@ -11,7 +11,6 @@
     <a href="https://www.npmjs.com/package/circlecode"><img src="https://img.shields.io/npm/v/circlecode?color=0071e3&style=flat-square" alt="NPM Version" /></a>
     <a href="https://circlecode.js.org"><img src="https://img.shields.io/badge/website-circlecode.js.org-0071e3?style=flat-square" alt="Website" /></a>
     <a href="https://github.com/Axphia/CircleCode"><img src="https://img.shields.io/badge/github-Axphia%2FCircleCode-black?style=flat-square&logo=github" alt="GitHub" /></a>
-    [![](https://data.jsdelivr.com/v1/package/npm/@axphia/circlecode/badge)](https://www.jsdelivr.com/package/npm/@axphia/circlecode)
     <img src="https://img.shields.io/badge/dependencies-0-brightgreen?style=flat-square" alt="Zero Dependencies" />
     <img src="https://img.shields.io/badge/WASM-Rust_Accelerated-orange?style=flat-square" alt="Rust WASM" />
     <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License" />
@@ -102,7 +101,7 @@ Include directly via script tag in vanilla HTML:
 
 ```html
 <!-- Standalone UMD Bundle -->
-<script src="https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.5/dist/circlecode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.6/dist/circlecode.min.js"></script>
 <script>
   const { buildModel, renderToCanvas, renderToSVG, scanCanvas, CircleScanner } = window.CircleCode;
 </script>

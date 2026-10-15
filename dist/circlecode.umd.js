@@ -32,7 +32,7 @@
  * contexts/strings, so this file also imports cleanly in Node.
  */
 
-const VERSION = '1.1.5';
+const VERSION = '1.1.6';
 const DISC_R = 190;
 const R_START = 55;
 const R_END = 157;

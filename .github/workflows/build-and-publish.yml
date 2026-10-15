@@ -141,4 +141,10 @@ jobs:
           if [ -n "$NODE_AUTH_TOKEN" ]; then
             npm config set //registry.npmjs.org/:_authToken "$NODE_AUTH_TOKEN"
           fi
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          PUBLISHED_VERSION=$(npm view @axphia/circlecode version 2>/dev/null || echo "")
+          if [ "$CURRENT_VERSION" = "$PUBLISHED_VERSION" ]; then
+            echo "Version $CURRENT_VERSION is already published to npm registry. Skipping publish."
+            exit 0
+          fi
           npm publish --provenance --access public || npm publish --access public

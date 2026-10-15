@@ -558,8 +558,8 @@
           mod = await import('../wasm/circlecode_core.js');
           await mod.default({ module_or_path: '../wasm/circlecode_core_bg.wasm' });
         } catch (localErr) {
-          mod = await import('https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.5/wasm/circlecode_core.js');
-          await mod.default({ module_or_path: 'https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.5/wasm/circlecode_core_bg.wasm' });
+          mod = await import('https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.6/wasm/circlecode_core.js');
+          await mod.default({ module_or_path: 'https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.6/wasm/circlecode_core_bg.wasm' });
         }
         scan_frame_wasm = mod.scan_frame_wasm;
         wasmReady = true;
