@@ -1,0 +1,63 @@
+{
+  "name": "circlecode",
+  "version": "1.0.0",
+  "description": "High-performance, dependency-free circular barcode encoder & decoder for Browser and Node.js.",
+  "type": "module",
+  "main": "./index.cjs",
+  "module": "./index.js",
+  "browser": "./dist/circlecode.umd.js",
+  "types": "./index.d.ts",
+  "files": [
+    "index.js",
+    "index.cjs",
+    "index.d.ts",
+    "circle-code.js",
+    "circle-scanner.js",
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js",
+      "require": "./index.cjs"
+    },
+    "./encoder": {
+      "types": "./index.d.ts",
+      "import": "./circle-code.js",
+      "require": "./circle-code.js"
+    },
+    "./scanner": {
+      "types": "./index.d.ts",
+      "import": "./circle-scanner.js",
+      "require": "./circle-scanner.js"
+    }
+  },
+  "scripts": {
+    "test": "node test/test.js",
+    "build": "node scripts/build.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Axphia/CircleCode.git"
+  },
+  "keywords": [
+    "circlecode",
+    "barcode",
+    "circular-barcode",
+    "apple-pay",
+    "app-clips",
+    "qr-code",
+    "scanner",
+    "encoder",
+    "decoder",
+    "svg",
+    "canvas",
+    "webcam"
+  ],
+  "author": "Axphia Project",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Axphia/CircleCode/issues"
+  },
+  "homepage": "https://circlecode.js.org"
+}

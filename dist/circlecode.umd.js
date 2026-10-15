@@ -1,0 +1,1255 @@
+/**
+ * CircleCode v1.0.0 — Universal Module Definition (UMD)
+ * https://circlecode.js.org
+ * (c) 2026 Axphia Project. MIT License.
+ */
+(function (root, factory) {
+  if (typeof define === 'function' && define.amd) {
+    define([], factory);
+  } else if (typeof module === 'object' && module.exports) {
+    module.exports = factory();
+  } else {
+    var exports = factory();
+    root.CircleCode = exports;
+    root.CircleScanner = exports.CircleScanner;
+  }
+}(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  // --- Encoder ---
+  /* Circle Code codec v1 — dependency-free JavaScript library.
+ *
+ * Use as an ES module:
+ *   import { buildModel, renderToCanvas, parsePayloadBits } from 'https://circlecode.js.org/circle-code.js';
+ *   import { buildModel } from './circle-code.js';
+ *
+ * Or with a module script tag + window global:
+ *   <script type="module">import 'https://circlecode.js.org/circle-code.js';
+ *     const m = window.CircleCode.buildModel('hello', { rings: 5, density: 0.35 });</script>
+ *
+ * No DOM is touched at import time. Canvas/SVG renderers take explicit
+ * contexts/strings, so this file also imports cleanly in Node.
+ */
+
+const VERSION = '1.0.0';
+const DISC_R = 190;
+const R_START = 55;
+const R_END = 157;
+const CENTER_R = 42;
+const DASH_OFF = 0.28; // dash start, centered at 0.50 of slot
+const DASH_LEN = 0.44; // dash length, leaves generous gap for optical scanning
+
+function xmur3(str) {
+  let h = 1779033703 ^ str.length;
+  for (let i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; }
+  return function () { h = Math.imul(h ^ h >>> 16, 2246822507); h = Math.imul(h ^ h >>> 13, 3266489909); return (h ^= h >>> 16) >>> 0; };
+}
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function rngFrom(s) { return mulberry32(xmur3(s)()); }
+
+function radii(k) {
+  const out = [];
+  if (k === 1) return [110];
+  for (let i = 0; i < k; i++) out.push(R_START + (R_END - R_START) * i / (k - 1));
+  return out;
+}
+function slotCount(r, density) { return Math.max(12, Math.floor(r * density)); }
+
+// ---- encode ----
+function buildModel(payload, opts) {
+  const o = Object.assign({ mode: 'data', rings: 5, density: 0.35 }, opts);
+  const bytes = new TextEncoder().encode(payload);
+  const rs = radii(o.rings);
+  const ns = rs.map(r => slotCount(r, o.density));
+  const cap = ns.reduce((a, n) => a + (n - 1), 0);
+  let bits = new Array(cap).fill(0), used = 0, checksum = 0;
+  if (o.mode === 'data') {
+    bytes.forEach(b => checksum = (checksum + b) & 255);
+    const need = 16 + bytes.length * 8 + 8;
+    if (need > cap) throw new Error('Payload too long: need ' + need + ' bits, capacity ' + cap + '. Shorten text or add rings.');
+    const seq = [];
+    for (let i = 15; i >= 0; i--) seq.push((bytes.length >> i) & 1);
+    bytes.forEach(b => { for (let i = 7; i >= 0; i--) seq.push((b >> i) & 1); });
+    for (let i = 7; i >= 0; i--) seq.push((checksum >> i) & 1);
+    const rnd = rngFrom(payload + '#pad');
+    while (seq.length < cap) seq.push(rnd() > 0.5 ? 1 : 0);
+    bits = seq; used = need;
+  } else {
+    const rnd = rngFrom(payload + '#art');
+    bits = bits.map(() => rnd() > 0.5 ? 1 : 0);
+    used = cap;
+  }
+  const rings = []; let idx = 0;
+  rs.forEach((r, i) => {
+    const n = ns[i], slots = [];
+    for (let j = 0; j < n; j++) {
+      if (j === 0) slots.push({ finder: true, bit: 1 });
+      else slots.push({ finder: false, bit: bits[idx++] });
+    }
+    rings.push({ r, n, slots });
+  });
+  return { rings, cap, used, bytes: bytes.length, checksum, payload };
+}
+
+function drawCenterLogo(ctx, cx, cy, s, center, centerBg) {
+  if (!center) return;
+  const isWhiteBg = centerBg === '#ffffff';
+  const textFill = isWhiteBg ? '#000000' : '#ffffff';
+
+  // 1. Image object or image element
+  if (center instanceof Image || (typeof center === 'object' && center.img)) {
+    const img = center instanceof Image ? center : center.img;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, 39 * s, 0, Math.PI * 2);
+    ctx.clip();
+    const targetSize = 64 * s;
+    const aspect = (img.width || 1) / (img.height || 1);
+    let dw, dh;
+    if (aspect >= 1) { dw = targetSize; dh = targetSize / aspect; }
+    else { dh = targetSize; dw = targetSize * aspect; }
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, cx - dw / 2, cy - dh / 2, dw, dh);
+    ctx.restore();
+    return;
+  }
+
+  // 2. App Clip preset
+  if (center === 'appclip') {
+    ctx.save();
+    ctx.strokeStyle = textFill;
+    ctx.lineWidth = 2.2 * s;
+    ctx.setLineDash([4 * s, 3.5 * s]);
+    ctx.beginPath();
+    ctx.arc(cx, cy, 24 * s, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = textFill;
+    const r = 11 * s;
+    if (typeof ctx.roundRect === 'function') {
+      ctx.beginPath(); ctx.roundRect(cx - r, cy - r, r * 2, r * 2, 4 * s); ctx.fill();
+    } else {
+      ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+    }
+    ctx.fillStyle = isWhiteBg ? '#ffffff' : '#000000';
+    ctx.beginPath(); ctx.arc(cx, cy, 3.5 * s, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    return;
+  }
+
+  // 3. Apple Pay preset
+  if (center === 'Pay' || center === 'Pay' || center === 'apple') {
+    ctx.save();
+    ctx.fillStyle = textFill;
+    ctx.translate(cx - 23 * s, cy - 9 * s);
+    ctx.scale(1.15 * s, 1.15 * s);
+    if (typeof Path2D !== 'undefined') {
+      const apple = new Path2D('M15.22 8.44c-.03-2.03 1.66-3.02 1.74-3.07-.95-1.38-2.42-1.57-2.94-1.59-1.25-.13-2.45.74-3.09.74-.64 0-1.62-.72-2.67-.7-1.37.02-2.64.8-3.34 2.03-1.43 2.48-.37 6.16 1.02 8.17.68.98 1.49 2.08 2.55 2.04 1.02-.04 1.41-.66 2.65-.66 1.23 0 1.59.66 2.66.64 1.09-.02 1.78-.99 2.45-1.98.78-1.13 1.1-2.23 1.12-2.29-.02-.01-2.14-.82-2.15-3.33zM13.63 3.19c.56-.68.94-1.63.84-2.58-.81.03-1.8.54-2.38 1.22-.51.6-.96 1.56-.84 2.48.9.07 1.83-.45 2.38-1.12z');
+      ctx.fill(apple);
+    }
+    ctx.restore();
+    ctx.fillStyle = textFill;
+    ctx.font = 'bold ' + Math.round(18 * s) + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Pay', cx - 1 * s, cy + 1 * s);
+    return;
+  }
+
+  // 4. Custom text
+  const text = typeof center === 'object' ? (center.text || '') : String(center);
+  ctx.fillStyle = textFill;
+  ctx.font = 'bold ' + Math.round(19 * s) + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, cx, cy);
+}
+
+function renderToCanvas(model, ctx, size, style) {
+  const o = Object.assign({ dark: '#000000', light: '#8e8e93', center: 'Pay', centerBg: '#000000' }, style);
+  const s = size / 400, cx = size / 2, cy = size / 2;
+  ctx.clearRect(0, 0, size, size);
+  ctx.beginPath(); ctx.fillStyle = '#ffffff';
+  ctx.arc(cx, cy, DISC_R * s, 0, 7); ctx.fill();
+  model.rings.forEach((rg, ri) => {
+    const slot = Math.PI * 2 / rg.n;
+    rg.slots.forEach((sl, j) => {
+      const isBit1 = sl.finder || sl.bit === 1;
+      const col = isBit1 ? (o.dark || '#000000') : (o.light || '#8e8e93');
+      const a0 = (j / rg.n) * Math.PI * 2 + slot * DASH_OFF;
+      const a1 = a0 + slot * DASH_LEN;
+      ctx.beginPath();
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 7.5 * s;
+      ctx.lineCap = 'round';
+      ctx.arc(cx, cy, rg.r * s, a0, a1);
+      ctx.stroke();
+    });
+  });
+
+  if (o.centerBg !== 'transparent') {
+    ctx.beginPath(); ctx.fillStyle = o.centerBg || '#000000';
+    ctx.arc(cx, cy, CENTER_R * s, 0, 7); ctx.fill();
+  }
+  drawCenterLogo(ctx, cx, cy, s, o.center, o.centerBg);
+}
+
+function renderToSVG(model, style) {
+  const o = Object.assign({ dark: '#000000', light: '#8e8e93', center: 'Pay', centerBg: '#000000' }, style);
+  const cx = 200, cy = 200;
+  const pol = (r, a) => [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+  let h = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">';
+  h += '<circle cx="200" cy="200" r="190" fill="#ffffff"/>';
+  model.rings.forEach((rg, ri) => {
+    const slot = Math.PI * 2 / rg.n, w = 7.5;
+    rg.slots.forEach((sl, j) => {
+      const isBit1 = sl.finder || sl.bit === 1;
+      const col = isBit1 ? (o.dark || '#000000') : (o.light || '#8e8e93');
+      const a0 = (j / rg.n) * Math.PI * 2 + slot * DASH_OFF;
+      const a1 = a0 + slot * DASH_LEN;
+      const p0 = pol(rg.r, a0), p1 = pol(rg.r, a1);
+      h += '<path d="M ' + p0[0].toFixed(2) + ' ' + p0[1].toFixed(2) + ' A ' + rg.r + ' ' + rg.r +
+        ' 0 0 1 ' + p1[0].toFixed(2) + ' ' + p1[1].toFixed(2) + '" stroke="' + col +
+        '" stroke-width="' + w + '" stroke-linecap="round" fill="none"/>';
+    });
+  });
+
+  const centerBg = o.centerBg || '#000000';
+  if (centerBg !== 'transparent') {
+    h += '<circle cx="200" cy="200" r="42" fill="' + centerBg + '"/>';
+  }
+  const textFill = centerBg === '#ffffff' ? '#000000' : '#ffffff';
+
+  if (typeof o.center === 'object' && o.center.dataUrl) {
+    const targetSize = 64;
+    h += '<defs><clipPath id="centerClip"><circle cx="200" cy="200" r="39"/></clipPath></defs>';
+    h += '<image href="' + o.center.dataUrl + '" x="' + (200 - targetSize/2) + '" y="' + (200 - targetSize/2) + '" width="' + targetSize + '" height="' + targetSize + '" clip-path="url(#centerClip)" preserveAspectRatio="xMidYMid meet"/>';
+  } else if (o.center === 'appclip') {
+    h += '<circle cx="200" cy="200" r="24" stroke="' + textFill + '" stroke-width="2.2" stroke-dasharray="4 3.5" fill="none"/>';
+    h += '<rect x="189" y="189" width="22" height="22" rx="4" fill="' + textFill + '"/>';
+    h += '<circle cx="200" cy="200" r="3.5" fill="' + (centerBg === '#ffffff' ? '#ffffff' : '#000000') + '"/>';
+  } else if (o.center === 'Pay' || o.center === 'Pay' || o.center === 'apple') {
+    h += '<path transform="translate(177, 191) scale(1.15)" d="M15.22 8.44c-.03-2.03 1.66-3.02 1.74-3.07-.95-1.38-2.42-1.57-2.94-1.59-1.25-.13-2.45.74-3.09.74-.64 0-1.62-.72-2.67-.7-1.37.02-2.64.8-3.34 2.03-1.43 2.48-.37 6.16 1.02 8.17.68.98 1.49 2.08 2.55 2.04 1.02-.04 1.41-.66 2.65-.66 1.23 0 1.59.66 2.66.64 1.09-.02 1.78-.99 2.45-1.98.78-1.13 1.1-2.23 1.12-2.29-.02-.01-2.14-.82-2.15-3.33zM13.63 3.19c.56-.68.94-1.63.84-2.58-.81.03-1.8.54-2.38 1.22-.51.6-.96 1.56-.84 2.48.9.07 1.83-.45 2.38-1.12z" fill="' + textFill + '"/>';
+    h += '<text x="199" y="201" fill="' + textFill + '" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="18" font-weight="bold" text-anchor="start" dominant-baseline="central">Pay</text>';
+  } else {
+    const safe = String(o.center).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    h += '<text x="200" y="200" fill="' + textFill + '" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="19" font-weight="bold" text-anchor="middle" dominant-baseline="central">' + safe + '</text>';
+  }
+  h += '</svg>';
+  return h;
+}
+
+// ---- decode (bits level) ----
+function modelToBits(model) {
+  const flat = [];
+  model.rings.forEach(rg => rg.slots.forEach(sl => { if (!sl.finder) flat.push(sl.bit); }));
+  return flat;
+}
+function parseBitsAt(bits, len) {
+  if (len < 0 || len > 120 || 16 + len * 8 + 8 > bits.length) return { ok: false, reason: 'bad len' };
+  const bytes = [];
+  for (let q = 0; q < len; q++) { let b = 0; for (let i = 0; i < 8; i++) b = (b << 1) | bits[16 + q * 8 + i]; bytes.push(b); }
+  let chk = 0; for (let i = 0; i < 8; i++) chk = (chk << 1) | bits[16 + len * 8 + i];
+  let sum = 0; bytes.forEach(b => sum = (sum + b) & 255);
+  if (sum !== chk) return { ok: false, reason: 'checksum', needFix: true, len, bytes, chk, sum };
+  let text = '';
+  try { text = new TextDecoder('utf-8', { fatal: true }).decode(new Uint8Array(bytes)); }
+  catch (e) { return { ok: false, reason: 'utf8' }; }
+  if (/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/.test(text)) return { ok: false, reason: 'implausible text' };
+  return { ok: true, text, len, chk };
+}
+function parseBits(bits) {
+  return parsePayloadBits(bits);
+}
+function parsePayloadBits(bits) {
+  if (bits.length < 24) return { ok: false, reason: 'too few bits' };
+  let len = 0; for (let i = 0; i < 16; i++) len = (len << 1) | bits[i];
+  if (len < 0 || len > 120 || 16 + len * 8 + 8 > bits.length) return { ok: false, reason: 'bad header len=' + len };
+  return parseBitsAt(bits, len);
+}
+function repairLens(header16, capBits) {
+  const out = [], seen = {};
+  const max = Math.min(120, Math.floor((capBits - 24) / 8));
+  const push = L => { if (L >= 1 && L <= max && !seen[L]) { seen[L] = 1; out.push(L); } };
+  let base = 0; for (let i = 0; i < 16; i++) base = (base << 1) | header16[i];
+  push(base);
+  for (let f = 0; f < 16; f++) {
+    const h = header16.slice(); h[f] ^= 1;
+    let L = 0; for (let i = 0; i < 16; i++) L = (L << 1) | h[i];
+    push(L);
+  }
+  return out;
+}
+function correctBitFlips(bits, conf, len, aggressive) {
+  const end = 16 + len * 8 + 8, order = [];
+  for (let i = 16; i < end && i < bits.length; i++) order.push(i);
+  order.sort((a, b) => conf[a] - conf[b]);
+  const weak = order.filter(i => conf[i] < 30);
+  for (const i of weak.slice(0, 8)) {
+    const t = bits.slice(); t[i] ^= 1;
+    const r = parseBitsAt(t, len);
+    if (r.ok) return Object.assign({}, r, { fixed: 1 });
+  }
+  if (aggressive) {
+    const pool = weak.slice(0, 7);
+    for (let a = 0; a < pool.length; a++) for (let b = a + 1; b < pool.length; b++) {
+      const t = bits.slice(); t[pool[a]] ^= 1; t[pool[b]] ^= 1;
+      const r = parseBitsAt(t, len);
+      if (r.ok) return Object.assign({}, r, { fixed: 2 });
+    }
+    const pool3 = weak.slice(0, 6);
+    for (let a = 0; a < pool3.length; a++) for (let b = a + 1; b < pool3.length; b++) for (let c = b + 1; c < pool3.length; c++) {
+      const t = bits.slice(); t[pool3[a]] ^= 1; t[pool3[b]] ^= 1; t[pool3[c]] ^= 1;
+      const r = parseBitsAt(t, len);
+      if (r.ok) return Object.assign({}, r, { fixed: 3 });
+    }
+  }
+  return null;
+}
+// full bit-level decode: checksum fix + header repair (gate repair to aligned patterns)
+function finishBits(bits, conf, aggressive, gate) {
+  let p = parsePayloadBits(bits), fixed = 0;
+  if (!p.ok && p.reason === 'checksum') {
+    const c = correctBitFlips(bits, conf, p.len, aggressive);
+    if (c) { p = c; fixed = c.fixed; }
+  }
+  if (!p.ok && p.reason.indexOf('bad header') === 0 && gate && gate.fMean < 70 && gate.minSep > 35) {
+    const cands = repairLens(bits.slice(0, 16), bits.length);
+    for (const L of cands) {
+      const q = parseBitsAt(bits, L);
+      if (q.ok) { p = q; fixed = 1; break; }
+      if (q.needFix) {
+        const c = correctBitFlips(bits, conf, L, aggressive);
+        if (c) { p = c; fixed = 1 + c.fixed; break; }
+      }
+    }
+  }
+  return { p, fixed };
+}
+// reorder per-ring luminance arrays sampled in mirrored order (jp ascending,
+// finder excluded) back into original bitstream order; needs rotation from
+// mirrored-finder alignment (see scanner app)
+function orderMirroredBits(ringsLums, ringThr) {
+  const bits = [], conf = [];
+  ringsLums.forEach((lums, ri) => {
+    const thr = ringThr[ri];
+    for (let k = lums.length - 1; k >= 0; k--) {
+      bits.push(lums[k] < thr ? 1 : 0); conf.push(Math.abs(lums[k] - thr));
+    }
+  });
+  return { bits, conf };
+}
+function otsuThreshold(vals) {
+  const hist = new Array(256).fill(0);
+  for (const v of vals) hist[Math.max(0, Math.min(255, Math.round(v)))]++;
+  const total = vals.length; let sum = 0;
+  for (let i = 0; i < 256; i++) sum += i * hist[i];
+  let sumB = 0, wB = 0, best = -1, thr = 128;
+  for (let t = 0; t < 256; t++) {
+    wB += hist[t]; if (wB === 0) continue;
+    const wF = total - wB; if (wF === 0) break;
+    sumB += t * hist[t];
+    const mB = sumB / wB, mF = (sum - sumB) / wF;
+    const between = wB * wF * (mB - mF) * (mB - mF);
+    if (between > best) { best = between; thr = t; }
+  }
+  let s0 = 0, n0 = 0, s1 = 0, n1 = 0;
+  for (const v of vals) { if (v <= thr) { s0 += v; n0++; } else { s1 += v; n1++; } }
+  if (!n0 || !n1) return { thr: thr + 0.5, sep: 0 };
+  return { thr: (s0 / n0 + s1 / n1) / 2, sep: Math.abs(s1 / n1 - s0 / n0) };
+}
+function kmeansThreshold(vals) {
+  const lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+  if (hi - lo < 8) return { thr: (lo + hi) / 2, sep: hi - lo };
+  let c0 = lo, c1 = hi;
+  for (let it = 0; it < 12; it++) {
+    let s0 = 0, n0 = 0, s1 = 0, n1 = 0;
+    for (const v of vals) { if (Math.abs(v - c0) < Math.abs(v - c1)) { s0 += v; n0++; } else { s1 += v; n1++; } }
+    if (!n0 || !n1) break;
+    const nc0 = s0 / n0, nc1 = s1 / n1;
+    if (Math.abs(nc0 - c0) < 0.5 && Math.abs(nc1 - c1) < 0.5) { c0 = nc0; c1 = nc1; break; }
+    c0 = nc0; c1 = nc1;
+  }
+  return { thr: (c0 + c1) / 2, sep: Math.abs(c1 - c0), dark: Math.min(c0, c1) };
+}
+
+const CircleCode = {
+  VERSION, DISC_R, R_START, R_END, CENTER_R, DASH_OFF, DASH_LEN,
+  xmur3, mulberry32, rngFrom, radii, slotCount,
+  buildModel, renderToCanvas, renderToSVG,
+  modelToBits, parseBits, parsePayloadBits, parseBitsAt, repairLens,
+  correctBitFlips, finishBits, orderMirroredBits,
+  otsuThreshold, kmeansThreshold
+};
+default CircleCode;
+if (typeof window !== 'undefined') window.CircleCode = CircleCode;
+
+
+  // --- Scanner ---
+  /* Circle Code Scanner v1.0.0 — dependency-free JavaScript circular code decoder.
+ *
+ * Scans Apple Pay-style circular codes from images, canvases, and live camera streams.
+ * Works 100% client-side in the browser or headless in Node.js.
+ *
+ * ES Module:
+ *   import { scanCanvas, scanImage, scanImageData, CircleScanner } from './circle-scanner.js';
+ *
+ * Classic Script:
+ *   <script type="module" src="./circle-scanner.js"></script>
+ *   <!-- Exposes window.CircleScanner -->
+ */
+
+const VERSION = '1.0.0';
+const DISC_R = 190;
+const R_START = 55;
+const R_END = 157;
+const CENTER_R = 42;
+
+function radii(k) {
+  const out = [];
+  if (k === 1) return [110];
+  for (let i = 0; i < k; i++) out.push(R_START + (R_END - R_START) * i / (k - 1));
+  return out;
+}
+
+function slotCount(r, density) {
+  return Math.max(12, Math.floor(r * density));
+}
+
+// -------------------------------------------------------------
+// Grayscale & Sampling Utilities
+// -------------------------------------------------------------
+
+function toGrayscale(imageData) {
+  const data = imageData.data || imageData;
+  const len = imageData.width * imageData.height;
+  const g = new Float32Array(len);
+  for (let i = 0; i < len; i++) {
+    const idx = i * 4;
+    g[i] = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+  }
+  return g;
+}
+
+function sample(g, w, h, cx, cy, r = 0, ang = 0) {
+  const x = cx + r * Math.cos(ang);
+  const y = cy + r * Math.sin(ang);
+  let s = 0, n = 0;
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      const xi = Math.round(x + dx), yi = Math.round(y + dy);
+      if (xi >= 0 && yi >= 0 && xi < w && yi < h) {
+        s += g[yi * w + xi];
+        n++;
+      }
+    }
+  }
+  return n ? s / n : 255;
+}
+
+function sampleRadialMin(g, w, h, cx, cy, r, ang, scale = 1.0) {
+  const dr = 2.2 * Math.max(0.6, scale);
+  const s0 = sample(g, w, h, cx, cy, r, ang);
+  const s1 = sample(g, w, h, cx, cy, r - dr, ang);
+  const s2 = sample(g, w, h, cx, cy, r + dr, ang);
+  return Math.min(s0, s1, s2);
+}
+
+function median3(g, w, h, cx, cy, r, ang, slot, scale = 1.0) {
+  // Use slot * 0.14 so taps remain inside the solid body of the dash (dash spans 0.28..0.72 of slot)
+  const off = slot * 0.14;
+  const a = [
+    sampleRadialMin(g, w, h, cx, cy, r, ang - off, scale),
+    sampleRadialMin(g, w, h, cx, cy, r, ang, scale),
+    sampleRadialMin(g, w, h, cx, cy, r, ang + off, scale)
+  ];
+  a.sort((x, y) => x - y);
+  return a[1];
+}
+
+// Otsu automatic thresholding per ring
+function otsuThr(vals) {
+  const hist = new Array(256).fill(0);
+  for (let i = 0; i < vals.length; i++) {
+    hist[Math.max(0, Math.min(255, Math.round(vals[i])))]++;
+  }
+  const total = vals.length;
+  let sum = 0;
+  for (let i = 0; i < 256; i++) sum += i * hist[i];
+
+  let sumB = 0, wB = 0, best = -1, thr = 128;
+  for (let t = 0; t < 256; t++) {
+    wB += hist[t];
+    if (wB === 0) continue;
+    const wF = total - wB;
+    if (wF === 0) break;
+    sumB += t * hist[t];
+    const mB = sumB / wB;
+    const mF = (sum - sumB) / wF;
+    const between = wB * wF * (mB - mF) * (mB - mF);
+    if (between > best) {
+      best = between;
+      thr = t;
+    }
+  }
+
+  let s0 = 0, n0 = 0, s1 = 0, n1 = 0;
+  for (let i = 0; i < vals.length; i++) {
+    const v = vals[i];
+    if (v <= thr) { s0 += v; n0++; }
+    else { s1 += v; n1++; }
+  }
+  if (!n0 || !n1) return { thr: thr + 0.5, sep: 0 };
+  return { thr: (s0 / n0 + s1 / n1) / 2, sep: Math.abs(s1 / n1 - s0 / n0) };
+}
+
+function kmeans2(vals) {
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  if (hi - lo < 8) return { thr: (lo + hi) / 2, sep: hi - lo };
+  let c0 = lo, c1 = hi;
+  for (let it = 0; it < 12; it++) {
+    let s0 = 0, n0 = 0, s1 = 0, n1 = 0;
+    for (const v of vals) {
+      if (Math.abs(v - c0) < Math.abs(v - c1)) { s0 += v; n0++; }
+      else { s1 += v; n1++; }
+    }
+    if (!n0 || !n1) break;
+    const nc0 = s0 / n0, nc1 = s1 / n1;
+    if (Math.abs(nc0 - c0) < 0.5 && Math.abs(nc1 - c1) < 0.5) break;
+    c0 = nc0; c1 = nc1;
+  }
+  return { thr: (c0 + c1) / 2, sep: Math.abs(c1 - c0) };
+}
+
+// Bit & Header Parsing + Checksum Guided Error Correction
+function parseBitsAt(bits, len) {
+  const maxLen = Math.floor((bits.length - 24) / 8);
+  if (len < 1 || len > maxLen || 16 + len * 8 + 8 > bits.length) {
+    return { ok: false, reason: 'bad length' };
+  }
+  const bytes = [];
+  for (let q = 0; q < len; q++) {
+    let b = 0;
+    for (let i = 0; i < 8; i++) b = (b << 1) | bits[16 + q * 8 + i];
+    if ((b < 32 && b !== 9 && b !== 10 && b !== 13) || b === 127) {
+      return { ok: false, reason: 'control char' };
+    }
+    bytes.push(b);
+  }
+  let chk = 0;
+  for (let i = 0; i < 8; i++) chk = (chk << 1) | bits[16 + len * 8 + i];
+
+  let sum = 0;
+  bytes.forEach(b => sum = (sum + b) & 255);
+  if (sum !== chk) {
+    return { ok: false, reason: 'checksum', needFix: true, len, bytes, chk, sum };
+  }
+
+  let text = '';
+  try {
+    text = new TextDecoder('utf-8', { fatal: true }).decode(new Uint8Array(bytes));
+  } catch (e) {
+    return { ok: false, reason: 'utf8 error' };
+  }
+  if (text.length < 1 || /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/.test(text)) {
+    return { ok: false, reason: 'implausible text' };
+  }
+  return { ok: true, text, bytes, len, chk };
+}
+
+function parseBits(bits) {
+  if (bits.length < 24) return { ok: false, reason: 'too few bits' };
+  let len = 0;
+  for (let i = 0; i < 16; i++) len = (len << 1) | bits[i];
+  const maxLen = Math.floor((bits.length - 24) / 8);
+  if (len < 1 || len > maxLen || 16 + len * 8 + 8 > bits.length) {
+    return { ok: false, reason: 'bad header len=' + len };
+  }
+  return parseBitsAt(bits, len);
+}
+
+function correctBits(bits, conf, len, aggressive, gate) {
+  // Allow error correction on payloads with at least 2 bytes
+  if (len < 2) return null;
+  if (gate && (gate.fMean > 155 || gate.minSep < 8)) return null;
+  const end = 16 + len * 8 + 8;
+  const order = [];
+  for (let i = 16; i < end && i < bits.length; i++) order.push(i);
+  order.sort((a, b) => conf[a] - conf[b]);
+
+  const bytes = [];
+  for (let q = 0; q < len; q++) {
+    let b = 0;
+    for (let i = 0; i < 8; i++) b = (b << 1) | bits[16 + q * 8 + i];
+    bytes.push(b);
+  }
+  let chk = 0;
+  for (let i = 0; i < 8; i++) chk = (chk << 1) | bits[16 + len * 8 + i];
+  let sum = 0;
+  bytes.forEach(b => sum = (sum + b) & 255);
+
+  // 1. Check if error was in checksum byte itself
+  const chkDiff = sum ^ chk;
+  if (chkDiff > 0 && (chkDiff & (chkDiff - 1)) === 0) {
+    let text = '';
+    try { text = new TextDecoder('utf-8', { fatal: true }).decode(new Uint8Array(bytes)); } catch (e) { text = ''; }
+    if (text && text.length >= 2 && !/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/.test(text)) {
+      return { ok: true, text, bytes, len, chk: sum, fixed: 1 };
+    }
+  }
+
+  // 2. Check 1-bit payload flip strictly matching the mathematical difference weight
+  const diffPlus = (sum - chk) & 255;
+  const diffMinus = (chk - sum) & 255;
+  const weak = order.slice(0, 16);
+  for (const i of weak) {
+    const bitPos = 7 - ((i - 16) % 8);
+    const weight = 1 << bitPos;
+    const curBit = bits[i];
+    if ((curBit === 1 && diffPlus === weight) || (curBit === 0 && diffMinus === weight)) {
+      const t = bits.slice(); t[i] ^= 1;
+      const r = parseBitsAt(t, len);
+      if (r.ok) return { ...r, fixed: 1 };
+    }
+  }
+
+  // 3. 2-bit flips ONLY if aggressive, len >= 4, high contrast, and mathematically matching delta!
+  if (aggressive && len >= 4 && gate && gate.minSep > 12 && gate.fMean < 145) {
+    const targetDelta = (chk - sum) & 255;
+    const pool = order.slice(0, 8);
+    for (let a = 0; a < pool.length; a++) {
+      const ia = pool[a];
+      const wa = (1 << (7 - ((ia - 16) % 8))) * (bits[ia] === 0 ? 1 : -1);
+      for (let b = a + 1; b < pool.length; b++) {
+        const ib = pool[b];
+        const wb = (1 << (7 - ((ib - 16) % 8))) * (bits[ib] === 0 ? 1 : -1);
+        if (((wa + wb) & 255) === targetDelta) {
+          const t = bits.slice(); t[ia] ^= 1; t[ib] ^= 1;
+          const r = parseBitsAt(t, len);
+          if (r.ok) return { ...r, fixed: 2 };
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function repairLens(header16, capBits) {
+  const out = [], seen = {};
+  const max = Math.min(120, Math.floor((capBits - 24) / 8));
+  const push = L => { if (L >= 2 && L <= max && !seen[L]) { seen[L] = 1; out.push(L); } };
+  let base = 0;
+  for (let i = 0; i < 16; i++) base = (base << 1) | header16[i];
+  push(base);
+  for (let f = 0; f < 16; f++) {
+    const h = header16.slice();
+    h[f] ^= 1;
+    let L = 0;
+    for (let i = 0; i < 16; i++) L = (L << 1) | h[i];
+    push(L);
+  }
+  return out;
+}
+
+function finishBits(bits, conf, aggressive, gate) {
+  let p = parseBits(bits), fixed = 0;
+  if (!p.ok && p.reason === 'checksum') {
+    const c = correctBits(bits, conf, p.len, aggressive, gate);
+    if (c) { p = c; fixed = c.fixed; }
+  }
+  if (!p.ok && String(p.reason).indexOf('bad header') === 0 && aggressive && gate && gate.fMean < 60 && gate.minSep > 35) {
+    const cands = repairLens(bits.slice(0, 16), bits.length);
+    for (const L of cands) {
+      const q = parseBitsAt(bits, L);
+      if (q.ok) { p = q; fixed = 1; break; }
+    }
+  }
+  return { p, fixed };
+}
+
+// -------------------------------------------------------------
+// Finder Sweep & Configuration Testing
+// -------------------------------------------------------------
+
+function finderScore(g, w, h, cx, cy, scale, k, density, rot) {
+  const rs = radii(k);
+  let s = 0;
+  for (let ri = 0; ri < rs.length; ri++) {
+    const n = slotCount(rs[ri], density);
+    const mid = (Math.PI * 2 / n) * 0.5 + rot;
+    s += sample(g, w, h, cx, cy, rs[ri] * scale, mid);
+  }
+  return s / rs.length;
+}
+
+function mirrorFinderScore(g, w, h, cx, cy, scale, k, density, rot) {
+  const rs = radii(k);
+  let s = 0;
+  for (let ri = 0; ri < rs.length; ri++) {
+    const n = slotCount(rs[ri], density);
+    s += sample(g, w, h, cx, cy, rs[ri] * scale, rot - (Math.PI * 2 / n) * 0.5);
+  }
+  return s / rs.length;
+}
+
+function tryConfig(g, w, h, cx, cy, scale, k, density, rot, aggressive) {
+  const rs = radii(k), ns = rs.map(r => slotCount(r, density));
+  const finderLum = [], rings = [];
+
+  rs.forEach((r, ri) => {
+    const n = ns[ri], slot = Math.PI * 2 / n, lums = [];
+    for (let j = 1; j < n; j++) {
+      const mid = (j / n) * Math.PI * 2 + slot * 0.5 + rot;
+      lums.push(median3(g, w, h, cx, cy, r * scale, mid, slot, scale));
+    }
+    const fslot = Math.PI * 2 / n, fmid = fslot * 0.5 + rot;
+    finderLum.push(median3(g, w, h, cx, cy, r * scale, fmid, fslot, scale));
+    rings.push({ lums, ri });
+  });
+
+  const flat = [].concat(...rings.map(rg => rg.lums)).concat(finderLum);
+  const kmAll = kmeans2(flat);
+  if (kmAll.sep < 10) return { ok: false, reason: 'low contrast' };
+
+  let minSep = 1e9;
+  const ringThr = rings.map(rg => {
+    const o = otsuThr(rg.lums);
+    if (o.sep < minSep) minSep = o.sep;
+    if (o.sep >= 16) {
+      return o.thr * 0.7 + kmAll.thr * 0.3;
+    }
+    return kmAll.thr;
+  });
+
+  const fMean = finderLum.reduce((a, b) => a + b, 0) / finderLum.length;
+  if (fMean > 165 || fMean > kmAll.thr + 5) return { ok: false, reason: 'finder not dark' };
+  const darkFinders = finderLum.filter(v => v <= kmAll.thr + 18).length;
+  if (darkFinders < Math.max(2, k - 1)) return { ok: false, reason: 'broken finder' };
+
+  const bits = [], conf = [], pos = [];
+  rings.forEach((rg, ri) => {
+    const thr = ringThr[ri];
+    rg.lums.forEach((v, idx) => {
+      bits.push(v < thr ? 1 : 0);
+      conf.push(Math.abs(v - thr));
+      pos.push({ ri, j: idx + 1, v, thr });
+    });
+  });
+
+  const f = finishBits(bits, conf, aggressive, { fMean, minSep: kmAll.sep });
+  if (!f.p.ok) return { ok: false, reason: f.p.reason };
+  const p = f.p;
+  return {
+    ok: true,
+    text: p.text,
+    bytes: p.bytes,
+    len: p.len,
+    chk: p.chk,
+    rings: k,
+    density,
+    rot,
+    sep: kmAll.sep,
+    fMean,
+    bits,
+    pos,
+    fixed: f.fixed,
+    mirrored: false
+  };
+}
+
+function tryConfigMirrored(g, w, h, cx, cy, scale, k, density, rot, aggressive) {
+  const rs = radii(k), ns = rs.map(r => slotCount(r, density));
+  const finderLum = [], rings = [];
+
+  rs.forEach((r, ri) => {
+    const n = ns[ri], slot = Math.PI * 2 / n, lums = [];
+    for (let jp = 0; jp <= n - 2; jp++) {
+      const mid = jp * slot + slot * 0.5 + rot;
+      lums.push({ v: median3(g, w, h, cx, cy, r * scale, mid, slot, scale), jp });
+    }
+    finderLum.push(median3(g, w, h, cx, cy, r * scale, rot - slot * 0.5, slot, scale));
+    rings.push({ lums, ri });
+  });
+
+  const flat = [].concat(...rings.map(rg => rg.lums.map(e => e.v))).concat(finderLum);
+  const kmAll = kmeans2(flat);
+  if (kmAll.sep < 10) return { ok: false, reason: 'low contrast' };
+
+  let minSep = 1e9;
+  const ringThr = rings.map(rg => {
+    const o = otsuThr(rg.lums.map(e => e.v));
+    if (o.sep < minSep) minSep = o.sep;
+    if (o.sep >= 16) {
+      return o.thr * 0.7 + kmAll.thr * 0.3;
+    }
+    return kmAll.thr;
+  });
+
+  const fMean = finderLum.reduce((a, b) => a + b, 0) / finderLum.length;
+  if (fMean > 165 || fMean > kmAll.thr + 5) return { ok: false, reason: 'finder not dark' };
+  const darkFinders = finderLum.filter(v => v <= kmAll.thr + 18).length;
+  if (darkFinders < Math.max(2, k - 1)) return { ok: false, reason: 'broken finder' };
+
+  const bits = [], conf = [];
+  rings.forEach((rg, ri) => {
+    const thr = ringThr[ri];
+    for (let p = rg.lums.length - 1; p >= 0; p--) {
+      const e = rg.lums[p];
+      bits.push(e.v < thr ? 1 : 0);
+      conf.push(Math.abs(e.v - thr));
+    }
+  });
+
+  const f = finishBits(bits, conf, aggressive, { fMean, minSep: kmAll.sep });
+  if (!f.p.ok) return { ok: false, reason: f.p.reason };
+  const p = f.p;
+  return {
+    ok: true,
+    text: p.text,
+    bytes: p.bytes,
+    len: p.len,
+    chk: p.chk,
+    rings: k,
+    density,
+    rot,
+    sep: kmAll.sep,
+    fMean,
+    bits,
+    fixed: f.fixed,
+    mirrored: true
+  };
+}
+
+function findCenterAndScale(g, w, h) {
+  let best = null, bestScore = -1;
+  const step = 6;
+  const minDim = Math.min(w, h);
+  const maxBadgeR = Math.min(180, Math.floor(minDim * 0.28));
+  const minBadgeR = 14;
+
+  for (let y = 25; y < h - 25; y += step) {
+    for (let x = 25; x < w - 25; x += step) {
+      for (let r = minBadgeR; r <= maxBadgeR; r += 2.5) {
+        const gapR = 1.15 * r;
+        if (x - gapR < 2 || y - gapR < 2 || x + gapR >= w - 2 || y + gapR >= h - 2) continue;
+
+        let inSum = 0, outSum = 0;
+        for (let a = 0; a < 8; a++) {
+          const th = a * Math.PI / 4;
+          inSum += sample(g, w, h, x, y, 0.82 * r, th);
+          outSum += sample(g, w, h, x, y, 1.10 * r, th);
+        }
+        const inMean = inSum / 8;
+        const outMean = outSum / 8;
+        const diff = outMean - inMean;
+
+        if (diff > bestScore && diff > 22 && outMean > inMean * 1.18) {
+          bestScore = diff;
+          best = { cx: x, cy: y, r, scale: r / CENTER_R, score: diff };
+        }
+      }
+    }
+  }
+
+  // Centroid & subpixel edge refinement
+  if (best) {
+    const roughX = best.cx, roughY = best.cy, roughR = best.r;
+    let sumX = 0, sumY = 0, count = 0;
+    const thr = (bestScore > 50) ? (sample(g, w, h, roughX, roughY, 0, 0) + bestScore * 0.5) : 115;
+    const searchR = roughR * 1.06;
+
+    for (let dy = -searchR; dy <= searchR; dy += 1) {
+      for (let dx = -searchR; dx <= searchR; dx += 1) {
+        if (dx * dx + dy * dy <= searchR * searchR) {
+          const xi = Math.round(roughX + dx), yi = Math.round(roughY + dy);
+          if (xi >= 0 && xi < w && yi >= 0 && yi < h && g[yi * w + xi] < thr) {
+            sumX += xi;
+            sumY += yi;
+            count++;
+          }
+        }
+      }
+    }
+
+    if (count > 40) {
+      const refCX = sumX / count;
+      const refCY = sumY / count;
+      const refR = Math.sqrt(count / Math.PI);
+      return { cx: refCX, cy: refCY, r: refR, scale: refR / CENTER_R, score: bestScore };
+    }
+    return best;
+  }
+  return null;
+}
+
+function estimateDisc(g, w, h, cx, cy) {
+  const edges = [];
+  const maxR = Math.floor(Math.min(w, h) / 2) - 2;
+  for (let a = 0; a < 8; a++) {
+    const th = a * Math.PI / 4;
+    let prev = null, maxG = -1, edge = -1;
+    for (let r = maxR; r >= 20; r -= 2) {
+      const v = sample(g, w, h, cx, cy, r, th);
+      if (prev !== null) {
+        const gr = Math.abs(v - prev);
+        if (gr > maxG) { maxG = gr; edge = r; }
+      }
+      prev = v;
+    }
+    if (maxG > 50) edges.push(edge);
+  }
+  if (edges.length < 5) return null;
+  edges.sort((x, y) => x - y);
+  const med = edges[Math.floor(edges.length / 2)];
+  if (edges.filter(e => Math.abs(e - med) < med * 0.15).length < 5) return null;
+  return med / DISC_R;
+}
+
+// -------------------------------------------------------------
+// High-Level Scanning API
+// -------------------------------------------------------------
+
+/**
+ * Scan an ImageData object (or { data, width, height })
+ * @param {ImageData|Object} imageData
+ * @param {Object} [options]
+ * @returns {Object} { ok: boolean, text?: string, bytes?: number[], rings?: number, ... }
+ */
+function scanImageData(imageData, options = {}) {
+  const w = imageData.width;
+  const h = imageData.height;
+  const g = toGrayscale(imageData);
+
+  let cx = options.cx;
+  let cy = options.cy;
+  const aggr = options.aggressive !== undefined ? options.aggressive : true;
+
+  // Auto center & scale detection from black center badge
+  let scales = [];
+  if (options.scale) {
+    scales = [options.scale];
+    if (cx === undefined) cx = w / 2;
+    if (cy === undefined) cy = h / 2;
+  } else {
+    const autoDet = findCenterAndScale(g, w, h);
+    if (autoDet) {
+      if (cx === undefined) cx = autoDet.cx;
+      if (cy === undefined) cy = autoDet.cy;
+      // Prioritize 1.0 exact scale first!
+      scales = [1.0, 0.98, 1.02, 0.95, 1.05, 0.91, 1.09, 0.85, 1.15].map(f => autoDet.scale * f);
+    } else {
+      if (cx === undefined) cx = w / 2;
+      if (cy === undefined) cy = h / 2;
+      const est = estimateDisc(g, w, h, cx, cy);
+      const base = Math.min(w, h) / 400;
+      scales = est
+        ? [1.0, 0.98, 1.02, 0.94, 1.06, 0.88, 1.12].map(f => est * f)
+        : [1.0, 0.94, 1.06, 0.86, 1.14, 0.76, 1.24].map(f => base * f);
+    }
+  }
+
+  // Build prioritized search order:
+  // 1. Standard density 0.35 across all supported ring counts (5 to 14, and 4)
+  // 2. Density 0.37 across all supported ring counts
+  // 3. Fallbacks
+  const cfgs = [];
+  if (options.rings && options.density) {
+    for (const sc of scales) cfgs.push({ sc, k: options.rings, d: options.density });
+  } else {
+    const allRings = [5, 6, 7, 8, 9, 10, 11, 12, 4, 13, 14, 3];
+    for (const sc of scales) {
+      for (const k of allRings) cfgs.push({ sc, k, d: 0.35 });
+    }
+    for (const sc of scales) {
+      for (const k of allRings) cfgs.push({ sc, k, d: 0.37 });
+    }
+    for (const sc of scales) {
+      for (const d of [0.40, 0.45, 0.49, 0.33, 0.38, 0.52]) {
+        for (const k of [5, 6, 7, 8, 9, 10, 4, 11, 12]) cfgs.push({ sc, k, d });
+      }
+    }
+  }
+
+  let bestClean = null, bestCorrected = null, bestFinder = null, bestFinderS = 1e9;
+
+  for (const { sc, k, d } of cfgs) {
+    // Fast candidate finder sweep with 1.8° step (fine enough to never miss outer ring dashes)
+    const cands = [];
+    for (let deg = 0; deg < 360; deg += 1.8) {
+      const rot = deg * Math.PI / 180;
+      cands.push({ rot, s: finderScore(g, w, h, cx, cy, sc, k, d, rot) });
+    }
+    cands.sort((a, b) => a.s - b.s);
+    if (cands[0].s < bestFinderS) {
+      bestFinderS = cands[0].s;
+      bestFinder = { sc, k, d, rot: cands[0].rot };
+    }
+    if (cands[0].s > 195) continue;
+
+    // Try top candidates with fine angular refinement
+    for (const c of cands.slice(0, 4)) {
+      for (const off of [0, 0.6, -0.6, 1.2, -1.2]) {
+        const r = tryConfig(g, w, h, cx, cy, sc, k, d, c.rot + off * Math.PI / 180, aggr);
+        if (r.ok) {
+          const score = r.sep - r.fMean;
+          if (!r.fixed) {
+            if (!bestClean || score > (bestClean.sep - bestClean.fMean)) {
+              bestClean = { ...r, cx, cy, scale: sc };
+            }
+            break;
+          } else {
+            if (!bestCorrected || score > (bestCorrected.sep - bestCorrected.fMean)) {
+              bestCorrected = { ...r, cx, cy, scale: sc };
+            }
+          }
+        }
+      }
+      if (bestClean) break;
+    }
+    if (bestClean) break;
+  }
+
+  let best = bestClean || bestCorrected;
+
+  // Mirrored fallback
+  if (!best && options.mirrored !== false) {
+    const ks = [5, 6, 7, 4], densities = [0.35, 0.37, 0.40];
+    for (const sc of scales.slice(0, 3)) {
+      for (const k of ks.slice(0, 3)) {
+        for (const d of densities.slice(0, 3)) {
+          const mcands = [];
+          for (let deg = 0; deg < 360; deg += 2.5) {
+            const rot = deg * Math.PI / 180;
+            mcands.push({ rot, s: mirrorFinderScore(g, w, h, cx, cy, sc, k, d, rot) });
+          }
+          mcands.sort((a, b) => a.s - b.s);
+          for (const c of mcands.slice(0, 4)) {
+            for (const off of [0, 0.8, -0.8]) {
+              const r = tryConfigMirrored(g, w, h, cx, cy, sc, k, d, c.rot + off * Math.PI / 180, aggr);
+              if (r.ok) {
+                return { ...r, cx, cy, scale: sc };
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return best || { ok: false, reason: 'No valid circular code detected' };
+}
+
+/**
+ * Scan an HTMLCanvasElement or 2D Context
+ */
+function scanCanvas(canvas, options = {}) {
+  const ctx = canvas.getContext ? canvas.getContext('2d') : canvas;
+  const cv = canvas.canvas || canvas;
+  const imgData = ctx.getImageData(0, 0, cv.width, cv.height);
+  return scanImageData(imgData, options);
+}
+
+/**
+ * Scan an HTMLImageElement or Image URL
+ */
+async function scanImage(source, options = {}) {
+  if (typeof source === 'string') {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = img.naturalWidth;
+        c.height = img.naturalHeight;
+        const ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        resolve(scanCanvas(c, options));
+      };
+      img.onerror = () => reject(new Error('Failed to load image: ' + source));
+      img.src = source;
+    });
+  }
+  const c = document.createElement('canvas');
+  c.width = source.naturalWidth || source.width;
+  c.height = source.naturalHeight || source.height;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(source, 0, 0);
+  return scanCanvas(c, options);
+}
+
+// -------------------------------------------------------------
+// Live Camera Scanner Controller
+// -------------------------------------------------------------
+
+class CircleScanner {
+  constructor(options = {}) {
+    this.options = Object.assign({
+      fps: 10,
+      facingMode: 'environment',
+      aggressive: true,
+      confirmCount: 2,
+      onScan: null,
+      onError: null
+    }, options);
+
+    this.stream = null;
+    this.video = null;
+    this.timer = null;
+    this.isScanning = false;
+    this.workCanvas = null;
+    this.workCtx = null;
+    this.pendingText = null;
+    this.pendingCount = 0;
+    this.lastDecodedText = null;
+    this.torchOn = false;
+  }
+
+  async start(videoElement, onScan, onError) {
+    if (onScan) this.options.onScan = onScan;
+    if (onError) this.options.onError = onError;
+    this.video = videoElement;
+
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: this.options.facingMode,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      });
+      this.video.srcObject = this.stream;
+      await this.video.play();
+
+      this.workCanvas = document.createElement('canvas');
+      this.workCtx = this.workCanvas.getContext('2d', { willReadFrequently: true });
+      this.isScanning = true;
+
+      const interval = Math.max(80, Math.floor(1000 / this.options.fps));
+      this.timer = setInterval(() => this._tick(), interval);
+      return true;
+    } catch (err) {
+      if (this.options.onError) this.options.onError(err);
+      throw err;
+    }
+  }
+
+  hasTorch() {
+    if (!this.stream) return false;
+    const track = this.stream.getVideoTracks()[0];
+    const caps = (typeof track.getCapabilities === 'function') ? track.getCapabilities() : {};
+    return !!caps.torch;
+  }
+
+  async setTorch(on) {
+    if (!this.stream) return false;
+    const track = this.stream.getVideoTracks()[0];
+    try {
+      await track.applyConstraints({ advanced: [{ torch: !!on }] });
+      this.torchOn = !!on;
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  async toggleTorch() {
+    return this.setTorch(!this.torchOn);
+  }
+
+  _tick() {
+    if (!this.isScanning || !this.video || !this.video.videoWidth) return;
+
+    const vw = this.video.videoWidth, vh = this.video.videoHeight;
+    const side = Math.min(vw, vh);
+    const S = 480; // High resolution 480x480 for sharp dash separation
+    this.workCanvas.width = S;
+    this.workCanvas.height = S;
+
+    const sx = (vw - side) / 2, sy = (vh - side) / 2;
+    this.workCtx.drawImage(this.video, sx, sy, side, side, 0, 0, S, S);
+    const imgData = this.workCtx.getImageData(0, 0, S, S);
+
+    const res = scanImageData(imgData, {
+      aggressive: this.options.aggressive
+    });
+
+    if (res.ok) {
+      if (res.text === this.pendingText) {
+        this.pendingCount++;
+      } else {
+        this.pendingText = res.text;
+        this.pendingCount = 1;
+      }
+
+      // Clean uncorrected decode with good separation confirms in 1 frame (instant decode!)
+      const reqConfirm = (res.fixed === 0 && res.sep > 20) ? 1 : this.options.confirmCount;
+      if (this.pendingCount >= reqConfirm) {
+        if (this.lastDecodedText !== res.text) {
+          this.lastDecodedText = res.text;
+          if (this.options.onScan) this.options.onScan(res);
+        }
+      }
+    }
+  }
+
+  stop() {
+    this.isScanning = false;
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+    if (this.stream) {
+      this.stream.getTracks().forEach(t => t.stop());
+      this.stream = null;
+    }
+    if (this.video) {
+      this.video.srcObject = null;
+    }
+    this.pendingText = null;
+    this.pendingCount = 0;
+    this.lastDecodedText = null;
+    this.torchOn = false;
+  }
+}
+
+// Global exposure for non-module usage
+if (typeof window !== 'undefined') {
+  window.CircleScanner = {
+    scanImageData,
+    scanCanvas,
+    scanImage,
+    CircleScanner,
+    VERSION
+  };
+}
+
+
+  return {
+    VERSION: VERSION,
+    DISC_R: DISC_R,
+    R_START: R_START,
+    R_END: R_END,
+    CENTER_R: CENTER_R,
+    radii: radii,
+    slotCount: slotCount,
+    buildModel: buildModel,
+    renderToCanvas: renderToCanvas,
+    renderToSVG: renderToSVG,
+    parsePayloadBits: parsePayloadBits,
+    findCenterAndScale: findCenterAndScale,
+    estimateDisc: estimateDisc,
+    scanImageData: scanImageData,
+    scanCanvas: scanCanvas,
+    scanImage: scanImage,
+    CircleScanner: CircleScanner
+  };
+}));
