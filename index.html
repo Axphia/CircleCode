@@ -1,248 +1,670 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Circle Code — Studio</title>
-<style>
-  :root {
-    --bg: #f5f5f7;
-    --card: #ffffff;
-    --text-primary: #1d1d1f;
-    --text-secondary: #86868b;
-    --border: rgba(0, 0, 0, 0.08);
-    --border-light: rgba(0, 0, 0, 0.04);
-    --accent: #0071e3;
-    --radius-lg: 24px;
-    --radius-md: 14px;
-    --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CircleCode — Elegant Circular Barcode Standard for Web & Mobile</title>
+  <meta name="description" content="High-performance, dependency-free circular barcode codec inspired by Apple Pay & App Clips. Encode data into concentric arcs and decode across 360° rotations at native speed.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='10' fill='none' stroke='%230071e3' stroke-width='2'/><circle cx='12' cy='12' r='4' fill='%230071e3'/></svg>">
+  <style>
+    :root {
+      --bg: #f5f5f7;
+      --card: #ffffff;
+      --text: #1d1d1f;
+      --text-sec: #86868b;
+      --accent: #0071e3;
+      --accent-hover: #0077ed;
+      --accent-green: #30d158;
+      --accent-green-bg: rgba(48, 209, 88, 0.1);
+      --border: rgba(0, 0, 0, 0.08);
+      --border-focus: rgba(0, 113, 227, 0.35);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 12px;
+      --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.03);
+      --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+      --shadow-hover: 0 14px 40px rgba(0, 0, 0, 0.08);
+    }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", -system-ui, "Segoe UI", sans-serif;
-    background: var(--bg);
-    color: var(--text-primary);
-    -webkit-font-smoothing: antialiased;
-    min-height: 100vh;
-    padding: 0 0 60px;
-    text-align: center;
-  }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+    }
 
-  .nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 28px;
-    background: rgba(255, 255, 255, 0.82);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .nav-brand {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    color: var(--text-primary);
-    text-decoration: none;
-  }
-  .nav-brand svg { width: 18px; height: 18px; }
-  .nav-links {
-    display: flex;
-    gap: 16px;
-    font-size: 13px;
-  }
-  .nav-links a {
-    color: var(--text-secondary);
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.15s;
-  }
-  .nav-links a:hover, .nav-links a.active { color: var(--text-primary); }
+    /* Navigation Bar */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 600;
+      font-size: 16px;
+      letter-spacing: -0.01em;
+    }
+    .nav-brand svg { width: 22px; height: 22px; color: var(--accent); }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      font-size: 13.5px;
+    }
+    .nav-links a {
+      color: var(--text-sec);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-btn {
+      padding: 6px 14px;
+      background: var(--accent);
+      color: #fff !important;
+      border-radius: 980px;
+      font-weight: 600;
+      transition: background 0.15s, transform 0.15s;
+    }
+    .nav-btn:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
 
-  .hero {
-    max-width: 720px;
-    margin: 56px auto 40px;
-    padding: 0 20px;
-  }
-  .badge-icon {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    margin: 0 auto 20px;
-    background: #000;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  }
-  .badge-icon svg { width: 44px; height: 44px; }
-  h1 {
-    font-size: 38px;
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    margin-bottom: 12px;
-  }
-  .sub {
-    font-size: 17px;
-    color: var(--text-secondary);
-    line-height: 1.5;
-    max-width: 600px;
-    margin: 0 auto;
-  }
+    /* Main Container */
+    .container {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 50px 24px 80px;
+    }
 
-  .cards {
-    display: grid;
-    gap: 20px;
-    max-width: 720px;
-    margin: 0 auto;
-    padding: 0 20px;
-  }
-  @media(min-width:640px) { .cards { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); max-width: 940px; } }
+    /* Hero Section */
+    .hero {
+      text-align: center;
+      max-width: 760px;
+      margin: 0 auto 60px;
+    }
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      background: rgba(0, 113, 227, 0.08);
+      color: var(--accent);
+      border-radius: 980px;
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      border: 1px solid rgba(0, 113, 227, 0.15);
+    }
+    .hero-badge-icon {
+      width: 88px;
+      height: 88px;
+      margin: 0 auto 24px;
+      background: #000;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+      position: relative;
+    }
+    .hero-badge-icon svg { width: 50px; height: 50px; }
+    .pulse-ring {
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 2px dashed rgba(0, 113, 227, 0.4);
+      animation: spin 30s linear infinite;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
 
-  .card {
-    background: var(--card);
-    border-radius: var(--radius-lg);
-    padding: 36px 24px;
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-card);
-    text-decoration: none;
-    color: var(--text-primary);
-    transition: transform 0.2s, box-shadow 0.2s;
-    text-align: left;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-  .card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-  }
-  .card-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
-    background: var(--bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 20px;
-  }
-  .card-icon svg { width: 24px; height: 24px; stroke: #000; }
-  .card h2 {
-    font-size: 21px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    margin-bottom: 8px;
-  }
-  .card p {
-    font-size: 14px;
-    color: var(--text-secondary);
-    line-height: 1.5;
-  }
-  .card-link {
-    margin-top: 24px;
-    font-size: 13.5px;
-    font-weight: 600;
-    color: var(--accent);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
+    .hero h1 {
+      font-size: 46px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 18px;
+      color: #111;
+    }
+    .hero p {
+      font-size: 18px;
+      color: var(--text-sec);
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
 
-  .foot {
-    margin-top: 50px;
-    font-size: 13px;
-    color: var(--text-secondary);
-    line-height: 1.6;
-    padding: 0 20px;
-  }
-  code {
-    background: rgba(0,0,0,0.06);
-    border-radius: 6px;
-    padding: 2px 7px;
-    font-family: ui-monospace, Menlo, monospace;
-    font-size: 12px;
-  }
-</style>
+    /* Teleport Buttons CTA */
+    .tp-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+    .tp-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 22px;
+      border-radius: 980px;
+      font-size: 14.5px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .tp-btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(0, 113, 227, 0.28);
+    }
+    .tp-btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(0, 113, 227, 0.35);
+    }
+    .tp-btn-wasm {
+      background: #1a9e38;
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(26, 158, 56, 0.28);
+    }
+    .tp-btn-wasm:hover {
+      background: #178a31;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(26, 158, 56, 0.35);
+    }
+    .tp-btn-secondary {
+      background: #fff;
+      color: var(--text);
+      border: 1px solid #d2d2d7;
+    }
+    .tp-btn-secondary:hover {
+      background: #fbfbfd;
+      border-color: #b0b0b5;
+      transform: translateY(-2px);
+    }
+
+    /* Section Headers */
+    .section-title {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .section-desc {
+      font-size: 15px;
+      color: var(--text-sec);
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    /* Teleport Launchpad Cards */
+    .launchpad-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 64px;
+    }
+    .lp-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 30px 24px;
+      text-decoration: none;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: var(--shadow-card);
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s, border-color 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .lp-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-hover);
+      border-color: var(--border-focus);
+    }
+    .lp-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: #f5f5f7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+    }
+    .lp-icon svg { width: 24px; height: 24px; }
+    .lp-tag {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .lp-tag-wasm {
+      background: rgba(48, 209, 88, 0.12);
+      color: #1a9e38;
+      border: 1px solid rgba(48, 209, 88, 0.25);
+    }
+    .lp-tag-js {
+      background: rgba(0, 113, 227, 0.08);
+      color: var(--accent);
+      border: 1px solid rgba(0, 113, 227, 0.2);
+    }
+    .lp-tag-gen {
+      background: rgba(142, 142, 147, 0.1);
+      color: #555;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+    }
+    .lp-card h3 {
+      font-size: 19px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+    .lp-card p {
+      font-size: 13.5px;
+      color: var(--text-sec);
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+    .lp-link {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* How It Works Deep Dive */
+    .how-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 38px 32px;
+      box-shadow: var(--shadow-card);
+      margin-bottom: 64px;
+    }
+    .step-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+      margin-top: 24px;
+    }
+    .step-item {
+      padding: 20px;
+      background: #fafafa;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+    }
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .step-item h4 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+    .step-item p {
+      font-size: 13px;
+      color: var(--text-sec);
+      line-height: 1.5;
+    }
+
+    /* Engine Comparison Table Box */
+    .compare-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 38px 32px;
+      box-shadow: var(--shadow-card);
+      margin-bottom: 64px;
+    }
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 13.5px;
+    }
+    .compare-table th, .compare-table td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .compare-table th {
+      background: #fbfbfd;
+      font-weight: 600;
+      color: var(--text);
+      font-size: 12.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .compare-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 11.5px;
+    }
+    .cb-js { background: rgba(0, 113, 227, 0.1); color: var(--accent); }
+    .cb-wasm { background: rgba(48, 209, 88, 0.15); color: #1a9e38; }
+
+    /* Code Snippet Box */
+    .code-box {
+      background: #1e1e24;
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      color: #f5f5f7;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      overflow-x: auto;
+      margin-top: 16px;
+      line-height: 1.6;
+    }
+    .code-comment { color: #86868b; }
+    .code-kw { color: #ff7ab2; }
+    .code-str { color: #ff8170; }
+    .code-fn { color: #78c2b4; }
+
+    /* Footer */
+    .foot {
+      text-align: center;
+      padding-top: 30px;
+      border-top: 1px solid var(--border);
+      color: var(--text-sec);
+      font-size: 13px;
+      line-height: 1.8;
+    }
+    .foot a { color: var(--accent); text-decoration: none; }
+    .foot a:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 32px; }
+      .hero p { font-size: 15px; }
+      .container { padding: 30px 16px 60px; }
+      .how-box, .compare-box { padding: 24px 18px; }
+      .tp-btn { width: 100%; justify-content: center; }
+    }
+  </style>
 </head>
 <body>
 
-<nav class="nav">
-  <a href="index.html" class="nav-brand">
-    <svg viewBox="0 0 24 24" fill="currentColor">
-      <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
-      <circle cx="12" cy="12" r="4" fill="currentColor"/>
-    </svg>
-    Circle Code
-  </a>
-  <div class="nav-links">
-    <a href="generator.html">Generator</a>
-    <a href="scanner.html">JS Scanner</a>
-    <a href="scanner-wasm.html">WASM Scanner</a>
-    <a href="https://github.com/Axphia/CircleCode">Docs</a>
+  <!-- Navigation Bar -->
+  <nav class="nav">
+    <a href="index.html" class="nav-brand">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+        <circle cx="12" cy="12" r="4" fill="currentColor"/>
+      </svg>
+      CircleCode
+    </a>
+    <div class="nav-links">
+      <a href="web-use-demo/generator.html">Generator</a>
+      <a href="web-use-demo/scanner.html">JS Scanner (Uploads)</a>
+      <a href="web-use-demo/scanner-wasm.html">WASM Scanner (Live)</a>
+      <a href="web-use-demo/example.html">Showcase</a>
+      <a href="https://github.com/Axphia/CircleCode" target="_blank" rel="noopener">GitHub</a>
+      <a href="web-use-demo/" class="nav-btn">Launch Demos →</a>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="badge-pill">✨ Apple Pay & App Clips Aesthetic Standard</div>
+      <div class="hero-badge-icon">
+        <div class="pulse-ring"></div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+          <circle cx="12" cy="12" r="9"/>
+          <circle cx="12" cy="12" r="5" stroke-dasharray="3 3"/>
+          <circle cx="12" cy="12" r="2" fill="#fff"/>
+        </svg>
+      </div>
+
+      <h1>Circular Barcode Codec for Modern Web & Mobile</h1>
+      <p>
+        CircleCode encodes custom data into elegant concentric dash arcs with a dedicated center branding slot. 
+        Decode across full 360° orientations with subpixel accuracy directly in the client.
+      </p>
+
+      <!-- Instant Teleport Buttons -->
+      <div class="tp-actions">
+        <a href="web-use-demo/scanner-wasm.html" class="tp-btn tp-btn-wasm" id="tpWasmBtn">
+          ⚡ Teleport to WASM Scanner (Real-time Camera)
+        </a>
+        <a href="web-use-demo/scanner.html" class="tp-btn tp-btn-primary" id="tpJsBtn">
+          🐢 Teleport to JS Scanner (Image Uploads)
+        </a>
+        <a href="web-use-demo/generator.html" class="tp-btn tp-btn-secondary" id="tpGenBtn">
+          🎨 Teleport to Generator
+        </a>
+        <a href="web-use-demo/example.html" class="tp-btn tp-btn-secondary" id="tpShowcaseBtn">
+          🧪 Comparison & CDN Hub
+        </a>
+      </div>
+      <div style="font-size: 12.5px; color: var(--text-sec);">
+        Zero installation required to test. All demos run client-side in your browser.
+      </div>
+    </section>
+
+    <!-- Teleport Launchpad Cards -->
+    <section>
+      <h2 class="section-title">🚀 Web Demos Launchpad</h2>
+      <p class="section-desc">Click any card to teleport directly into the interactive apps in <code>web-use-demo/</code>:</p>
+
+      <div class="launchpad-grid">
+        <!-- Card 1: WASM Scanner -->
+        <a href="web-use-demo/scanner-wasm.html" class="lp-card">
+          <span class="lp-tag lp-tag-wasm">Real-time 60 FPS</span>
+          <div>
+            <div class="lp-icon" style="background: rgba(48, 209, 88, 0.1);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#1a9e38" stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+            </div>
+            <h3>Full WASM Scanner</h3>
+            <p>Built with compiled Native Rust WebAssembly. Sub-3ms latency, zero garbage collection pauses, audio chimes, haptics, flashlight torch, and reticle tracking.</p>
+          </div>
+          <span class="lp-link" style="color: #1a9e38;">Launch WASM Scanner ⚡ →</span>
+        </a>
+
+        <!-- Card 2: Pure JS Scanner -->
+        <a href="web-use-demo/scanner.html" class="lp-card">
+          <span class="lp-tag lp-tag-js">Zero Dependency</span>
+          <div>
+            <div class="lp-icon" style="background: rgba(0, 113, 227, 0.08);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#0071e3" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </div>
+            <h3>Pure JS Scanner</h3>
+            <p>100% vanilla JavaScript decoding. Optimized for drag-and-drop file inputs, photo uploads, and environments where loading a <code>.wasm</code> file is not required.</p>
+          </div>
+          <span class="lp-link">Launch JS Upload Scanner →</span>
+        </a>
+
+        <!-- Card 3: Code Generator -->
+        <a href="web-use-demo/generator.html" class="lp-card">
+          <span class="lp-tag lp-tag-gen">Vector SVG & Canvas</span>
+          <div>
+            <div class="lp-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" stroke-width="2">
+                <circle cx="12" cy="12" r="9"/>
+                <circle cx="12" cy="12" r="4" fill="#000"/>
+              </svg>
+            </div>
+            <h3>Barcode Generator</h3>
+            <p>Generate standard Apple Pay circular barcodes with customizable center badges (Apple Pay, custom logo, or text). Export crisp vector SVG and PNG.</p>
+          </div>
+          <span class="lp-link">Launch Generator →</span>
+        </a>
+
+        <!-- Card 4: CDN & Comparison Showcase -->
+        <a href="web-use-demo/example.html" class="lp-card">
+          <span class="lp-tag lp-tag-gen">Interactive</span>
+          <div>
+            <div class="lp-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+            </div>
+            <h3>CDN & Performance Showcase</h3>
+            <p>Live side-by-side benchmark, instant color theme switches, test presets, and standalone CDN script snippet integration examples.</p>
+          </div>
+          <span class="lp-link">Open Comparison Hub →</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- How It Works Deep Dive -->
+    <section class="how-box">
+      <h2 class="section-title">🔍 How CircleCode Works</h2>
+      <p class="section-desc">CircleCode combines circular geometry with subpixel computer vision:</p>
+
+      <div class="step-grid">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <h4>Concentric Arc Geometry</h4>
+          <p>Data bits are distributed across concentric rings (4 to 14 rings). Each ring has a calculated radius, slot count, and fixed angular dash spacing ($0.35$ density).</p>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <h4>Finder Spoke & Centroid</h4>
+          <p>A reference dark finder spoke at $0^\circ$ and a dark center badge ($R=42$) anchor the barcode in 2D space, allowing 360° omnidirectional detection.</p>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <h4>Perspective & Tilt Recovery</h4>
+          <p>When photographed from an angle, circles distort into ellipses. The decoder computes spatial moments to normalize perspective tilt before reading bits.</p>
+        </div>
+
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <h4>Checksum & Error Recovery</h4>
+          <p>Every payload includes a 16-bit header, length byte, and Modulo-256 checksum with aggressive 1–3 bit recovery for low-contrast or partially shadowed codes.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Engine Selection: Pure JS vs Native Rust WASM -->
+    <section class="compare-box">
+      <h2 class="section-title">⚖️ Which Engine Should You Use?</h2>
+      <p class="section-desc">Choose the right engine for your application's requirements:</p>
+
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>🐢 Pure JavaScript (<code>circlecode</code>)</th>
+            <th>⚡ Native Rust WASM (<code>circlecode/wasm</code>)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>Best Use Case</b></td>
+            <td><span class="compare-badge cb-js">Web Image Uploads & Forms</span></td>
+            <td><span class="compare-badge cb-wasm">Real-Time Mobile Camera Scanning</span></td>
+          </tr>
+          <tr>
+            <td><b>Decoding Latency</b></td>
+            <td>~25 ms – 50 ms</td>
+            <td><b>~2 ms – 4 ms</b> (15x faster)</td>
+          </tr>
+          <tr>
+            <td><b>External Dependencies</b></td>
+            <td><b>Zero</b> (runs everywhere out-of-the-box)</td>
+            <td>Requires <code>circlecode_core.wasm</code> binary</td>
+          </tr>
+          <tr>
+            <td><b>CPU & Battery Impact</b></td>
+            <td>High on continuous 60 FPS video loops</td>
+            <td><b>Minimal (&lt;10% CPU)</b>, prevents phone heating</td>
+          </tr>
+          <tr>
+            <td><b>Ideal Environment</b></td>
+            <td>Drag & drop file upload, Node.js, static files</td>
+            <td>Live smartphone camera feed, kiosks, PWAs</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Quick Installation -->
+    <section class="how-box">
+      <h2 class="section-title">📦 Quick Installation</h2>
+      <p class="section-desc">Install from npm or include the standalone UMD bundle:</p>
+
+      <div class="code-box">
+<span class="code-comment"># Install from NPM Registry</span>
+npm install circlecode
+
+<span class="code-comment"># Or install from GitHub Packages (Axphia scope)</span>
+npm install @axphia/circlecode --registry=https://npm.pkg.github.com
+      </div>
+
+      <div class="code-box" style="margin-top: 14px;">
+<span class="code-comment">// In your JavaScript / TypeScript application</span>
+<span class="code-kw">import</span> { buildModel, renderToSVG, scanCanvas } <span class="code-kw">from</span> <span class="code-str">'circlecode'</span>;
+
+<span class="code-comment">// 1. Generate circular barcode SVG</span>
+<span class="code-kw">const</span> model = <span class="code-fn">buildModel</span>(<span class="code-str">'Table-24'</span>);
+<span class="code-kw">const</span> svg = <span class="code-fn">renderToSVG</span>(model, { dark: <span class="code-str">'#0071e3'</span>, light: <span class="code-str">'#ffffff'</span> });
+
+<span class="code-comment">// 2. Decode from an HTML canvas</span>
+<span class="code-kw">const</span> result = <span class="code-fn">scanCanvas</span>(canvas);
+<span class="code-kw">if</span> (result.ok) {
+  console.log(<span class="code-str">'Decoded payload:'</span>, result.text);
+}
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="foot">
+      CircleCode Standard · Apple Pay & App Clips Aesthetic (4–14 Rings · Density 0.35 · Checksum Error-Correction)<br>
+      Open Source MIT License · Published on <a href="https://www.npmjs.com/package/circlecode" target="_blank" rel="noopener">npm</a> and <a href="https://github.com/Axphia/CircleCode" target="_blank" rel="noopener">GitHub</a> by <a href="https://github.com/Axphia" target="_blank" rel="noopener">Axphia</a>.
+    </footer>
+
   </div>
-</nav>
-
-<div class="hero">
-  <div class="badge-icon">
-    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
-      <circle cx="12" cy="12" r="9"/>
-      <circle cx="12" cy="12" r="5" stroke-dasharray="3 3"/>
-      <circle cx="12" cy="12" r="2" fill="#fff"/>
-    </svg>
-  </div>
-  <h1>Circle Code</h1>
-  <p class="sub">Apple Pay and App Clips style circular barcodes encoded with your custom data — generate and scan with subpixel accuracy, 100% in the browser.</p>
-</div>
-
-<div class="cards">
-  <a class="card" href="generator.html">
-    <div>
-      <div class="card-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="#000"/></svg>
-      </div>
-      <h2>Generator</h2>
-      <p>Generate standard Apple Pay circular barcodes (sharp dark & light dashes). Instantly export high-resolution PNG and scalable vector SVG.</p>
-    </div>
-    <div class="card-link">Launch Generator →</div>
-  </a>
-
-  <a class="card" href="scanner.html">
-    <div>
-      <div class="card-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      </div>
-      <h2>JS Scanner</h2>
-      <p>Scan and decode via live camera stream or file upload. Features 60 FPS Web Worker decoupling and zero external dependencies.</p>
-    </div>
-    <div class="card-link">Launch JS Scanner →</div>
-  </a>
-
-  <a class="card" href="scanner-wasm.html">
-    <div>
-      <div class="card-icon" style="background: rgba(48, 209, 88, 0.1);">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke="#1a9e38"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-      </div>
-      <h2>WASM Scanner</h2>
-      <p>Blazing-fast native decoding powered by compiled Rust WebAssembly with sub-3ms frame processing for production workloads.</p>
-    </div>
-    <div class="card-link" style="color: #1a9e38;">Launch WASM Scanner ⚡ →</div>
-  </a>
-</div>
-
-<div class="foot">
-  Apple Pay Circular Code Standard (4–14 Rings · Density 0.35 · Checksum Error-Correction)<br>
-  100% Client-side · Zero Server Dependency · Fast & Private
-</div>
 
 </body>
 </html>
