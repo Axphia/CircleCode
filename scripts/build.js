@@ -13,12 +13,22 @@ if (!fs.existsSync(distDir)) {
 console.log('Building CircleCode UMD bundle...');
 
 const encoderCode = fs.readFileSync(path.resolve(root, 'circle-code.js'), 'utf8')
-  .replace(/^export\s+/gm, '')
-  .replace(/export\s+default\s+[^;]+;/g, '');
+  .replace(/export\s+default\s+[^;]+;/g, '')
+  .replace(/^export\s+/gm, '');
 
-const scannerCode = fs.readFileSync(path.resolve(root, 'circle-scanner.js'), 'utf8')
-  .replace(/^export\s+/gm, '')
-  .replace(/export\s+default\s+[^;]+;/g, '');
+let scannerCode = fs.readFileSync(path.resolve(root, 'circle-scanner.js'), 'utf8')
+  .replace(/export\s+default\s+[^;]+;/g, '')
+  .replace(/^export\s+/gm, '');
+
+// Strip duplicate constants and helper declarations already defined by encoderCode
+scannerCode = scannerCode
+  .replace(/const\s+VERSION\s*=[^;]+;/g, '')
+  .replace(/const\s+DISC_R\s*=[^;]+;/g, '')
+  .replace(/const\s+R_START\s*=[^;]+;/g, '')
+  .replace(/const\s+R_END\s*=[^;]+;/g, '')
+  .replace(/const\s+CENTER_R\s*=[^;]+;/g, '')
+  .replace(/function\s+radii\s*\([\s\S]*?^}/m, '')
+  .replace(/function\s+slotCount\s*\([\s\S]*?^}/m, '');
 
 const umdBundle = `/**
  * CircleCode v1.0.0 — Universal Module Definition (UMD)

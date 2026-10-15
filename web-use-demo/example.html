@@ -291,11 +291,11 @@
     .status-err { background: rgba(255, 59, 48, 0.12); color: #ff3b30; }
   </style>
 
-  <!-- 1. CDN Production Script with Local Fallback -->
-  <script src="https://cdn.jsdelivr.net/npm/circlecode@1.1.0/dist/circlecode.min.js"></script>
+  <!-- 1. CircleCode Production UMD Bundle (with CDN fallback) -->
+  <script src="../dist/circlecode.min.js"></script>
   <script>
     if (!window.CircleCode) {
-      document.write('<script src="../dist/circlecode.min.js"><\/script>');
+      document.write('<script src="https://cdn.jsdelivr.net/npm/circlecode@1.1.0/dist/circlecode.min.js"><\/script>');
     }
   </script>
 </head>
