@@ -8,7 +8,8 @@
   </p>
   <p align="center">
     <a href="https://github.com/Axphia/CircleCode/actions/workflows/build-and-publish.yml"><img src="https://github.com/Axphia/CircleCode/actions/workflows/build-and-publish.yml/badge.svg" alt="CI & Publish" /></a>
-    <a href="https://www.npmjs.com/package/circlecode"><img src="https://img.shields.io/npm/v/circlecode?color=0071e3&style=flat-square" alt="NPM Version" /></a>
+    <a href="https://www.npmjs.com/package/@axphia/circlecode"><img src="https://img.shields.io/npm/v/@axphia/circlecode?color=0071e3&style=flat-square" alt="NPM Version" /></a>
+    <a href="https://www.jsdelivr.com/package/npm/@axphia/circlecode"><img src="https://data.jsdelivr.com/v1/package/npm/@axphia/circlecode/badge" alt="jsDelivr CDN" /></a>
     <a href="https://circlecode.js.org"><img src="https://img.shields.io/badge/website-circlecode.js.org-0071e3?style=flat-square" alt="Website" /></a>
     <a href="https://github.com/Axphia/CircleCode"><img src="https://img.shields.io/badge/github-Axphia%2FCircleCode-black?style=flat-square&logo=github" alt="GitHub" /></a>
     <img src="https://img.shields.io/badge/dependencies-0-brightgreen?style=flat-square" alt="Zero Dependencies" />
