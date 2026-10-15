@@ -158,7 +158,27 @@ if (scanner.hasTorch()) {
 
 ---
 
-### 3. CommonJS Usage (Node.js)
+### 3. Native Rust WebAssembly (WASM) Acceleration
+
+For maximum scanning throughput, you can use the compiled Rust WebAssembly module directly:
+
+```javascript
+import { ensureWasm, scanFrameWasm } from 'circlecode/wasm';
+
+// 1. Initialize WASM module
+await ensureWasm();
+
+// 2. Scan RGBA buffer with sub-3ms latency
+const result = scanFrameWasm(imageData.data, 480, 480, true);
+
+if (result.ok) {
+  console.log('WASM Decoded text:', result.text);
+}
+```
+
+---
+
+### 4. CommonJS Usage (Node.js)
 
 ```javascript
 const { buildModel, renderToSVG, scanImageData } = require('circlecode');

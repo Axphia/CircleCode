@@ -1,0 +1,20 @@
+{
+  "name": "circlecode-core",
+  "type": "module",
+  "collaborators": [
+    "Axphia Project"
+  ],
+  "description": "High-performance Rust/WASM circular barcode scanning engine",
+  "version": "1.0.0",
+  "license": "MIT",
+  "files": [
+    "circlecode_core_bg.wasm",
+    "circlecode_core.js",
+    "circlecode_core.d.ts"
+  ],
+  "main": "circlecode_core.js",
+  "types": "circlecode_core.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
