@@ -101,7 +101,7 @@ Include directly via script tag in vanilla HTML:
 
 ```html
 <!-- Standalone UMD Bundle -->
-<script src="https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.4/dist/circlecode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.5/dist/circlecode.min.js"></script>
 <script>
   const { buildModel, renderToCanvas, renderToSVG, scanCanvas, CircleScanner } = window.CircleCode;
 </script>

@@ -1,6 +1,6 @@
-# CircleCode API Reference (v1.1.0)
+# CircleCode API Reference (v1.1.5)
 
-`circlecode` provides a unified suite of tools for generating and scanning Apple Pay-style circular barcodes across Browser, Node.js, and WebAssembly runtimes.
+`circlecode` provides a unified suite of tools for generating and scanning circular barcodes in dual modes (Circle discrete dashes & LonCle sweeping connected arcs) across Browser, Node.js, and WebAssembly runtimes.
 
 ---
 

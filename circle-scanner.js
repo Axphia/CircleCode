@@ -11,7 +11,7 @@
  *   <!-- Exposes window.CircleScanner -->
  */
 
-export const VERSION = '1.1.4';
+export const VERSION = '1.1.5';
 export const DISC_R = 190;
 export const R_START = 55;
 export const R_END = 157;
