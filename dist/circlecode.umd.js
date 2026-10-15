@@ -439,9 +439,18 @@ function toGrayscale(imageData) {
   return g;
 }
 
-function sample(g, w, h, cx, cy, r = 0, ang = 0) {
-  const x = cx + r * Math.cos(ang);
-  const y = cy + r * Math.sin(ang);
+function sample(g, w, h, cx, cy, r = 0, ang = 0, aspect = 1.0, tilt = 0) {
+  let xr = r * Math.cos(ang);
+  let yr = r * Math.sin(ang);
+  if (aspect !== 1.0) {
+    const cosT = Math.cos(tilt), sinT = Math.sin(tilt);
+    const u = xr * cosT + yr * sinT;
+    const v = (-xr * sinT + yr * cosT) * aspect;
+    xr = u * cosT - v * sinT;
+    yr = u * sinT + v * cosT;
+  }
+  const x = cx + xr;
+  const y = cy + yr;
   let s = 0, n = 0;
   for (let dy = -1; dy <= 1; dy++) {
     for (let dx = -1; dx <= 1; dx++) {
@@ -455,21 +464,21 @@ function sample(g, w, h, cx, cy, r = 0, ang = 0) {
   return n ? s / n : 255;
 }
 
-function sampleRadialMin(g, w, h, cx, cy, r, ang, scale = 1.0) {
+function sampleRadialMin(g, w, h, cx, cy, r, ang, scale = 1.0, aspect = 1.0, tilt = 0) {
   const dr = 2.2 * Math.max(0.6, scale);
-  const s0 = sample(g, w, h, cx, cy, r, ang);
-  const s1 = sample(g, w, h, cx, cy, r - dr, ang);
-  const s2 = sample(g, w, h, cx, cy, r + dr, ang);
+  const s0 = sample(g, w, h, cx, cy, r, ang, aspect, tilt);
+  const s1 = sample(g, w, h, cx, cy, r - dr, ang, aspect, tilt);
+  const s2 = sample(g, w, h, cx, cy, r + dr, ang, aspect, tilt);
   return Math.min(s0, s1, s2);
 }
 
-function median3(g, w, h, cx, cy, r, ang, slot, scale = 1.0) {
+function median3(g, w, h, cx, cy, r, ang, slot, scale = 1.0, aspect = 1.0, tilt = 0) {
   // Use slot * 0.14 so taps remain inside the solid body of the dash (dash spans 0.28..0.72 of slot)
   const off = slot * 0.14;
   const a = [
-    sampleRadialMin(g, w, h, cx, cy, r, ang - off, scale),
-    sampleRadialMin(g, w, h, cx, cy, r, ang, scale),
-    sampleRadialMin(g, w, h, cx, cy, r, ang + off, scale)
+    sampleRadialMin(g, w, h, cx, cy, r, ang - off, scale, aspect, tilt),
+    sampleRadialMin(g, w, h, cx, cy, r, ang, scale, aspect, tilt),
+    sampleRadialMin(g, w, h, cx, cy, r, ang + off, scale, aspect, tilt)
   ];
   a.sort((x, y) => x - y);
   return a[1];
@@ -679,28 +688,28 @@ function finishBits(bits, conf, aggressive, gate) {
 // Finder Sweep & Configuration Testing
 // -------------------------------------------------------------
 
-function finderScore(g, w, h, cx, cy, scale, k, density, rot) {
+function finderScore(g, w, h, cx, cy, scale, k, density, rot, aspect = 1.0, tilt = 0) {
   const rs = radii(k);
   let s = 0;
   for (let ri = 0; ri < rs.length; ri++) {
     const n = slotCount(rs[ri], density);
     const mid = (Math.PI * 2 / n) * 0.5 + rot;
-    s += sample(g, w, h, cx, cy, rs[ri] * scale, mid);
+    s += sample(g, w, h, cx, cy, rs[ri] * scale, mid, aspect, tilt);
   }
   return s / rs.length;
 }
 
-function mirrorFinderScore(g, w, h, cx, cy, scale, k, density, rot) {
+function mirrorFinderScore(g, w, h, cx, cy, scale, k, density, rot, aspect = 1.0, tilt = 0) {
   const rs = radii(k);
   let s = 0;
   for (let ri = 0; ri < rs.length; ri++) {
     const n = slotCount(rs[ri], density);
-    s += sample(g, w, h, cx, cy, rs[ri] * scale, rot - (Math.PI * 2 / n) * 0.5);
+    s += sample(g, w, h, cx, cy, rs[ri] * scale, rot - (Math.PI * 2 / n) * 0.5, aspect, tilt);
   }
   return s / rs.length;
 }
 
-function tryConfig(g, w, h, cx, cy, scale, k, density, rot, aggressive) {
+function tryConfig(g, w, h, cx, cy, scale, k, density, rot, aggressive, aspect = 1.0, tilt = 0) {
   const rs = radii(k), ns = rs.map(r => slotCount(r, density));
   const finderLum = [], rings = [];
 
@@ -708,10 +717,10 @@ function tryConfig(g, w, h, cx, cy, scale, k, density, rot, aggressive) {
     const n = ns[ri], slot = Math.PI * 2 / n, lums = [];
     for (let j = 1; j < n; j++) {
       const mid = (j / n) * Math.PI * 2 + slot * 0.5 + rot;
-      lums.push(median3(g, w, h, cx, cy, r * scale, mid, slot, scale));
+      lums.push(median3(g, w, h, cx, cy, r * scale, mid, slot, scale, aspect, tilt));
     }
     const fslot = Math.PI * 2 / n, fmid = fslot * 0.5 + rot;
-    finderLum.push(median3(g, w, h, cx, cy, r * scale, fmid, fslot, scale));
+    finderLum.push(median3(g, w, h, cx, cy, r * scale, fmid, fslot, scale, aspect, tilt));
     rings.push({ lums, ri });
   });
 
@@ -1044,6 +1053,31 @@ function scanImageData(imageData, options = {}) {
     }
   }
 
+  // Perspective tilt recovery (camera angled 15° to 30°)
+  if (!best && options.perspective) {
+    const pAspects = [0.91, 0.84];
+    const pTilts = [0, Math.PI / 4, Math.PI / 2, 3 * Math.PI / 4];
+    for (const aspect of pAspects) {
+      for (const tilt of pTilts) {
+        for (const { sc, k, d } of cfgs.slice(0, 8)) {
+          const cands = [];
+          for (let deg = 0; deg < 360; deg += 3.6) {
+            const rot = deg * Math.PI / 180;
+            cands.push({ rot, s: finderScore(g, w, h, cx, cy, sc, k, d, rot, aspect, tilt) });
+          }
+          cands.sort((a, b) => a.s - b.s);
+          if (cands[0].s > 185) continue;
+          for (const c of cands.slice(0, 2)) {
+            const r = tryConfig(g, w, h, cx, cy, sc, k, d, c.rot, aggr, aspect, tilt);
+            if (r.ok) {
+              return { ...r, cx, cy, scale: sc, aspect, tilt };
+            }
+          }
+        }
+      }
+    }
+  }
+
   return best || { ok: false, reason: 'No valid circular code detected' };
 }
 
@@ -1092,10 +1126,13 @@ async function scanImage(source, options = {}) {
 class CircleScanner {
   constructor(options = {}) {
     this.options = Object.assign({
-      fps: 10,
+      fps: 12,
       facingMode: 'environment',
       aggressive: true,
+      perspective: true,
       confirmCount: 2,
+      useWorker: false,
+      workerUrl: 'scanner-worker.js',
       onScan: null,
       onError: null
     }, options);
@@ -1106,6 +1143,8 @@ class CircleScanner {
     this.isScanning = false;
     this.workCanvas = null;
     this.workCtx = null;
+    this.worker = null;
+    this.workerBusy = false;
     this.pendingText = null;
     this.pendingCount = 0;
     this.lastDecodedText = null;
@@ -1132,6 +1171,17 @@ class CircleScanner {
       this.workCanvas = document.createElement('canvas');
       this.workCtx = this.workCanvas.getContext('2d', { willReadFrequently: true });
       this.isScanning = true;
+
+      if (this.options.useWorker && typeof Worker !== 'undefined') {
+        try {
+          this.worker = new Worker(this.options.workerUrl, { type: 'module' });
+          this.worker.onmessage = (e) => this._onWorkerMessage(e);
+          this.workerBusy = false;
+        } catch (wErr) {
+          console.warn('CircleScanner: Could not initialize Web Worker, falling back to main thread.', wErr);
+          this.worker = null;
+        }
+      }
 
       const interval = Math.max(80, Math.floor(1000 / this.options.fps));
       this.timer = setInterval(() => this._tick(), interval);
@@ -1178,10 +1228,37 @@ class CircleScanner {
     this.workCtx.drawImage(this.video, sx, sy, side, side, 0, 0, S, S);
     const imgData = this.workCtx.getImageData(0, 0, S, S);
 
-    const res = scanImageData(imgData, {
-      aggressive: this.options.aggressive
-    });
+    if (this.worker) {
+      if (this.workerBusy) return; // Drop frame to maintain 60 FPS UI responsiveness
+      this.workerBusy = true;
+      this.worker.postMessage({
+        type: 'scan',
+        imageData: imgData,
+        options: {
+          aggressive: this.options.aggressive,
+          perspective: this.options.perspective
+        }
+      });
+      return;
+    }
 
+    const res = scanImageData(imgData, {
+      aggressive: this.options.aggressive,
+      perspective: this.options.perspective
+    });
+    this._handleScanResult(res);
+  }
+
+  _onWorkerMessage(e) {
+    this.workerBusy = false;
+    const { ok, result } = e.data || {};
+    if (ok && result) {
+      this._handleScanResult(result);
+    }
+  }
+
+  _handleScanResult(res) {
+    if (!this.isScanning) return;
     if (res.ok) {
       if (res.text === this.pendingText) {
         this.pendingCount++;
@@ -1206,6 +1283,11 @@ class CircleScanner {
     if (this.timer) {
       clearInterval(this.timer);
       this.timer = null;
+    }
+    if (this.worker) {
+      this.worker.terminate();
+      this.worker = null;
+      this.workerBusy = false;
     }
     if (this.stream) {
       this.stream.getTracks().forEach(t => t.stop());

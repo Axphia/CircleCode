@@ -41,6 +41,7 @@ export interface RenderOptions {
 export interface ScanOptions {
   aggressive?: boolean;
   mirrored?: boolean;
+  perspective?: boolean;
   rings?: number;
   density?: number;
   cx?: number;
@@ -63,13 +64,19 @@ export interface ScanResult {
   cx?: number;
   cy?: number;
   scale?: number;
+  aspect?: number;
+  tilt?: number;
   reason?: string;
 }
 
 export interface CircleScannerOptions {
   targetSize?: number;
   fps?: number;
+  aggressive?: boolean;
+  perspective?: boolean;
   confirmCount?: number;
+  useWorker?: boolean;
+  workerUrl?: string;
   facingMode?: 'environment' | 'user';
   onScan?: (result: ScanResult) => void;
   onError?: (err: Error) => void;

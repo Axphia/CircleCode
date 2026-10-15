@@ -21,8 +21,10 @@
 
 - 🎨 **Apple Pay & App Clips Aesthetic:** Minimalist circular dash design that feels natural on round packaging, coasters, cards, and luxury brand merchandise.
 - ⚡ **Zero Dependencies:** Pure vanilla JavaScript. Runs out-of-the-box in Node.js, modern browsers, PWAs, or embedded webviews.
+- 🧵 **Non-Blocking Web Worker:** Dedicated background worker (`scanner-worker.js`) decouples CPU-heavy decoding from the UI thread, ensuring silky smooth 60 FPS camera previews.
+- 📐 **Perspective & Tilt Recovery:** Automatically corrects for camera angles (15°–30° tilt) and elliptical distortion.
 - 🔍 **Subpixel 360° Scanning Engine:** Dual-centroid edge detection, scale-aware radial search (`dr = 2.2 * scale`), and hybrid Otsu/K-means thresholding for extreme reliability under shadows and glare.
-- 📱 **Live Camera & Mobile Features:** Integrated torch (flashlight) toggle, digital 2x zoom crop, and 1-frame instant lock when checksum matches.
+- 📱 **Live Camera & Mobile Features:** Integrated torch (flashlight) toggle, digital zoom crop, and 1-frame instant lock when checksum matches.
 - 📐 **Vector SVG & Canvas Support:** Export crisp, high-resolution SVG markup or render directly to 2D canvas contexts.
 - 🏷️ **Center Logo Slot:** Dedicated center circular badge (42px standard) for custom logos (Apple Pay, brand icons, avatars, or text) with zero data occlusion.
 - 📦 **Dual Module Format:** Full support for ECMAScript Modules (`import`), CommonJS (`require`), TypeScript types (`index.d.ts`), and standalone UMD browser bundle.
@@ -111,7 +113,10 @@ import { scanImageData, scanCanvas, scanImage } from 'circlecode';
 
 // From an Image element
 const img = document.querySelector('img#uploadedCode');
-const result = await scanImage(img);
+const result = await scanImage(img, {
+  aggressive: true,
+  perspective: true // Compensates for perspective tilt
+});
 
 if (result.ok) {
   console.log('Decoded:', result.text);
@@ -122,15 +127,17 @@ if (result.ok) {
 }
 ```
 
-#### Real-Time Camera Scanner
+#### Real-Time Camera Scanner (with Web Worker)
 ```javascript
 import { CircleScanner } from 'circlecode';
 
 const videoElement = document.getElementById('cameraVideo');
 
-const scanner = new CircleScanner(videoElement, {
-  fps: 10,
-  targetSize: 480,
+const scanner = new CircleScanner({
+  fps: 12,
+  useWorker: true, // Run frame decoding in background thread (60 FPS UI)
+  workerUrl: 'scanner-worker.js',
+  perspective: true,
   facingMode: 'environment',
   onScan: (result) => {
     console.log('Scanned successfully:', result.text);
@@ -140,13 +147,12 @@ const scanner = new CircleScanner(videoElement, {
 });
 
 // Start camera stream
-await scanner.start();
+await scanner.start(videoElement);
 
-// Control camera features
+// Control camera torch
 if (scanner.hasTorch()) {
   await scanner.toggleTorch();
 }
-scanner.setZoom(2); // 2x digital zoom
 ```
 
 ---
