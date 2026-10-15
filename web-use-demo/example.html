@@ -543,8 +543,45 @@
     };
 
     function updateCodePreview(payload, dark, light, center, eng, rings = 5) {
-      const code = `<!-- 1. Include CircleCode via CDN -->
-<script src="https://cdn.jsdelivr.net/npm/circlecode@1.1.0/dist/circlecode.min.js"><\\/script>
+      let code = '';
+      if (eng === 'wasm') {
+        code = `<!-- 1. Include CircleCode via CDN for Rendering -->
+<script src="https://cdn.jsdelivr.net/npm/circlecode@1.1.1/dist/circlecode.min.js"><\\/script>
+
+<canvas id="circlecode-canvas" width="400" height="400"></canvas>
+
+<!-- 2. Render CircleCode -->
+<script>
+  const { buildModel, renderToCanvas } = window.CircleCode;
+  const model = buildModel('${payload}', { rings: ${rings}, density: 0.35 });
+  const canvas = document.getElementById('circlecode-canvas');
+  renderToCanvas(model, canvas.getContext('2d'), 400, {
+    dark: '${dark}',
+    light: '${light}',
+    center: '${center}'
+  });
+<\\/script>
+
+<!-- 3. Load & Run Rust WebAssembly Scanner Engine -->
+<script type="module">
+  import init, { scan_frame_wasm } from 'https://cdn.jsdelivr.net/npm/circlecode@1.1.1/native/rust/pkg/circlecode_core.js';
+
+  // Initialize WebAssembly linear memory module
+  await init({ module_or_path: 'https://cdn.jsdelivr.net/npm/circlecode@1.1.1/native/rust/pkg/circlecode_core_bg.wasm' });
+
+  // Fast zero-copy decode directly from canvas ImageData
+  const canvas = document.getElementById('circlecode-canvas');
+  const ctx = canvas.getContext('2d');
+  const imgData = ctx.getImageData(0, 0, 400, 400);
+
+  const result = scan_frame_wasm(imgData.data, 400, 400, true);
+  if (result.ok) {
+    console.log('Decoded Payload via Rust WASM:', result.text);
+  }
+<\\/script>`;
+      } else {
+        code = `<!-- 1. Include CircleCode via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/circlecode@1.1.1/dist/circlecode.min.js"><\\/script>
 
 <canvas id="circlecode-canvas" width="400" height="400"></canvas>
 
@@ -562,12 +599,13 @@
     center: '${center}'
   });
 
-  // 3. Scan & Decode (${eng === 'wasm' ? 'WebAssembly Accelerated' : 'Pure JavaScript'})
+  // 3. Scan & Decode (Pure JavaScript)
   const result = scanCanvas(canvas);
   if (result.ok) {
     console.log('Decoded Payload:', result.text);
   }
 <\\/script>`;
+      }
       document.getElementById('codePreview').textContent = code;
     }
 

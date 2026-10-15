@@ -521,14 +521,17 @@ export function tryConfigMirrored(g, w, h, cx, cy, scale, k, density, rot, aggre
 
 export function findCenterAndScale(g, w, h) {
   let best = null, bestScore = -1;
-  const step = 6;
+  const step = 8;
   const minDim = Math.min(w, h);
   const maxBadgeR = Math.min(180, Math.floor(minDim * 0.28));
   const minBadgeR = 14;
 
-  for (let y = 25; y < h - 25; y += step) {
-    for (let x = 25; x < w - 25; x += step) {
-      for (let r = minBadgeR; r <= maxBadgeR; r += 2.5) {
+  for (let y = 30; y < h - 30; y += step) {
+    for (let x = 30; x < w - 30; x += step) {
+      // Fast center bailout: CircleCode center MUST be dark (<90)
+      if (g[y * w + x] > 90) continue;
+
+      for (let r = minBadgeR; r <= maxBadgeR; r += 5) {
         const gapR = 1.15 * r;
         if (x - gapR < 2 || y - gapR < 2 || x + gapR >= w - 2 || y + gapR >= h - 2) continue;
 
@@ -542,7 +545,7 @@ export function findCenterAndScale(g, w, h) {
         const outMean = outSum / 8;
         const diff = outMean - inMean;
 
-        if (diff > bestScore && diff > 22 && outMean > inMean * 1.18) {
+        if (diff > bestScore && diff > 20 && outMean > inMean * 1.18) {
           bestScore = diff;
           best = { cx: x, cy: y, r, scale: r / CENTER_R, score: diff };
         }
@@ -557,8 +560,8 @@ export function findCenterAndScale(g, w, h) {
     const thr = (bestScore > 50) ? (sample(g, w, h, roughX, roughY, 0, 0) + bestScore * 0.5) : 115;
     const searchR = roughR * 1.06;
 
-    for (let dy = -searchR; dy <= searchR; dy += 1) {
-      for (let dx = -searchR; dx <= searchR; dx += 1) {
+    for (let dy = -searchR; dy <= searchR; dy += 2) {
+      for (let dx = -searchR; dx <= searchR; dx += 2) {
         if (dx * dx + dy * dy <= searchR * searchR) {
           const xi = Math.round(roughX + dx), yi = Math.round(roughY + dy);
           if (xi >= 0 && xi < w && yi >= 0 && yi < h && g[yi * w + xi] < thr) {
@@ -570,10 +573,10 @@ export function findCenterAndScale(g, w, h) {
       }
     }
 
-    if (count > 40) {
+    if (count > 20) {
       const refCX = sumX / count;
       const refCY = sumY / count;
-      const refR = Math.sqrt(count / Math.PI);
+      const refR = Math.sqrt((count * 4) / Math.PI);
       return { cx: refCX, cy: refCY, r: refR, scale: refR / CENTER_R, score: bestScore };
     }
     return best;
@@ -929,7 +932,7 @@ export class CircleScanner {
   }
 
   _tick() {
-    if (!this.isScanning || !this.video || !this.video.videoWidth) return;
+    if (!this.isScanning || !this.video || !this.video.videoWidth || this.isProcessing) return;
 
     const vw = this.video.videoWidth, vh = this.video.videoHeight;
     const side = Math.min(vw, vh);
@@ -955,10 +958,19 @@ export class CircleScanner {
       return;
     }
 
+    this.isProcessing = true;
+    const t0 = performance.now();
     const res = scanImageData(imgData, {
       aggressive: this.options.aggressive,
       perspective: this.options.perspective
     });
+    const t1 = performance.now();
+    this.isProcessing = false;
+
+    if (this.options.onFrame) {
+      this.options.onFrame({ ms: t1 - t0, fps: Math.round(1000 / Math.max(t1 - t0, 1)), result: res });
+    }
+
     this._handleScanResult(res);
   }
 
