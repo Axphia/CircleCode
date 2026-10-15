@@ -13,6 +13,7 @@
     "index.d.ts",
     "circle-code.js",
     "circle-scanner.js",
+    "scanner-worker.js",
     "dist"
   ],
   "exports": {
@@ -30,7 +31,8 @@
       "types": "./index.d.ts",
       "import": "./circle-scanner.js",
       "require": "./circle-scanner.js"
-    }
+    },
+    "./worker": "./scanner-worker.js"
   },
   "scripts": {
     "test": "node test/test.js",
