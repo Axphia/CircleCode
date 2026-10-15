@@ -105,6 +105,9 @@ jobs:
     needs: build-and-test
     if: (github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')) || github.event_name == 'release'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -117,13 +120,15 @@ jobs:
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
-      - name: Setup Node.js for NPM
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          registry-url: 'https://registry.npmjs.org'
 
-      - name: Build & Publish to npm
+      - name: Upgrade npm to latest for OIDC support
+        run: sudo npm install -g npm@latest
+
+      - name: Build & Publish to npm via Trusted Publisher
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
@@ -133,7 +138,7 @@ jobs:
           cd ../..
           cp native/rust/pkg/circlecode_core* wasm/
           npm run build
-          if [ -z "$NODE_AUTH_TOKEN" ]; then
-            sed -i '/_authToken/d' ~/.npmrc 2>/dev/null || true
+          if [ -n "$NODE_AUTH_TOKEN" ]; then
+            npm config set //registry.npmjs.org/:_authToken "$NODE_AUTH_TOKEN"
           fi
-          npm publish --provenance --access public || npm publish --access public || echo "Publish completed or version already exists"
+          npm publish --provenance --access public || npm publish --access public
