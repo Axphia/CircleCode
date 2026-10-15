@@ -18,6 +18,7 @@ export {
   radii,
   slotCount,
   buildModel,
+  getRuns,
   renderToCanvas,
   renderToSVG,
   parsePayloadBits

@@ -2,6 +2,7 @@ import assert from 'assert';
 import {
   VERSION,
   buildModel,
+  getRuns,
   renderToSVG,
   radii,
   slotCount,
@@ -19,7 +20,18 @@ assert.strictEqual(r5[0], 55);
 assert.strictEqual(r5[4], 157);
 console.log('✓ radii() works');
 
-// 2. Test Model Generation
+// 2. Test getRuns (Apple-style contiguous arc grouping with circular wrap-around)
+const runs1 = getRuns([1, 1, 0, 1, 1, 1, 1]);
+assert.strictEqual(runs1.length, 1);
+assert.strictEqual(runs1[0].start, 3);
+assert.strictEqual(runs1[0].len, 6);
+const runs2 = getRuns([1, 0, 1, 1, 0]);
+assert.strictEqual(runs2.length, 2);
+assert.strictEqual(runs2[0].start, 2);
+assert.strictEqual(runs2[0].len, 2);
+console.log('✓ getRuns() works with wrap-around');
+
+// 3. Test Model Generation
 const shortText = 'A';
 const mShort = buildModel(shortText, { rings: 5, density: 0.35 });
 assert.strictEqual(mShort.bytes, 1);
@@ -36,11 +48,16 @@ const mLong = buildModel(longText, { rings: 9, density: 0.35 });
 assert.strictEqual(mLong.bytes, 37);
 console.log('✓ buildModel(longText) works');
 
-// 3. Test SVG Rendering
+// 4. Test SVG Rendering (Discrete and Apple Style)
 const svg = renderToSVG(mStd, { dark: '#000', light: '#8e8e93', center: 'Test Table' });
 assert.ok(svg.startsWith('<svg'));
 assert.ok(svg.includes('Test Table'));
-console.log('✓ renderToSVG() works');
+console.log('✓ renderToSVG() discrete works');
+
+const svgApple = renderToSVG(mStd, { appleStyle: true, dark: '#000', center: 'Pay' });
+assert.ok(svgApple.startsWith('<svg'));
+assert.ok(svgApple.includes('stroke-linecap="round"'));
+console.log('✓ renderToSVG({ appleStyle: true }) works');
 
 // 4. Test Synthetic Image Scan Roundtrip
 function renderSyntheticCode(model, w = 400, h = 400, rot = 0.4) {

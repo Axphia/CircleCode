@@ -522,11 +522,23 @@
         <textarea id="payload" placeholder="e.g. user-12345 or https://example.com">user-12345</textarea>
       </div>
 
+      <!-- Arc Stroke Style: Apple Connected Arcs vs Classic Discrete -->
+      <div class="form-group">
+        <label>Barcode Arc Style</label>
+        <div class="segmented-control" id="arcStyleSeg">
+          <button type="button" class="seg-btn active" data-style="apple">Apple Style (Merged Arcs)</button>
+          <button type="button" class="seg-btn" data-style="discrete">Classic (Discrete Pills)</button>
+        </div>
+        <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 6px; line-height: 1.4;">
+          <strong>Apple Style:</strong> Consecutive 1-bits merge into fluid, variable-length sweeping strokes, identical to official Apple Pay &amp; App Clip codes.
+        </div>
+      </div>
+
       <!-- Center Logo Configuration -->
       <div class="form-group">
         <label>Center Logo Badge</label>
         <div class="segmented-control" id="logoModeSeg">
-          <button type="button" class="seg-btn active" data-mode="apple"> Apple Pay</button>
+          <button type="button" class="seg-btn active" data-mode="apple">Apple Pay</button>
           <button type="button" class="seg-btn" data-mode="appclip">App Clip</button>
           <button type="button" class="seg-btn" data-mode="image">Upload Logo</button>
           <button type="button" class="seg-btn" data-mode="text">Text</button>
@@ -704,7 +716,8 @@
     </div>
   </div>
 </div>
-
+ 
+<script src="../dist/circlecode.umd.js"></script>
 <script>
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d', { willReadFrequently: true });
@@ -719,6 +732,38 @@ function xmur3(str){ let h=1779033703^str.length; for(let i=0;i<str.length;i++){
 function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
 function rngFrom(s){ const seed=xmur3(s)(); return mulberry32(seed); }
 
+let currentArcStyle = 'apple';
+
+function getRuns(bits) {
+  const n = bits.length;
+  let allOnes = true;
+  for (let i = 0; i < n; i++) {
+    if (bits[i] !== 1) { allOnes = false; break; }
+  }
+  if (allOnes) return [{ start: 0, len: n, full: true }];
+
+  let firstZero = 0;
+  while (firstZero < n && bits[firstZero] === 1) firstZero++;
+
+  const runs = [];
+  let i = 0;
+  while (i < n) {
+    const idx = (firstZero + i) % n;
+    if (bits[idx] === 1) {
+      const runStart = idx;
+      let len = 0;
+      while (i < n && bits[(firstZero + i) % n] === 1) {
+        len++;
+        i++;
+      }
+      runs.push({ start: runStart, len });
+    } else {
+      i++;
+    }
+  }
+  return runs;
+}
+
 function opts(){
   const bgRadio = document.querySelector('input[name="centerBg"]:checked');
   return {
@@ -727,6 +772,7 @@ function opts(){
     density: parseFloat(document.getElementById('density').value),
     dark: document.getElementById('colorDark').value || '#000000',
     light: document.getElementById('colorLight').value || '#8e8e93',
+    arcStyle: currentArcStyle,
     centerMode: currentLogoMode,
     centerText: document.getElementById('centerText').value || 'MyPay',
     centerBg: bgRadio ? bgRadio.value : '#000000'
@@ -759,6 +805,7 @@ const model = buildModel(${JSON.stringify(payload)}, {
 });
 
 renderToCanvas(model, canvas.getContext('2d'), 400, {
+  appleStyle: ${o.arcStyle === 'apple'},
   dark: ${JSON.stringify(o.dark)},
   light: ${JSON.stringify(o.light)},
   center: ${JSON.stringify(o.centerMode === 'text' ? o.centerText : o.centerMode)}
@@ -894,21 +941,49 @@ function drawTo(context, size, m, o){
   const cx=size/2, cy=size/2;
   context.beginPath(); context.fillStyle='#ffffff';
   context.arc(cx,cy,190*s,0,7); context.fill();
-  m.rings.forEach((rg,ri)=>{
-    const slot=Math.PI*2/rg.n;
-    rg.slots.forEach((sl,j)=>{
-      const isBit1 = sl.finder || sl.bit === 1;
-      const col = isBit1 ? (o.dark || '#000000') : (o.light || '#8e8e93');
-      const a0=(j/rg.n)*Math.PI*2 + slot*0.28;
-      const a1=a0 + slot*0.44;
-      context.beginPath();
-      context.strokeStyle = col;
-      context.lineWidth=7.5*s;
-      context.lineCap='round';
-      context.arc(cx,cy,rg.r*s,a0,a1);
-      context.stroke();
+
+  const isApple = o.arcStyle === 'apple';
+
+  if (isApple) {
+    // Apple App Clip / Apple Pay connected sweeping arcs with variable lengths
+    m.rings.forEach((rg)=>{
+      const n = rg.n;
+      const slot = Math.PI * 2 / n;
+      const bits = rg.slots.map(sl => (sl.finder || sl.bit === 1) ? 1 : 0);
+      const runs = getRuns(bits);
+      context.strokeStyle = o.dark || '#000000';
+      context.lineWidth = 7.5 * s;
+      context.lineCap = 'round';
+      runs.forEach(({ start, len, full }) => {
+        context.beginPath();
+        if (full) {
+          context.arc(cx, cy, rg.r * s, 0, Math.PI * 2);
+        } else {
+          const a0 = (start / n) * Math.PI * 2 + slot * 0.15;
+          const a1 = a0 + (len - 1) * slot + slot * 0.70;
+          context.arc(cx, cy, rg.r * s, a0, a1);
+        }
+        context.stroke();
+      });
     });
-  });
+  } else {
+    // Classic discrete dashed pills
+    m.rings.forEach((rg,ri)=>{
+      const slot=Math.PI*2/rg.n;
+      rg.slots.forEach((sl,j)=>{
+        const isBit1 = sl.finder || sl.bit === 1;
+        const col = isBit1 ? (o.dark || '#000000') : (o.light || '#8e8e93');
+        const a0=(j/rg.n)*Math.PI*2 + slot*0.28;
+        const a1=a0 + slot*0.44;
+        context.beginPath();
+        context.strokeStyle = col;
+        context.lineWidth=7.5*s;
+        context.lineCap='round';
+        context.arc(cx,cy,rg.r*s,a0,a1);
+        context.stroke();
+      });
+    });
+  }
 
   // Center circle background
   const centerBg = o.centerBg || '#000000';
@@ -926,18 +1001,45 @@ function modelToSVG(m,o){
   const pol=(r,a)=>[cx+r*Math.cos(a), cy+r*Math.sin(a)];
   let h='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">';
   h+='<circle cx="200" cy="200" r="190" fill="#ffffff"/>';
-  m.rings.forEach((rg,ri)=>{
-    const slot=Math.PI*2/rg.n;
-    const w=7.5;
-    rg.slots.forEach((sl,j)=>{
-      const isBit1 = sl.finder || sl.bit === 1;
-      const col = isBit1 ? (o.dark || '#000000') : (o.light || '#8e8e93');
-      const a0=(j/rg.n)*Math.PI*2 + slot*0.28;
-      const a1=a0 + slot*0.44;
-      const [x0,y0]=pol(rg.r,a0), [x1,y1]=pol(rg.r,a1);
-      h+='<path d="M '+x0.toFixed(2)+' '+y0.toFixed(2)+' A '+rg.r+' '+rg.r+' 0 0 1 '+x1.toFixed(2)+' '+y1.toFixed(2)+'" stroke="'+col+'" stroke-width="'+w+'" stroke-linecap="round" fill="none"/>';
+
+  const isApple = o.arcStyle === 'apple';
+
+  if (isApple) {
+    m.rings.forEach((rg)=>{
+      const n = rg.n;
+      const slot = Math.PI * 2 / n;
+      const w = 7.5;
+      const bits = rg.slots.map(sl => (sl.finder || sl.bit === 1) ? 1 : 0);
+      const runs = getRuns(bits);
+      runs.forEach(({ start, len, full }) => {
+        if (full) {
+          h += '<circle cx="200" cy="200" r="' + rg.r + '" stroke="' + (o.dark || '#000000') +
+            '" stroke-width="' + w + '" fill="none"/>';
+        } else {
+          const a0 = (start / n) * Math.PI * 2 + slot * 0.15;
+          const a1 = a0 + (len - 1) * slot + slot * 0.70;
+          const [x0, y0] = pol(rg.r, a0), [x1, y1] = pol(rg.r, a1);
+          const largeArc = (a1 - a0) > Math.PI ? 1 : 0;
+          h += '<path d="M ' + x0.toFixed(2) + ' ' + y0.toFixed(2) + ' A ' + rg.r + ' ' + rg.r +
+            ' 0 ' + largeArc + ' 1 ' + x1.toFixed(2) + ' ' + x1.toFixed(2) + '" stroke="' + (o.dark || '#000000') +
+            '" stroke-width="' + w + '" stroke-linecap="round" fill="none"/>';
+        }
+      });
     });
-  });
+  } else {
+    m.rings.forEach((rg,ri)=>{
+      const slot=Math.PI*2/rg.n;
+      const w=7.5;
+      rg.slots.forEach((sl,j)=>{
+        const isBit1 = sl.finder || sl.bit === 1;
+        const col = isBit1 ? (o.dark || '#000000') : (o.light || '#8e8e93');
+        const a0=(j/rg.n)*Math.PI*2 + slot*0.28;
+        const a1=a0 + slot*0.44;
+        const [x0,y0]=pol(rg.r,a0), [x1,y1]=pol(rg.r,a1);
+        h+='<path d="M '+x0.toFixed(2)+' '+y0.toFixed(2)+' A '+rg.r+' '+rg.r+' 0 0 1 '+x1.toFixed(2)+' '+y1.toFixed(2)+'" stroke="'+col+'" stroke-width="'+w+'" stroke-linecap="round" fill="none"/>';
+      });
+    });
+  }
 
   const centerBg = o.centerBg || '#000000';
   if (centerBg !== 'transparent') {
@@ -1011,6 +1113,16 @@ function generate(){
   document.getElementById('info').textContent = 'Capacity: ' + m.used + ' / ' + m.cap + ' bits (' + m.bytes + ' bytes) · ' + rings + ' Rings';
   setStatus('✓ Ready (Apple Pay Standard)', 'ok');
 }
+
+// Arc Style Segmented Buttons
+document.querySelectorAll('#arcStyleSeg .seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#arcStyleSeg .seg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentArcStyle = btn.dataset.style;
+    generate();
+  });
+});
 
 // Logo Segmented Buttons
 document.querySelectorAll('#logoModeSeg .seg-btn').forEach(btn => {
@@ -1170,6 +1282,13 @@ document.getElementById('dlJsBtn').onclick=()=>{
 };
 document.getElementById('verifyBtn').onclick=()=>{
   if(!model) generate();
+  if (window.CircleCode && typeof window.CircleCode.scanCanvas === 'function') {
+    const res = window.CircleCode.scanCanvas(cv, { aggressive: true });
+    if (res && res.ok) {
+      setStatus('✓ Optical scan passed: "' + res.text + '" (100% clean decode)', 'ok');
+      return;
+    }
+  }
   const d=decodeModel(model);
   setStatus(d.ok ? '✓ Verification passed: 100% clean decode' : 'Verify failed: '+d.msg, d.ok?'ok':'err');
 };

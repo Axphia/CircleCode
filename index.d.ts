@@ -32,10 +32,21 @@ export interface RenderOptions {
   dark?: string;
   light?: string;
   bg?: string;
-  center?: string | HTMLImageElement | { img: HTMLImageElement };
+  appleStyle?: boolean;
+  connectedArcs?: boolean;
+  merged?: boolean;
+  style?: 'apple' | 'discrete';
+  lineWidth?: number;
+  center?: string | HTMLImageElement | { img: HTMLImageElement; dataUrl?: string };
   centerBg?: string;
   title?: string;
   sub?: string;
+}
+
+export interface ArcRun {
+  start: number;
+  len: number;
+  full?: boolean;
 }
 
 export interface ScanOptions {
@@ -93,6 +104,7 @@ export declare const DASH_LEN: number;
 export declare function radii(k: number): number[];
 export declare function slotCount(r: number, density: number): number;
 export declare function buildModel(payload: string, opts?: ModelOptions): CircleCodeModel;
+export declare function getRuns(bits: number[]): ArcRun[];
 export declare function renderToCanvas(model: CircleCodeModel, ctx: CanvasRenderingContext2D, size?: number, opts?: RenderOptions): void;
 export declare function renderToSVG(model: CircleCodeModel, opts?: RenderOptions): string;
 export declare function parsePayloadBits(bits: number[]): { ok: boolean; text?: string; len?: number; chk?: number; reason?: string };

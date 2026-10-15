@@ -64,6 +64,7 @@ const umdBundle = `/**
     radii: radii,
     slotCount: slotCount,
     buildModel: buildModel,
+    getRuns: getRuns,
     renderToCanvas: renderToCanvas,
     renderToSVG: renderToSVG,
     parsePayloadBits: parsePayloadBits,
