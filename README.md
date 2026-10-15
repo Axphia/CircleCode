@@ -7,6 +7,7 @@
     Inspired by Apple Pay & Apple App Clips codes. Generate elegant circular barcodes with center branding and scan them across full 360° rotations at native speeds.
   </p>
   <p align="center">
+    <a href="https://github.com/Axphia/CircleCode/actions/workflows/build-and-publish.yml"><img src="https://github.com/Axphia/CircleCode/actions/workflows/build-and-publish.yml/badge.svg" alt="CI & Publish" /></a>
     <a href="https://www.npmjs.com/package/circlecode"><img src="https://img.shields.io/npm/v/circlecode?color=0071e3&style=flat-square" alt="NPM Version" /></a>
     <a href="https://circlecode.js.org"><img src="https://img.shields.io/badge/website-circlecode.js.org-0071e3?style=flat-square" alt="Website" /></a>
     <a href="https://github.com/Axphia/CircleCode"><img src="https://img.shields.io/badge/github-Axphia%2FCircleCode-black?style=flat-square&logo=github" alt="GitHub" /></a>
@@ -57,6 +58,9 @@
 ```bash
 # npm
 npm install circlecode
+
+# GitHub Packages (Axphia scope)
+npm install @axphia/circlecode --registry=https://npm.pkg.github.com
 
 # yarn
 yarn add circlecode
