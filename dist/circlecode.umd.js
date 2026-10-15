@@ -910,10 +910,10 @@ function tryConfigMirrored(g, w, h, cx, cy, scale, k, density, rot, aggressive) 
 
 function findCenterAndScale(g, w, h) {
   let best = null, bestScore = -1, bestInMean = 0, bestOutMean = 0;
-  const step = 6;
   const minDim = Math.min(w, h);
-  const maxBadgeR = Math.min(180, Math.floor(minDim * 0.30));
-  const minBadgeR = 12;
+  const step = Math.max(4, Math.min(12, Math.floor(minDim / 80)));
+  const maxBadgeR = Math.floor(minDim * 0.35);
+  const minBadgeR = Math.max(10, Math.floor(minDim * 0.025));
 
   for (let y = 24; y < h - 24; y += step) {
     for (let x = 24; x < w - 24; x += step) {
@@ -1264,6 +1264,31 @@ function scanImageData(imageData, options = {}) {
 function scanCanvas(canvas, options = {}) {
   const ctx = canvas.getContext ? canvas.getContext('2d') : canvas;
   const cv = canvas.canvas || canvas;
+  
+  // Auto-downsample ultra high-res canvases (> 960px) for 10x faster decoding and seamless large image support
+  const maxDim = options.maxScanDimension || 960;
+  if ((cv.width > maxDim || cv.height > maxDim) && typeof document !== 'undefined' && document.createElement) {
+    const sc = Math.min(maxDim / cv.width, maxDim / cv.height);
+    const targetW = Math.round(cv.width * sc);
+    const targetH = Math.round(cv.height * sc);
+    const downCv = document.createElement('canvas');
+    downCv.width = targetW;
+    downCv.height = targetH;
+    const downCtx = downCv.getContext('2d');
+    downCtx.drawImage(cv, 0, 0, targetW, targetH);
+    const imgData = downCtx.getImageData(0, 0, targetW, targetH);
+    const res = scanImageData(imgData, options);
+    if (res && res.ok && res.cx !== undefined) {
+      return {
+        ...res,
+        cx: res.cx / sc,
+        cy: res.cy / sc,
+        scale: res.scale / sc
+      };
+    }
+    return res;
+  }
+
   const imgData = ctx.getImageData(0, 0, cv.width, cv.height);
   return scanImageData(imgData, options);
 }
