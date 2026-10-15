@@ -425,36 +425,95 @@ function slotCount(r, density) {
 }
 
 // -------------------------------------------------------------
+// Data-Oriented Precomputed Look-Up Tables (LUT) & Scratch Buffers
+// -------------------------------------------------------------
+
+// Fast 360-degree trigonometric LUT (1024-entry circle for high angular precision)
+const TABLE_SIZE = 1024;
+const TABLE_MASK = TABLE_SIZE - 1;
+const RAD_TO_INDEX = TABLE_SIZE / (Math.PI * 2);
+const SIN_LUT = new Float32Array(TABLE_SIZE);
+const COS_LUT = new Float32Array(TABLE_SIZE);
+
+for (let i = 0; i < TABLE_SIZE; i++) {
+  const rad = (i * Math.PI * 2) / TABLE_SIZE;
+  SIN_LUT[i] = Math.sin(rad);
+  COS_LUT[i] = Math.cos(rad);
+}
+
+// Inline fast sin & cos lookup
+function fastCos(rad) {
+  let idx = (rad * RAD_TO_INDEX) | 0;
+  return COS_LUT[((idx % TABLE_SIZE) + TABLE_SIZE) & TABLE_MASK];
+}
+
+function fastSin(rad) {
+  let idx = (rad * RAD_TO_INDEX) | 0;
+  return SIN_LUT[((idx % TABLE_SIZE) + TABLE_SIZE) & TABLE_MASK];
+}
+
+// Flat scratch histogram buffer for zero-allocation Otsu thresholding
+const OTSU_HIST = new Int32Array(256);
+
+// Pre-allocated flat scratch buffers for candidate sweeps
+const SCRATCH_CANDS_ROT = new Float32Array(256);
+const SCRATCH_CANDS_SCORE = new Float32Array(256);
+const SCRATCH_CANDS_IDX = new Int32Array(256);
+
+// -------------------------------------------------------------
 // Grayscale & Sampling Utilities
 // -------------------------------------------------------------
 
 function toGrayscale(imageData) {
   const data = imageData.data || imageData;
-  const len = imageData.width * imageData.height;
+  const len = (imageData.width * imageData.height) | 0;
   const g = new Float32Array(len);
-  for (let i = 0; i < len; i++) {
-    const idx = i * 4;
-    g[i] = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+  
+  // Fast 32-bit integer luminance weighting: (77*R + 150*G + 29*B) >> 8
+  const loopEnd = len << 2;
+  let p = 0;
+  for (let idx = 0; idx < loopEnd; idx += 4) {
+    g[p++] = (data[idx] * 77 + data[idx + 1] * 150 + data[idx + 2] * 29) >> 8;
   }
   return g;
 }
 
 function sample(g, w, h, cx, cy, r = 0, ang = 0, aspect = 1.0, tilt = 0) {
-  let xr = r * Math.cos(ang);
-  let yr = r * Math.sin(ang);
-  if (aspect !== 1.0) {
-    const cosT = Math.cos(tilt), sinT = Math.sin(tilt);
-    const u = xr * cosT + yr * sinT;
-    const v = (-xr * sinT + yr * cosT) * aspect;
-    xr = u * cosT - v * sinT;
-    yr = u * sinT + v * cosT;
+  let xr = 0, yr = 0;
+  if (r !== 0) {
+    xr = r * fastCos(ang);
+    yr = r * fastSin(ang);
+    if (aspect !== 1.0) {
+      const cosT = fastCos(tilt), sinT = fastSin(tilt);
+      const u = xr * cosT + yr * sinT;
+      const v = (-xr * sinT + yr * cosT) * aspect;
+      xr = u * cosT - v * sinT;
+      yr = u * sinT + v * cosT;
+    }
   }
   const x = cx + xr;
   const y = cy + yr;
+  
+  // 3x3 box sample with fast integer boundary guards
+  const xi0 = (x + 0.5) | 0;
+  const yi0 = (y + 0.5) | 0;
+  
+  if (xi0 >= 1 && yi0 >= 1 && xi0 < w - 1 && yi0 < h - 1) {
+    const row0 = (yi0 - 1) * w + (xi0 - 1);
+    const row1 = yi0 * w + (xi0 - 1);
+    const row2 = (yi0 + 1) * w + (xi0 - 1);
+    return (
+      g[row0] + g[row0 + 1] + g[row0 + 2] +
+      g[row1] + g[row1 + 1] + g[row1 + 2] +
+      g[row2] + g[row2 + 1] + g[row2 + 2]
+    ) * 0.11111111; // 1 / 9
+  }
+  
   let s = 0, n = 0;
   for (let dy = -1; dy <= 1; dy++) {
     for (let dx = -1; dx <= 1; dx++) {
-      const xi = Math.round(x + dx), yi = Math.round(y + dy);
+      const xi = ((x + dx) + 0.5) | 0;
+      const yi = ((y + dy) + 0.5) | 0;
       if (xi >= 0 && yi >= 0 && xi < w && yi < h) {
         s += g[yi * w + xi];
         n++;
@@ -465,45 +524,56 @@ function sample(g, w, h, cx, cy, r = 0, ang = 0, aspect = 1.0, tilt = 0) {
 }
 
 function sampleRadialMin(g, w, h, cx, cy, r, ang, scale = 1.0, aspect = 1.0, tilt = 0) {
-  const dr = 2.2 * Math.max(0.6, scale);
+  const dr = 2.2 * (scale > 0.6 ? scale : 0.6);
   const s0 = sample(g, w, h, cx, cy, r, ang, aspect, tilt);
   const s1 = sample(g, w, h, cx, cy, r - dr, ang, aspect, tilt);
   const s2 = sample(g, w, h, cx, cy, r + dr, ang, aspect, tilt);
-  return Math.min(s0, s1, s2);
+  return s0 < s1 ? (s0 < s2 ? s0 : s2) : (s1 < s2 ? s1 : s2);
 }
 
 function median3(g, w, h, cx, cy, r, ang, slot, scale = 1.0, aspect = 1.0, tilt = 0) {
-  // Use slot * 0.14 so taps remain inside the solid body of the dash (dash spans 0.28..0.72 of slot)
+  // Use slot * 0.14 so taps remain inside the solid body of the dash
   const off = slot * 0.14;
-  const a = [
-    sampleRadialMin(g, w, h, cx, cy, r, ang - off, scale, aspect, tilt),
-    sampleRadialMin(g, w, h, cx, cy, r, ang, scale, aspect, tilt),
-    sampleRadialMin(g, w, h, cx, cy, r, ang + off, scale, aspect, tilt)
-  ];
-  a.sort((x, y) => x - y);
-  return a[1];
+  const a0 = sampleRadialMin(g, w, h, cx, cy, r, ang - off, scale, aspect, tilt);
+  const a1 = sampleRadialMin(g, w, h, cx, cy, r, ang, scale, aspect, tilt);
+  const a2 = sampleRadialMin(g, w, h, cx, cy, r, ang + off, scale, aspect, tilt);
+  
+  // Fast branchless/minimal branch 3-element median (no array allocation, no .sort())
+  if (a0 > a1) {
+    if (a1 > a2) return a1;
+    return a0 > a2 ? a2 : a0;
+  } else {
+    if (a0 > a2) return a0;
+    return a1 > a2 ? a2 : a1;
+  }
 }
 
-// Otsu automatic thresholding per ring
+// Otsu automatic thresholding per ring with zero GC allocations
 function otsuThr(vals) {
-  const hist = new Array(256).fill(0);
-  for (let i = 0; i < vals.length; i++) {
-    hist[Math.max(0, Math.min(255, Math.round(vals[i])))]++;
+  const total = vals.length | 0;
+  OTSU_HIST.fill(0);
+  
+  for (let i = 0; i < total; i++) {
+    const v = (vals[i] + 0.5) | 0;
+    const bin = v < 0 ? 0 : (v > 255 ? 255 : v);
+    OTSU_HIST[bin]++;
   }
-  const total = vals.length;
+  
   let sum = 0;
-  for (let i = 0; i < 256; i++) sum += i * hist[i];
+  for (let i = 0; i < 256; i++) sum += i * OTSU_HIST[i];
 
   let sumB = 0, wB = 0, best = -1, thr = 128;
   for (let t = 0; t < 256; t++) {
-    wB += hist[t];
+    const h = OTSU_HIST[t];
+    wB += h;
     if (wB === 0) continue;
     const wF = total - wB;
     if (wF === 0) break;
-    sumB += t * hist[t];
+    sumB += t * h;
     const mB = sumB / wB;
     const mF = (sum - sumB) / wF;
-    const between = wB * wF * (mB - mF) * (mB - mF);
+    const diff = mB - mF;
+    const between = wB * wF * diff * diff;
     if (between > best) {
       best = between;
       thr = t;
@@ -511,22 +581,30 @@ function otsuThr(vals) {
   }
 
   let s0 = 0, n0 = 0, s1 = 0, n1 = 0;
-  for (let i = 0; i < vals.length; i++) {
+  for (let i = 0; i < total; i++) {
     const v = vals[i];
     if (v <= thr) { s0 += v; n0++; }
     else { s1 += v; n1++; }
   }
   if (!n0 || !n1) return { thr: thr + 0.5, sep: 0 };
-  return { thr: (s0 / n0 + s1 / n1) / 2, sep: Math.abs(s1 / n1 - s0 / n0) };
+  return { thr: (s0 / n0 + s1 / n1) * 0.5, sep: Math.abs(s1 / n1 - s0 / n0) };
 }
 
 function kmeans2(vals) {
-  let lo = Math.min(...vals), hi = Math.max(...vals);
-  if (hi - lo < 8) return { thr: (lo + hi) / 2, sep: hi - lo };
+  let lo = 1e9, hi = -1e9;
+  const len = vals.length | 0;
+  for (let i = 0; i < len; i++) {
+    const v = vals[i];
+    if (v < lo) lo = v;
+    if (v > hi) hi = v;
+  }
+  if (hi - lo < 8) return { thr: (lo + hi) * 0.5, sep: hi - lo };
+  
   let c0 = lo, c1 = hi;
   for (let it = 0; it < 12; it++) {
     let s0 = 0, n0 = 0, s1 = 0, n1 = 0;
-    for (const v of vals) {
+    for (let i = 0; i < len; i++) {
+      const v = vals[i];
       if (Math.abs(v - c0) < Math.abs(v - c1)) { s0 += v; n0++; }
       else { s1 += v; n1++; }
     }
@@ -535,7 +613,7 @@ function kmeans2(vals) {
     if (Math.abs(nc0 - c0) < 0.5 && Math.abs(nc1 - c1) < 0.5) break;
     c0 = nc0; c1 = nc1;
   }
-  return { thr: (c0 + c1) / 2, sep: Math.abs(c1 - c0) };
+  return { thr: (c0 + c1) * 0.5, sep: Math.abs(c1 - c0) };
 }
 
 // Bit & Header Parsing + Checksum Guided Error Correction
@@ -990,23 +1068,54 @@ function scanImageData(imageData, options = {}) {
   let bestClean = null, bestCorrected = null, bestFinder = null, bestFinderS = 1e9;
 
   for (const { sc, k, d } of cfgs) {
-    // Fast candidate finder sweep with 1.8° step (fine enough to never miss outer ring dashes)
-    const cands = [];
-    for (let deg = 0; deg < 360; deg += 1.8) {
-      const rot = deg * Math.PI / 180;
-      cands.push({ rot, s: finderScore(g, w, h, cx, cy, sc, k, d, rot) });
+    // Fast candidate finder sweep with 1.8° step (200 steps per sweep)
+    // Uses pre-allocated flat TypedArrays instead of creating 200 object instances!
+    const numSteps = 200; // 360 / 1.8
+    const stepRad = (Math.PI * 2) / numSteps;
+    
+    let bestLocalS = 1e9, bestLocalRot = 0;
+    for (let step = 0; step < numSteps; step++) {
+      const rot = step * stepRad;
+      const s = finderScore(g, w, h, cx, cy, sc, k, d, rot);
+      SCRATCH_CANDS_ROT[step] = rot;
+      SCRATCH_CANDS_SCORE[step] = s;
+      SCRATCH_CANDS_IDX[step] = step;
+      if (s < bestLocalS) {
+        bestLocalS = s;
+        bestLocalRot = rot;
+      }
     }
-    cands.sort((a, b) => a.s - b.s);
-    if (cands[0].s < bestFinderS) {
-      bestFinderS = cands[0].s;
-      bestFinder = { sc, k, d, rot: cands[0].rot };
+    
+    if (bestLocalS < bestFinderS) {
+      bestFinderS = bestLocalS;
+      bestFinder = { sc, k, d, rot: bestLocalRot };
     }
-    if (cands[0].s > 195) continue;
+    if (bestLocalS > 195) continue;
+
+    // Fast top-4 selection via partial selection sort (no full 200-item array sort!)
+    for (let top = 0; top < 4; top++) {
+      let minPos = top;
+      let minScore = SCRATCH_CANDS_SCORE[SCRATCH_CANDS_IDX[top]];
+      for (let scan = top + 1; scan < numSteps; scan++) {
+        const scVal = SCRATCH_CANDS_SCORE[SCRATCH_CANDS_IDX[scan]];
+        if (scVal < minScore) {
+          minScore = scVal;
+          minPos = scan;
+        }
+      }
+      if (minPos !== top) {
+        const tmp = SCRATCH_CANDS_IDX[top];
+        SCRATCH_CANDS_IDX[top] = SCRATCH_CANDS_IDX[minPos];
+        SCRATCH_CANDS_IDX[minPos] = tmp;
+      }
+    }
 
     // Try top candidates with fine angular refinement
-    for (const c of cands.slice(0, 4)) {
+    for (let cIdx = 0; cIdx < 4; cIdx++) {
+      const bestIdx = SCRATCH_CANDS_IDX[cIdx];
+      const candRot = SCRATCH_CANDS_ROT[bestIdx];
       for (const off of [0, 0.6, -0.6, 1.2, -1.2]) {
-        const r = tryConfig(g, w, h, cx, cy, sc, k, d, c.rot + off * Math.PI / 180, aggr);
+        const r = tryConfig(g, w, h, cx, cy, sc, k, d, candRot + off * (Math.PI / 180), aggr);
         if (r.ok) {
           const score = r.sep - r.fMean;
           if (!r.fixed) {
