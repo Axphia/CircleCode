@@ -35,6 +35,7 @@
 
 - **Generator:** [https://circlecode.js.org/generator.html](https://circlecode.js.org/generator.html)
 - **Camera Scanner:** [https://circlecode.js.org/scanner.html](https://circlecode.js.org/scanner.html)
+- **WASM Acceleration Demo:** [https://circlecode.js.org/wasm-demo.html](https://circlecode.js.org/wasm-demo.html)
 - **Home / Studio:** [https://circlecode.js.org](https://circlecode.js.org)
 
 ---

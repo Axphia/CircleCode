@@ -116,7 +116,7 @@ pub fn find_center(g: &[f32], w: usize, h: usize) -> Option<(f32, f32, f32)> {
 }
 
 #[wasm_bindgen]
-pub fn scan_frame_wasm(rgba: &[u8], width: usize, height: usize, aggressive: bool) -> Result<JsValue, JsValue> {
+pub fn scan_frame_wasm(rgba: &[u8], width: usize, height: usize, _aggressive: bool) -> Result<JsValue, JsValue> {
     let total_pixels = width * height;
     if rgba.len() < total_pixels * 4 {
         return Err(JsValue::from_str("Invalid buffer size"));
@@ -124,8 +124,8 @@ pub fn scan_frame_wasm(rgba: &[u8], width: usize, height: usize, aggressive: boo
 
     let g = to_grayscale(rgba, total_pixels);
 
-    if let Some((cx, cy, r)) = find_center(&g, width, height) {
-        let scale = r / CENTER_R;
+    if let Some((_cx, _cy, r)) = find_center(&g, width, height) {
+        let _scale = r / CENTER_R;
         let res = ScanResult {
             ok: true,
             text: Some("WASM Decoded".to_string()),
