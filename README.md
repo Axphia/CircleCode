@@ -4,7 +4,7 @@
   <img src="https://circlecode.js.org/CNAME" alt="CircleCode Logo" style="display:none;" />
   <h2 align="center">High-performance, dependency-free circular barcode codec for Browser and Node.js</h2>
   <p align="center">
-    Inspired by Apple Pay and Apple App Clips codes. Generate elegant circular barcodes with center branding and scan them across full 360° rotations at native speeds.
+    Generate elegant circular barcodes in dual modes (<b>Circle</b> discrete dashes &amp; <b>LonCle</b> connected sweeping arcs) with custom center branding, and scan them across full 360° rotations at native speeds.
   </p>
   <p align="center">
     <a href="https://github.com/Axphia/CircleCode/actions/workflows/build-and-publish.yml"><img src="https://github.com/Axphia/CircleCode/actions/workflows/build-and-publish.yml/badge.svg" alt="CI & Publish" /></a>
@@ -16,6 +16,19 @@
     <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License" />
   </p>
 </p>
+
+---
+
+## Dual Rendering Modes
+
+CircleCode officially supports two distinct visual styles while maintaining 100% optical scanning compatibility:
+
+| Mode | Option | Visual Representation | Use Case |
+| :--- | :--- | :--- | :--- |
+| **Circle** | `style: 'circle'` | **Classic discrete dashed pills** for each individual bit slot. | High-contrast industrial labels, technical tags, and classic circular codes. |
+| **LonCle** | `style: 'loncle'` *(or `loncle: true`)* | **Continuous sweeping variable-length arcs** merging contiguous 1-bits. | Modern apps, payment cards, luxury merchandise, badges, and posters. |
+
+Both modes preserve exact angular slot center alignment, allowing the same scanner engine to decode both modes with zero configuration.
 
 ---
 
@@ -39,7 +52,7 @@
 
 ## Features
 
-- **Apple Pay & App Clips Aesthetic:** Minimalist circular dash design that feels natural on round packaging, coasters, cards, and luxury brand merchandise.
+- **Dual Visual Modes (Circle & LonCle):** Choose between classic discrete pill dashes or fluid, variable-length sweeping connected ribbons.
 - **Zero Dependencies:** Pure vanilla JavaScript default. Runs out-of-the-box in Node.js, modern browsers, PWAs, or embedded webviews.
 - **Native WebAssembly Acceleration (`circlecode/wasm`):** Compiled from Rust for sub-3ms frame processing and 300+ FPS decoding.
 - **Non-Blocking Web Worker:** Dedicated background worker (`scanner-worker.js`) decouples CPU-heavy decoding from the UI thread, ensuring silky smooth 60 FPS camera previews.
@@ -47,7 +60,7 @@
 - **Subpixel 360° Scanning Engine:** Dual-centroid edge detection, scale-aware radial search (`dr = 2.2 * scale`), and hybrid Otsu/K-means thresholding for extreme reliability under shadows and glare.
 - **Live Camera & Mobile Features:** Integrated torch (flashlight) toggle, digital zoom crop, and 1-frame instant lock when checksum matches.
 - **Vector SVG & Canvas Support:** Export crisp, high-resolution SVG markup or render directly to 2D canvas contexts.
-- **Center Logo Slot:** Dedicated center circular badge (42px standard) for custom logos (Apple Pay, brand icons, avatars, or text) with zero data occlusion.
+- **Center Branding Badge:** Dedicated center circular slot ($R=42$) for brand icons, text, or avatars with zero data occlusion.
 - **Dual Module Format:** Full support for ECMAScript Modules (`import`), CommonJS (`require`), TypeScript types (`index.d.ts`), and standalone UMD browser bundle.
 
 ---
@@ -88,9 +101,9 @@ Include directly via script tag in vanilla HTML:
 
 ```html
 <!-- Standalone UMD Bundle -->
-<script src="https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.3/dist/circlecode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.4/dist/circlecode.min.js"></script>
 <script>
-  const { buildModel, renderToCanvas, scanCanvas, CircleScanner } = window.CircleCode;
+  const { buildModel, renderToCanvas, renderToSVG, scanCanvas, CircleScanner } = window.CircleCode;
 </script>
 ```
 
@@ -100,39 +113,39 @@ Include directly via script tag in vanilla HTML:
 
 ### 1. Generating Codes (Encoder)
 
-#### Render Scalable SVG
+#### Render Scalable SVG (LonCle Mode)
 ```javascript
-import { buildModel, renderToSVG } from 'circlecode';
+import { buildModel, renderToSVG } from '@axphia/circlecode';
 
-// 1. Build circular code data model (supports rings from 4 to 14)
-const model = buildModel('Table-24', {
-  rings: 5,
-  density: 0.35
-});
+// 1. Build circular code data model (supports 4 to 14 rings)
+const model = buildModel('Table-24', { rings: 5, density: 0.35 });
 
-// 2. Generate pure vector SVG markup
+// 2. Generate pure vector SVG in LonCle mode (connected sweeping arcs)
 const svg = renderToSVG(model, {
+  style: 'loncle',
   dark: '#0071e3',
   light: '#ffffff',
-  center: 'Pay',
+  center: 'Pay',
   centerBg: '#000000'
 });
 
 console.log(svg);
 ```
 
-#### Render to HTML Canvas
+#### Render to HTML Canvas (Circle Mode)
 ```javascript
-import { buildModel, renderToCanvas } from 'circlecode';
+import { buildModel, renderToCanvas } from '@axphia/circlecode';
 
 const canvas = document.getElementById('myCanvas');
 const ctx = canvas.getContext('2d');
 
-const model = buildModel('Table-24', { rings: 5, density: 0.35 });
+const model = buildModel('user-12345', { rings: 5, density: 0.35 });
 
+// Render in Circle mode (classic discrete dashes)
 renderToCanvas(model, ctx, 400, {
+  style: 'circle',
   dark: '#1d1d1f',
-  light: '#ffffff',
+  light: '#8e8e93',
   center: 'MyBrand',
   centerBg: '#000000'
 });
@@ -235,11 +248,12 @@ const svg = renderToSVG(model, { dark: '#0071e3', light: '#ffffff' });
 
 | Parameter | Standard Value | Description |
 | :--- | :--- | :--- |
+| **Rendering Modes** | `Circle`, `LonCle` | Discrete dashes (`style: 'circle'`) vs contiguous sweeping arcs (`style: 'loncle'`) |
 | **Center Radius** | `42` (normalized) | Protected circular branding slot for logos / icons |
 | **Inner Ring Start** | `55` | Ring 0 start radius |
 | **Outer Ring End** | `157` | Outermost ring radius |
 | **Disc Edge Radius** | `190` | Outer boundary border |
-| **Standard Density** | `0.35` | Dash density (Apple Pay specification) |
+| **Standard Density** | `0.35` | Dash density parameter ($d = 0.35$) |
 | **Ring Counts** | `4` to `14` | Dynamically expandable for payloads up to 50+ bytes |
 | **Checksum** | `Modulo-256 Sum` | 8-bit checksum with 1–2 bit mathematical error recovery |
 | **Camera Latency** | `~2–4 ms` | Sub-3ms frame processing cycle via compiled Rust WASM |

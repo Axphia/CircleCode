@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CircleCode — Elegant Circular Barcode Standard for Web & Mobile</title>
-  <meta name="description" content="High-performance, dependency-free circular barcode codec inspired by Apple Pay & App Clips. Encode data into concentric arcs and decode across 360° rotations at native speed.">
+  <title>CircleCode — Dual-Mode Circular Barcode Standard for Web & Mobile</title>
+  <meta name="description" content="High-performance, dependency-free circular barcode codec with dual modes: Circle discrete dashed pills and LonCle connected sweeping arcs.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='10' fill='none' stroke='%230071e3' stroke-width='2'/><circle cx='12' cy='12' r='4' fill='%230071e3'/></svg>">
   
   <!-- KaTeX for Mathematical Formulas -->
@@ -484,7 +484,7 @@
 
     <!-- Hero Section -->
     <section class="hero">
-      <div class="badge-pill">Apple Pay &amp; App Clips Aesthetic Standard</div>
+      <div class="badge-pill">Dual-Mode Standard: Circle &amp; LonCle</div>
       <div class="hero-badge-icon">
         <div class="pulse-ring"></div>
         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
@@ -496,7 +496,8 @@
 
       <h1>Circular Barcode Codec for Modern Web &amp; Mobile</h1>
       <p>
-        CircleCode encodes custom data into elegant concentric dash arcs with a dedicated center branding slot. 
+        CircleCode encodes custom data into elegant concentric dash arcs with dual visual styles: 
+        classic discrete pills (<b>Circle</b>) or continuous sweeping arcs (<b>LonCle</b>). 
         Decode across full 360° orientations with subpixel accuracy directly in the client.
       </p>
 
@@ -718,17 +719,27 @@ npm install @axphia/circlecode --registry=https://npm.pkg.github.com</div>
       <!-- 1. Encoder -->
       <div style="margin-top: 24px;">
         <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 4px;">1. Generating Codes (Encoder)</h4>
-        <p style="font-size: 13px; color: var(--text-sec); margin-bottom: 8px;">Create Apple Pay circular barcodes and render to SVG or HTML5 Canvas:</p>
-        <div class="code-box"><span class="code-kw">import</span> { buildModel, renderToSVG, renderToCanvas } <span class="code-kw">from</span> <span class="code-str">'circlecode'</span>;
+        <p style="font-size: 13px; color: var(--text-sec); margin-bottom: 8px;">Create circular barcodes in LonCle or Circle mode and render to SVG or HTML5 Canvas:</p>
+        <div class="code-box"><span class="code-kw">import</span> { buildModel, renderToSVG, renderToCanvas } <span class="code-kw">from</span> <span class="code-str">'@axphia/circlecode'</span>;
 
 <span class="code-comment">// 1. Build circular code model</span>
-<span class="code-kw">const</span> model = <span class="code-fn">buildModel</span>(<span class="code-str">'user-12345'</span>, { rings: 5, density: 0.35 });
+<span class="code-kw">const</span> model = <span class="code-fn">buildModel</span>(<span class="code-str">'Table-24'</span>, { rings: 5, density: 0.35 });
 
-<span class="code-comment">// 2. Export vector SVG markup</span>
-<span class="code-kw">const</span> svg = <span class="code-fn">renderToSVG</span>(model, { dark: <span class="code-str">'#0071e3'</span>, light: <span class="code-str">'#ffffff'</span> });
+<span class="code-comment">// 2. Export vector SVG in LonCle mode (connected sweeping arcs)</span>
+<span class="code-kw">const</span> svg = <span class="code-fn">renderToSVG</span>(model, {
+  style: <span class="code-str">'loncle'</span>,
+  dark: <span class="code-str">'#0071e3'</span>,
+  light: <span class="code-str">'#ffffff'</span>,
+  center: <span class="code-str">'Pay'</span>
+});
 
-<span class="code-comment">// 3. Or render directly to an HTML5 Canvas</span>
-<span class="code-fn">renderToCanvas</span>(model, canvas.getContext(<span class="code-str">'2d'</span>), 400);</div>
+<span class="code-comment">// 3. Or render to Canvas in Circle mode (classic discrete dashes)</span>
+<span class="code-fn">renderToCanvas</span>(model, canvas.getContext(<span class="code-str">'2d'</span>), 400, {
+  style: <span class="code-str">'circle'</span>,
+  dark: <span class="code-str">'#1d1d1f'</span>,
+  light: <span class="code-str">'#8e8e93'</span>,
+  center: <span class="code-str">'MyBrand'</span>
+});</div>
       </div>
 
       <!-- 2. Pure JS Scanner -->
@@ -851,7 +862,7 @@ npm install @axphia/circlecode --registry=https://npm.pkg.github.com</div>
               </svg>
             </div>
             <h3>Barcode Generator</h3>
-            <p>Generate standard Apple Pay circular barcodes with customizable center badges (Apple Pay, custom logo, or text). Export crisp vector SVG and PNG.</p>
+            <p>Generate circular barcodes in dual modes: Circle (classic discrete) and LonCle (connected sweeping arcs) with customizable center badges. Export crisp vector SVG and PNG.</p>
           </div>
           <span class="lp-link">Launch Generator →</span>
         </a>
@@ -875,7 +886,7 @@ npm install @axphia/circlecode --registry=https://npm.pkg.github.com</div>
 
     <!-- Footer -->
     <footer class="foot">
-      CircleCode Standard · Apple Pay & App Clips Aesthetic (4–14 Rings · Density 0.35 · Checksum Error-Correction)<br>
+      CircleCode Standard · Dual-Mode Circle &amp; LonCle (4–14 Rings · Density 0.35 · Checksum Error-Correction)<br>
       Open Source MIT License · Published on <a href="https://www.npmjs.com/package/circlecode" target="_blank" rel="noopener">npm</a> and <a href="https://github.com/Axphia/CircleCode" target="_blank" rel="noopener">GitHub</a> by <a href="https://github.com/Axphia" target="_blank" rel="noopener">Axphia</a>.
     </footer>
 
