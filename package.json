@@ -69,5 +69,8 @@
   "bugs": {
     "url": "https://github.com/Axphia/CircleCode/issues"
   },
-  "homepage": "https://circlecode.js.org"
+  "homepage": "https://circlecode.js.org",
+  "publishConfig": {
+    "access": "public"
+  }
 }
