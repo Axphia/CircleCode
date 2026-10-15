@@ -68,16 +68,30 @@ const SCRATCH_CANDS_IDX = new Int32Array(256);
 // Grayscale & Sampling Utilities
 // -------------------------------------------------------------
 
-export function toGrayscale(imageData) {
+export function toGrayscale(imageData, mode = 'luminance') {
   const data = imageData.data || imageData;
   const len = (imageData.width * imageData.height) | 0;
   const g = new Float32Array(len);
-  
-  // Fast 32-bit integer luminance weighting: (77*R + 150*G + 29*B) >> 8
   const loopEnd = len << 2;
   let p = 0;
-  for (let idx = 0; idx < loopEnd; idx += 4) {
-    g[p++] = (data[idx] * 77 + data[idx + 1] * 150 + data[idx + 2] * 29) >> 8;
+
+  if (mode === 'red') {
+    for (let idx = 0; idx < loopEnd; idx += 4) {
+      g[p++] = data[idx];
+    }
+  } else if (mode === 'blue') {
+    for (let idx = 0; idx < loopEnd; idx += 4) {
+      g[p++] = data[idx + 2];
+    }
+  } else if (mode === 'green') {
+    for (let idx = 0; idx < loopEnd; idx += 4) {
+      g[p++] = data[idx + 1];
+    }
+  } else {
+    // Fast 32-bit integer luminance weighting: (77*R + 150*G + 29*B) >> 8
+    for (let idx = 0; idx < loopEnd; idx += 4) {
+      g[p++] = (data[idx] * 77 + data[idx + 1] * 150 + data[idx + 2] * 29) >> 8;
+    }
   }
   return g;
 }
@@ -692,8 +706,40 @@ export function estimateDisc(g, w, h, cx, cy) {
 export function scanImageData(imageData, options = {}) {
   const w = imageData.width;
   const h = imageData.height;
-  const g = toGrayscale(imageData);
 
+  // 1. Primary pass with standard luminance
+  const gLum = toGrayscale(imageData, 'luminance');
+  let res = _scanGrayscaleBuffer(gLum, w, h, options);
+  if (res && res.ok) return res;
+
+  // 2. High-chroma color contrast pass (for colorful themes like Cyber, Neon, Sunset)
+  if (imageData.data && options.colorPass !== false) {
+    const d = imageData.data;
+    const step = Math.max(4, Math.floor(d.length / (128 * 4))) * 4;
+    let hasColor = false;
+    for (let i = 0; i < d.length; i += step) {
+      if (Math.abs(d[i] - d[i + 1]) > 25 || Math.abs(d[i] - d[i + 2]) > 25) {
+        hasColor = true;
+        break;
+      }
+    }
+    if (hasColor) {
+      // Red channel provides maximum contrast for purple/pink/red/magenta themes
+      const gRed = toGrayscale(imageData, 'red');
+      res = _scanGrayscaleBuffer(gRed, w, h, options);
+      if (res && res.ok) return res;
+
+      // Blue channel provides maximum contrast for yellow/orange/green themes
+      const gBlue = toGrayscale(imageData, 'blue');
+      res = _scanGrayscaleBuffer(gBlue, w, h, options);
+      if (res && res.ok) return res;
+    }
+  }
+
+  return res || { ok: false, reason: 'No valid circular code detected' };
+}
+
+function _scanGrayscaleBuffer(g, w, h, options = {}) {
   let cx = options.cx;
   let cy = options.cy;
   const aggr = options.aggressive !== undefined ? options.aggressive : true;
@@ -876,8 +922,8 @@ export function scanCanvas(canvas, options = {}) {
   const ctx = canvas.getContext ? canvas.getContext('2d') : canvas;
   const cv = canvas.canvas || canvas;
   
-  // Auto-downsample ultra high-res canvases (> 960px) for 10x faster decoding and seamless large image support
-  const maxDim = options.maxScanDimension || 960;
+  // Auto-downsample ultra high-res canvases (> 600px) for 10x faster decoding and seamless large image support
+  const maxDim = options.maxScanDimension || 600;
   if ((cv.width > maxDim || cv.height > maxDim) && typeof document !== 'undefined' && document.createElement) {
     const sc = Math.min(maxDim / cv.width, maxDim / cv.height);
     const targetW = Math.round(cv.width * sc);
@@ -886,6 +932,8 @@ export function scanCanvas(canvas, options = {}) {
     downCv.width = targetW;
     downCv.height = targetH;
     const downCtx = downCv.getContext('2d');
+    downCtx.imageSmoothingEnabled = true;
+    downCtx.imageSmoothingQuality = 'high';
     downCtx.drawImage(cv, 0, 0, targetW, targetH);
     const imgData = downCtx.getImageData(0, 0, targetW, targetH);
     const res = scanImageData(imgData, options);
