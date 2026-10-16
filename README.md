@@ -287,7 +287,9 @@ npm run build:wasm
 
 ---
 
-<img src="images/circle-code-1024.png" alt="CircleCode Diagram" width="500">
+<img src="images/circle-code-1024.png" alt="CircleCode Diagram">
+
+<img src="images\circle-code.svg" alt="CircleCode Diagram">
 
 ## License
 
