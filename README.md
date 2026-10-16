@@ -1,7 +1,7 @@
 # CircleCode
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Axphia/CircleCode/02c7416623aa0b1378a653161c4ca0ef0ee63e8c/images/logo.png" alt="CircleCode Logo"  width="160" style="border-radius: 28px; box-shadow: 0 10px 30px rgba(0, 113, 227, 0.25);" />
+  <img src="https://raw.githubusercontent.com/Axphia/CircleCode/02c7416623aa0b1378a653161c4ca0ef0ee63e8c/images/logo.png" alt="CircleCode Logo" width="160" style="border-radius: 28px; box-shadow: 0 10px 30px rgba(0, 113, 227, 0.25);" />
 </p>
 <h2 align="center">High-performance, dependency-free circular barcode codec for Browser and Node.js</h2>
   <p align="center">
