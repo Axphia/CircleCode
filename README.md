@@ -36,6 +36,7 @@ Both modes preserve exact angular slot center alignment, allowing the same scann
 
 ## Documentation
 
+- **[Documentation Hub & Benchmarks](docs/README.md)** — Complete technical documentation and empirical performance benchmarks.
 - **[API Reference](docs/API.md)** — Complete function signatures, options, and TypeScript definitions.
 - **[Technical Specification](docs/SPECIFICATION.md)** — Format geometry, dash angles, header encoding, and error correction.
 - **[System Architecture](docs/ARCHITECTURE.md)** — Dual-engine design, subpixel image pipeline, and threading models.

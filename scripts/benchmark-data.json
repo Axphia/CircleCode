@@ -1,0 +1,94 @@
+{
+  "resBenchmark": [
+    {
+      "res": "320x320 (Preview)",
+      "w": 320,
+      "h": 320,
+      "wasmMs": 31.94,
+      "wasmFps": 31.3,
+      "jsMs": 43.95,
+      "jsFps": 22.8,
+      "speedup": 1.38,
+      "wasmOk": true,
+      "jsOk": true
+    },
+    {
+      "res": "400x400 (Viewfinder)",
+      "w": 400,
+      "h": 400,
+      "wasmMs": 16.64,
+      "wasmFps": 60.1,
+      "jsMs": 10.94,
+      "jsFps": 91.4,
+      "speedup": 0.66,
+      "wasmOk": true,
+      "jsOk": true
+    },
+    {
+      "res": "480x480 (Square Cam)",
+      "w": 480,
+      "h": 480,
+      "wasmMs": 34.26,
+      "wasmFps": 29.2,
+      "jsMs": 12.53,
+      "jsFps": 79.8,
+      "speedup": 0.37,
+      "wasmOk": true,
+      "jsOk": true
+    },
+    {
+      "res": "640x480 (VGA 4:3)",
+      "w": 640,
+      "h": 480,
+      "wasmMs": 19.37,
+      "wasmFps": 51.6,
+      "jsMs": 24.4,
+      "jsFps": 41,
+      "speedup": 1.26,
+      "wasmOk": true,
+      "jsOk": true
+    },
+    {
+      "res": "800x800 (Hi-Res)",
+      "w": 800,
+      "h": 800,
+      "wasmMs": 56.72,
+      "wasmFps": 17.6,
+      "jsMs": 18.59,
+      "jsFps": 53.8,
+      "speedup": 0.33,
+      "wasmOk": true,
+      "jsOk": true
+    }
+  ],
+  "payloadBenchmark": [
+    {
+      "label": "3 Rings (1 byte)",
+      "rings": 3,
+      "bytes": 1,
+      "wasmMs": 40.91,
+      "jsMs": 11.29
+    },
+    {
+      "label": "5 Rings (8 bytes)",
+      "rings": 5,
+      "bytes": 8,
+      "wasmMs": 65.89,
+      "jsMs": 83.14
+    },
+    {
+      "label": "7 Rings (20 bytes)",
+      "rings": 7,
+      "bytes": 19,
+      "wasmMs": 84.23,
+      "jsMs": 95.91
+    },
+    {
+      "label": "9 Rings (37 bytes)",
+      "rings": 9,
+      "bytes": 37,
+      "wasmMs": 93.65,
+      "jsMs": 127.13
+    }
+  ]
+}
