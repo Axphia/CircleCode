@@ -59,8 +59,8 @@ representative at an online or offline event.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the community leaders responsible for enforcement at
-.
+reported to the project maintainers via [GitHub Security Advisories](https://github.com/Axphia/CircleCode/security/advisories/new)
+or by emailing the maintainers directly at [contact@axphia.org](mailto:contact@axphia.org).
 All complaints will be reviewed and investigated promptly and fairly.
 
 All community leaders are obligated to respect the privacy and security of the
