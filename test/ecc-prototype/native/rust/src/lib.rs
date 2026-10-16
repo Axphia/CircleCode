@@ -1,5 +1,5 @@
-//! CircleCode Rust/WebAssembly Full Scanner Engine
-//! V1 checksum scanner and V2/V2.1 Reed-Solomon + CRC32 scanner.
+//! Full-featured CircleCode scanner engine in Rust/WebAssembly
+//! Checksum-based scanner for V1, and Reed-Solomon + CRC32 scanner for V2/V2.1
 
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;

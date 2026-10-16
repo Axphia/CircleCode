@@ -1,90 +1,90 @@
 # CircleCode ECC prototype
 
-ต้นแบบทดลอง V2.1: แพ็ก Numeric / Alphanumeric / UTF-8 / Binary พร้อม Reed–Solomon + CRC32 แยกจากไลบรารีหลัก ใช้ JavaScript โดยไม่มี dependency เพิ่ม
+Experimental prototype V2.1: Packed Numeric / Alphanumeric / UTF-8 / Binary modes with Reed–Solomon + CRC32 error correction isolated from the main library, implemented in vanilla JavaScript without extra dependencies.
 
-โค้ด codec/packing/RS/scanner ตัวจริงอยู่ที่ `v2/` ภายในโฟลเดอร์ทดลองนี้ ไฟล์ชื่อเดิม re-export โค้ดร่วมเพื่อให้ ECC Lab กับเว็บสแกนใช้ implementation เดียวกัน ทุกส่วนของ V2 รวมเว็บสแกนและ Rust/WASM อยู่ใน `test/ecc-prototype/` เท่านั้น ไม่แก้ exports, scripts หรือไลบรารีหลัก สำเนา `legacy/` ใช้ renderer และตัวช่วย V1 ที่แยกจากโค้ดหลัก
+The actual codec, packing, RS, and scanner implementations live in `v2/` within this experimental directory. Legacy-named files re-export this shared code so ECC Lab and the web scanner use the exact same implementation. All V2 components, including the web scanner and Rust/WASM, reside solely in `test/ecc-prototype/` without modifying root exports, scripts, or the primary library. The `legacy/` directory contains an isolated snapshot of the V1 renderer and utilities.
 
-เว็บสแกนมือถือพร้อมกล้องและ Rust/WASM อยู่ที่ [scanner-web](scanner-web/README.md) ตัวอ่าน JS/Rust ทดลองค้นหาจำนวนวงอัตโนมัติ 4–14 ได้ด้วยค่า rings = 0; ECC Lab ยังคงให้เลือกจำนวนวงเอง ไม่มีการเผยแพร่เว็บหรือเชื่อมต่อ Sites ในโฟลเดอร์นี้
+The mobile camera and Rust/WASM web scanner is located in [scanner-web](scanner-web/README.md). Both JS and Rust experimental scanners support automatic ring count detection across 4–14 rings when rings = 0; ECC Lab continues to require manual ring selection. No web publishing or Google Sites integration exists in this directory.
 
-จากรากโปรเจกต์ รันชุดทดลองทั้งหมดด้วย `npm --prefix test/ecc-prototype test` สร้างเว็บสแกนด้วย `npm --prefix test/ecc-prototype run build:scanner` และเปิดด้วย `npm --prefix test/ecc-prototype run preview` ที่ `http://127.0.0.1:4180/` คำสั่ง build:wasm ของ package ทดลองสร้างเฉพาะ `native/rust/` และ `wasm/` ภายในโฟลเดอร์นี้
+From the repository root, run the entire test suite via `npm --prefix test/ecc-prototype test`. Build the scanner web app using `npm --prefix test/ecc-prototype run build:scanner` and open it with `npm --prefix test/ecc-prototype run preview` at `http://127.0.0.1:4180/`. The package `build:wasm` script exclusively compiles `native/rust/` and syncs artifacts to `wasm/` inside this directory.
 
-## เปิดเว็บทดลอง
+## Running ECC Lab
 
-จากโฟลเดอร์รากของโปรเจกต์:
+From the repository root:
 
 ```sh
 node test/ecc-prototype/serve.mjs
 ```
 
-เปิด [ECC Lab](http://127.0.0.1:4173/) ต้องเปิดผ่าน HTTP server เพื่อโหลด ES modules และ Web Worker
+Open [ECC Lab](http://127.0.0.1:4173/). An HTTP server is required to load ES modules and the Web Worker.
 
-หน้าเว็บสร้าง Circle / LonCle, เปลี่ยนข้อมูลแบบสุ่มหรือกดเลือกไบต์, แสดงต้นฉบับ/ความเสียหาย/ผลกู้ และบันทึกภาพ PNG หรือ SVG ได้ ส่วนอ่านภาพใช้ตัวถอดรหัสทดลองจริงใน Worker รองรับ Canvas ด้านบน ภาพตัวอย่าง และไฟล์ PNG/JPEG/WebP ไม่เกิน 10 MB โดยย่อด้านยาวเหลือไม่เกิน 800 พิกเซลก่อนอ่าน
+The web UI creates Circle / LonCle codes, allows random byte corruption or manual byte toggling, displays clean, damaged, and recovered results, and exports PNG or SVG images. Image scanning runs the actual experimental decoder inside a Web Worker, supporting the canvas above, bundled sample images, or uploaded PNG/JPEG/WebP files up to 10 MB (downscaled so the max dimension does not exceed 800 pixels before decoding).
 
-เลือกโหมดแพ็กข้อมูลเป็น Auto เพื่อเลือก Numeric, Alphanumeric หรือ UTF-8 สำหรับทั้งข้อความ หรือเลือก Binary แล้วใส่ hex ครบคู่ เช่น `00 FF 80 41` หน้าเว็บแสดงจำนวนหลัก/ตัว/ไบต์และจำนวนบิตที่แพ็กจริง ไบนารีที่อ่านกลับจะแสดงเป็น hex เพื่อคงค่า `00`, `FF` และไบต์ที่ไม่ใช่ UTF-8
+Set the packing mode to Auto to select Numeric, Alphanumeric, or UTF-8 across the entire payload, or choose Binary and enter complete hex pairs such as `00 FF 80 41`. The UI reports the count of digits/characters/bytes and total packed bits. Scanned binary data is rendered as hexadecimal bytes to preserve `00`, `FF`, and non-UTF-8 bytes.
 
-ภาพและข้อความประมวลผลในเบราว์เซอร์ เซิร์ฟเวอร์ใช้ Node มาตรฐานและรับการเชื่อมต่อเฉพาะ `127.0.0.1` จำนวนวงของภาพต้องระบุเอง ภาพตัวอย่างที่แนบมาใช้ 7 วงทั้งหมด เว็บนี้ไม่มีการอ่านจากกล้อง
+Images and text are processed entirely client-side in the browser. The local server uses standard Node.js APIs bound strictly to `127.0.0.1`. The ring count must be specified manually for uploaded images; bundled sample fixtures all use 7 rings. This test bench does not include camera access.
 
-ตรวจการใช้งานจริงในเบราว์เซอร์แล้ว: กู้ 4 ไบต์จาก Canvas, ปฏิเสธกรณี 5 ไบต์ที่เลือกและภาพ noise, อ่านภาพหมุน/กระจก/กลับสี, ภาษาไทยและ emoji แบบ LonCle, ข้อความเกินความจุ, ดาวน์โหลด PNG/SVG และนำ PNG ที่ดาวน์โหลดกลับมาอ่านได้ ตรวจความกว้าง 375 และ 1280 พิกเซลแล้วไม่มีเนื้อหาล้นแนวนอน ภาพหน้าเว็บอยู่ที่ `outputs/web-preview.jpg`
+Verified in real browser testing: 4-byte recovery from canvas, rejection of 5-byte corrupted cases and random noise, handling rotated/mirrored/inverted images, Thai script and emoji in LonCle style, payload capacity overflow rejection, PNG/SVG downloading, and round-trip decoding of downloaded PNGs. Layout verified at 375 px and 1280 px viewport widths with zero horizontal overflow. UI screenshot available at `outputs/web-preview.jpg`.
 
-โหมด V2.1 ตรวจผ่านหน้าเว็บจริงแล้ว: Auto Numeric 33 หลักที่มีศูนย์นำหน้าและเสียหาย 4 ไบต์, Alphanumeric 20 ตัวแบบ LonCle, UTF-8 ที่เกินความจุ, hex ไม่ครบคู่ถูกปฏิเสธ และ Binary ครบ 14 ไบต์ที่เสียหาย 4 ไบต์ถูกส่งออกเป็น PNG แล้วนำกลับมาอ่านได้ตรงทุกไบต์ ตรวจหน้าจอ 375/1280 พิกเซลซ้ำสำหรับ UI โหมดใหม่แล้วไม่มีเนื้อหาล้นแนวนอน
+Verified V2.1 features via live web testing: Auto Numeric 33 digits with leading zeros and 4 corrupted bytes, 20-character Alphanumeric in LonCle style, over-capacity UTF-8 rejection, odd/invalid hex rejection, and full 14-byte Binary payload with 4 corrupted bytes exported to PNG and scanned back with 100% byte fidelity. Responsive layout at 375/1280 px re-verified for the updated mode controls.
 
-## รันการทดลอง
+## Running Tests
 
-จากโฟลเดอร์รากของโปรเจกต์:
+From the repository root:
 
 ```sh
 node test/ecc-prototype/run-tests.js
 ```
 
-โปรแกรมทดสอบและเขียนตัวอย่างลง `test/ecc-prototype/outputs/` ทุกครั้งที่รัน
+The test runner validates the implementation and writes sample files to `test/ecc-prototype/outputs/` on each run.
 
-การทดสอบเพิ่มเติม รวมการอ่านภาพ:
+Extended test suite, including optical image decoding:
 
 ```sh
 node test/ecc-prototype/run-more-tests.js
 node test/ecc-prototype/run-web-tests.js
 ```
 
-คำสั่งเพิ่มเติมใช้ ImageMagick (`magick`) และ Python พร้อม Pillow ที่ติดตั้งอยู่ในเครื่องสำหรับสร้างและอ่านภาพ ไม่มี dependency JavaScript เพิ่ม ตัวทดสอบรันชุดพื้นฐานก่อน แล้วเขียนภาพลง `outputs/optical/` และผลลง `outputs/more-results.json`
+The extended tests utilize system-installed ImageMagick (`magick`) and Python with Pillow to generate and rasterize optical test fixtures without introducing npm dependencies. The test runner runs the core suite first, then writes optical images to `outputs/optical/` and structured test summaries to `outputs/more-results.json`.
 
-## ไฟล์
+## Files
 
-- `legacy/circle-code.js`, `legacy/circle-scanner.js`, `legacy/LICENSE`: สำเนาไฟล์ปัจจุบันของโปรเจกต์ ใช้เทียบพฤติกรรมเดิมและใช้ renderer เดิม สำเนาเหล่านี้ไม่อัปเดตตามไฟล์หลักโดยอัตโนมัติ
-- `reed-solomon.js`: shortened Reed–Solomon บน GF(256), primitive polynomial `0x11D`, generator roots เริ่มที่ α⁰ ใช้ Berlekamp–Massey หาตำแหน่งผิด และแก้ระบบสมการเพื่อหาค่าที่ต้องแก้
-- `codec.js`: กรอบข้อมูลทดลอง version 2, CRC32 และการวางข้อมูลลงโมเดลวงกลม
-- `packing.js`: แพ็กและอ่านโหมดข้อมูล คำนวณความจุ และตรวจกลุ่มบิต/บิตเติมที่ไม่ถูกต้อง
-- `run-packing-tests.js`: ตรวจเวกเตอร์แพ็ก ความจุ ไบนารี และความเข้ากันได้กับ V2 เดิม รันรวมในชุดพื้นฐานด้วย
-- `run-tests.js`: การทดสอบและตัวสร้างไฟล์ตัวอย่าง
-- `scan-image.js`: ตัวอ่านภาพทดลอง ใช้ตัวค้นหาศูนย์กลางและตัว sample จากสำเนา scanner เดิม แล้วส่งไบต์ให้ RS + CRC32
-- `make-optical-fixtures.py`: แปลง SVG จริงเป็นภาพ แล้วสร้างภาพหมุน กลับสี กระจก เบลอ JPEG และรอยขีดอย่างทำซ้ำได้
-- `run-more-tests.js`: ทดสอบคู่บิตทุกคู่ รูปแบบไบต์เสียทุกตำแหน่ง และภาพที่แปลงแล้ว
-- `index.html`, `web.css`, `web.js`: หน้าเว็บทดลอง ใช้ codec และ renderer เดิมร่วมกัน
-- `scan-worker.js`: อ่านภาพใน Web Worker เพื่อไม่ขวางการใช้งานหน้าเว็บ
-- `serve.mjs`: HTTP server สำหรับเปิดเว็บในเครื่อง
-- `run-web-tests.js`: ตรวจ protocol ของ Worker, ภาพจริงทั้ง 4 โหมด × 2 รูปแบบ × ต้นฉบับ/เสียหาย 4 ไบต์ รวม 16 ภาพ, ภาพ V2 เดิม และกรณี input/exception
-- `outputs/packing-results.json`, `outputs/web-results.json`: ผลทดสอบโหมดแพ็กและ Worker
-- `outputs/results.json`: สรุปผลที่สร้างจากการรันจริง
-- `outputs/circle-{clean,damaged,recovered}.svg`: ภาพแบบขีดแยก ก่อนเสียหาย/เสียหาย/หลังกู้
-- `outputs/loncle-{clean,damaged,recovered}.svg`: ตัวอย่างเดียวกันแบบส่วนโค้งต่อเนื่อง
+- `legacy/circle-code.js`, `legacy/circle-scanner.js`, `legacy/LICENSE`: Snapshot copies of existing project files used for regression testing and original rendering. These files do not auto-update from the project root.
+- `reed-solomon.js`: Shortened Reed–Solomon over GF(256), primitive polynomial `0x11D`, generator roots starting at α⁰. Uses Berlekamp–Massey for error locator polynomial and solves a linear system for error magnitudes.
+- `codec.js`: Version 2 experimental framing, CRC32, and circular coordinate mapping.
+- `packing.js`: Payload mode packing and unpacking, capacity calculations, and bit group / padding validation.
+- `run-packing-tests.js`: Validates packing vectors, mode capacities, raw binary payloads, and backward compatibility with legacy V2 frames. Included in default test runs.
+- `run-tests.js`: Core unit tests and sample artifact generator.
+- `scan-image.js`: Experimental image scanner using legacy finder/sampling routines paired with RS + CRC32 decoding.
+- `make-optical-fixtures.py`: Rasterizes SVG fixtures into deterministic test images with rotation, inversion, mirroring, blur, JPEG compression, and scratch degradation.
+- `run-more-tests.js`: Exhaustive 2-bit flip tests, every single-byte corrupted position, and optical fixture decoding.
+- `index.html`, `web.css`, `web.js`: Interactive ECC Lab web page reusing the codec and legacy renderer.
+- `scan-worker.js`: Dedicated Web Worker for off-thread image decoding without UI blocking.
+- `serve.mjs`: Lightweight HTTP server for local development.
+- `run-web-tests.js`: Validates Worker message protocol, 16 optical fixtures across 4 modes × 2 styles × clean/4-byte damage, legacy V2 images, and input/exception edge cases.
+- `outputs/packing-results.json`, `outputs/web-results.json`: Benchmark and validation results for packing modes and Worker protocols.
+- `outputs/results.json`: Test execution summary generated on each run.
+- `outputs/circle-{clean,damaged,recovered}.svg`: Rendered clean, corrupted, and recovered Circle codes.
+- `outputs/loncle-{clean,damaged,recovered}.svg`: Corresponding sample set rendered in continuous LonCle style.
 
-## รูปแบบทดลอง
+## Wire Format
 
 ```text
 magic CC (2 bytes) | format/mode (1 byte) | length (2 bytes, big-endian)
 packed payload | zero padding | CRC32 (4 bytes) | RS parity (8 bytes)
 ```
 
-ความยาวกรอบข้อมูลกำหนดจากความจุของวงแหวน โดยใช้เฉพาะไบต์เต็ม เศษบิตที่เหลือเติม 0 ตัวถอดรหัสจึงไม่ต้องเชื่อ length header ก่อนแก้ข้อมูล
+The frame length is determined directly by the slot capacity of the concentric rings, using only full bytes with zero padding on unused trailing bits. This prevents decoders from relying on unauthenticated length headers prior to error correction.
 
-CRC32/ISO-HDLC คำนวณบน header, payload และ padding ทั้งหมด จากนั้น Reed–Solomon ครอบข้อมูลรวม CRC32 อีกชั้น หลังแก้ RS ต้องผ่าน CRC32, magic/mode, ความยาว, กลุ่มบิตที่ถูกต้อง และ padding ศูนย์ก่อนคืน `ok: true` โหมด UTF-8 ต้องผ่านการถอด UTF-8 แบบ strict ด้วย
+CRC32/ISO-HDLC is computed over the entire header, payload, and zero padding. Reed–Solomon parity protects the combined data and CRC32 payload. Following RS decoding, the data must pass CRC32 verification, magic bytes, valid encoding mode, valid payload length, legal bit groups, and all-zero padding before returning `ok: true`. UTF-8 payloads must also pass strict UTF-8 decoding.
 
-ไบต์ format/mode: `0x20` = UTF-8, `0x21` = Numeric, `0x22` = Alphanumeric, `0x23` = Binary ตั้งชื่อรูปแบบนี้ว่า V2.1 ตัวอ่านใหม่ยังรับกรอบ V2 เดิมที่ใช้ `0x02` เป็น UTF-8 ได้ ตัวอ่าน V2 เดิมจะปฏิเสธกรอบใหม่ จึงต้องอัปเดตตัวอ่านก่อนใช้โหมดแพ็กใหม่ และทั้งสองรูปแบบใช้กับ scanner หลัก V1 ไม่ได้
+Format/mode byte values: `0x20` = UTF-8, `0x21` = Numeric, `0x22` = Alphanumeric, `0x23` = Binary. This updated format is designated V2.1. The updated decoder maintains backward compatibility with legacy V2 frames (`0x02` UTF-8). Legacy V2 decoders reject V2.1 frames, requiring decoders to be updated prior to adopting the new packing modes. Neither format is compatible with the legacy V1 scanner.
 
-Numeric นับ length เป็นจำนวนหลัก `0–9`: ทุก 3 หลักใช้ 10 บิต เศษ 1/2 หลักใช้ 4/7 บิต Alphanumeric นับเป็นจำนวนตัวจากชุด `0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:`: ทุก 2 ตัวใช้ 11 บิต เศษ 1 ตัวใช้ 6 บิต UTF-8 และ Binary นับเป็นจำนวนไบต์ โดยแต่ละไบต์ใช้ 8 บิต
+Numeric mode encodes payload length as digit count `0–9`: every 3 digits use 10 bits; remainder 1 or 2 digits use 4 or 7 bits. Alphanumeric mode encodes character count from `0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:`: every 2 characters use 11 bits; remainder 1 character uses 6 bits. UTF-8 and Binary modes encode length as byte count (8 bits per byte).
 
-กฎแพ็ก Numeric/Alphanumeric สอดคล้องกับ [ตัวเข้ารหัส QR ของ Project Nayuki](https://github.com/nayuki/QR-Code-generator/blob/master/typescript-javascript/qrcodegen.ts#L743-L772) แต่ header, CRC และรูปแบบภาพนี้เป็น CircleCode ทดลอง ไม่ใช่ QR Code ไม่มี dependency จาก QR library และยังไม่มีการแบ่งหลาย segment ในหนึ่งกรอบ
+Numeric and Alphanumeric packing rules follow the specifications from [Project Nayuki's QR Code generator](https://github.com/nayuki/QR-Code-generator/blob/master/typescript-javascript/qrcodegen.ts#L743-L772). However, the framing, CRC32, and circular coordinate geometry are unique to CircleCode without external dependencies or multi-segment frames.
 
-ตัวอย่างเริ่มต้น 7 วงมีพื้นที่ 31 ไบต์ ใช้ overhead 17 ไบต์ เหลือ 112 บิตสำหรับ payload จึงเก็บได้สูงสุด 33 หลัก Numeric, 20 ตัว Alphanumeric หรือ 14 ไบต์ UTF-8/Binary โดยยังใช้ parity 8 ไบต์ กู้ได้สูงสุด 4 ไบต์ที่ผิดตำแหน่งใดก็ได้ในกรอบ รวม header, CRC หรือ parity ตัวเลขนี้นับความเสียหายหลังแพ็กแล้ว ไม่ใช่จำนวนตัวอักษรหรือเปอร์เซ็นต์พื้นที่ภาพ
+The default 7-ring configuration provides 31 total bytes (17 bytes overhead, leaving 112 bits for payload). This yields a maximum capacity of 33 Numeric digits, 20 Alphanumeric characters, or 14 UTF-8/Binary bytes while retaining 8 parity bytes. The system can correct up to 4 corrupted bytes at arbitrary positions within the frame, including header, CRC, or parity bytes. Correction counts refer to post-packing byte corruption, not individual characters or visual area percentage.
 
 ```js
 import { encodeFrame, decodeFrame } from './codec.js';
@@ -96,48 +96,48 @@ console.log(result.ok, result.text, result.correctedBytes);
 // true Table-24 1
 
 const numbers = encodeFrame('000123456789012345678901234567890');
-console.log(decodeFrame(numbers).mode); // numeric; ศูนย์นำหน้าคงเดิม
+console.log(decodeFrame(numbers).mode); // numeric; preserves leading zeros
 const binary = encodeFrame(Uint8Array.of(0, 255, 128, 65));
 const decoded = decodeFrame(binary);
 console.log(decoded.bytes); // Uint8Array [0, 255, 128, 65]
-// binary คืน bytes โดย text เป็น undefined
+// binary mode returns raw bytes with undefined text
 ```
 
-API `encodeFrame(payload, frameBytes = 31, mode = 'auto')` และ `buildEccModel(payload, rings = 7, mode = 'auto')` รับ string หรือ Uint8Array; เลือกโหมดเองได้ด้วย `numeric`, `alphanumeric`, `utf8`, `binary` โหมดข้อความไม่แก้ตัวพิมพ์หรือเลขศูนย์นำหน้า และปฏิเสธอักขระที่ใช้กับโหมดนั้นไม่ได้ ข้อความที่มี UTF-16 surrogate ไม่ครบคู่ถูกปฏิเสธเพื่อไม่ให้ข้อมูลเปลี่ยนเงียบ ๆ
+The API functions `encodeFrame(payload, frameBytes = 31, mode = 'auto')` and `buildEccModel(payload, rings = 7, mode = 'auto')` accept `string` or `Uint8Array`. Explicit modes can be set to `numeric`, `alphanumeric`, `utf8`, or `binary`. Text modes preserve case sensitivity and leading zeros, and reject invalid characters for the selected mode. Text containing unpaired UTF-16 surrogates is rejected to prevent silent data corruption.
 
-ผลอ่านเพิ่ม `mode`, `bytes` (Uint8Array), `payloadLength`, `packedBits`, `packedBytes` และ `format` เป็น `2` หรือ `2.1` ทุกโหมดข้อความยังคืน `text` ตามเดิม การแพ็กไม่ใช่การเข้ารหัสลับหรือการบีบอัดไฟล์ทั่วไป
+Decoded result objects include `mode`, `bytes` (Uint8Array), `payloadLength`, `packedBits`, `packedBytes`, and `format` (`'2'` or `'2.1'`). All text modes continue to return `text`. Mode packing optimizes payload density; it is neither cryptographic encryption nor general-purpose file compression.
 
-## สิ่งที่ทดสอบ
+## Verification & Test Coverage
 
-- RS encoder ตรงกับ test vector จาก ISO 18004 Annex I ที่เผยแพร่ใน [ZXing ReedSolomonTestCase.testQRCode](https://github.com/zxing/zxing/blob/master/core/src/test/java/com/google/zxing/common/reedsolomon/ReedSolomonTestCase.java#L55-L65) และ decoder กู้บล็อกอ้างอิงที่เสียหายได้
-- CRC32 ของ `123456789` ตรงกับค่าอ้างอิง `CBF43926`
-- การพลิกบิตทีละตำแหน่งครบ 248 ตำแหน่ง และ XOR ทุกค่าที่ไม่เป็นศูนย์ในหนึ่งไบต์
-- 2,000 กรณีสุ่มแบบ seed คงที่: เสียหาย 1–4 ไบต์ ความยาวกรอบสูงสุด 255 ไบต์ และตรวจว่า decoder ไม่แก้ input ต้นฉบับ
-- 200 รูปแบบที่เลือกให้เสียหายเกินขีดจำกัดถูกปฏิเสธ ตัวเลขนี้ไม่ใช่ข้อรับประกันสำหรับทุกกรณีที่เกินขีดจำกัด
-- กรอบที่ RS ถูกต้องแต่ CRC32 ไม่ตรงถูกปฏิเสธ รวมถึง version, length และ UTF-8 ที่ไม่ถูกต้อง
-- เทียบข้อผิดพลาดเดิม: `AB` ที่เสีย 1 บิตถูกตัวเดิมยอมรับเป็น `@B` ขณะที่ต้นแบบกู้ `AB` กลับได้
-- ตัวอย่างโมเดลวงกลมพลิก 32 บิตใน 4 ไบต์ แล้วกู้ `Table-24` กลับได้
-- ภาษาไทย, emoji, ข้อความว่าง, ข้อจำกัดความจุ และ input ที่ไม่ถูกต้อง
-- เวกเตอร์ Numeric `01234567` → `03 15 98 60` (27 บิต + padding), Alphanumeric `AB` → `39 A0` (11 บิต + padding), กลุ่มตัวเลขครบ 1,000 ค่า และคู่ Alphanumeric ครบ 2,025 คู่
-- ขอบเขตความจุ 956 กรณี: 4 โหมด × พื้นที่ payload 0–238 ไบต์ ทั้งค่าที่พอดีและเกิน 1 หน่วย รวมไบต์ดิบครบทุกค่า 0–255
-- เฟรมเสียหาย 1–4 ไบต์อีก 400 กรณีสำหรับโหมดใหม่, header/mode/กลุ่มบิต/padding ที่ปลอมพร้อม CRC/RS ถูกต้อง, BOM, newline และภาพ V2 เดิมที่จับค่าไว้
+- RS encoder matches the reference test vector from ISO 18004 Annex I as published in [ZXing ReedSolomonTestCase.testQRCode](https://github.com/zxing/zxing/blob/master/core/src/test/java/com/google/zxing/common/reedsolomon/ReedSolomonTestCase.java#L55-L65), and the decoder successfully recovers corrupted reference blocks.
+- CRC32 of `123456789` strictly matches reference standard `CBF43926`.
+- Single-bit flipping exhaustively tested across all 248 bit positions, along with all 255 non-zero XOR masks for single-byte corruption.
+- 2,000 seeded pseudorandom trials: 1–4 corrupted bytes with frame lengths up to 255 bytes, verifying that input buffers are never mutated by the decoder.
+- 200 adversarial over-limit patterns correctly rejected (not an absolute guarantee against every conceivable over-limit corruption).
+- Frames with valid RS parity but mismatched CRC32 are rejected, along with corrupted version headers, invalid lengths, and malformed UTF-8 sequences.
+- Legacy bug reproduction: legacy decoder accepted corrupted 1-bit `AB` as `@B`, whereas the prototype successfully recovers `AB`.
+- Circular model recovery test flipping 32 bits across 4 bytes with clean recovery of `Table-24`.
+- Validation of Thai script, emojis, empty payloads, capacity boundaries, and malformed inputs.
+- Test vectors: Numeric `01234567` → `03 15 98 60` (27 bits + padding), Alphanumeric `AB` → `39 A0` (11 bits + padding), exhaustive testing across 1,000 Numeric 3-digit groups and 2,025 Alphanumeric pairs.
+- 956 capacity boundary cases: 4 modes × payload capacities 0–238 bytes, validating exact fit, 1-byte overflow rejection, and arbitrary byte values 0–255.
+- 400 additional 1–4 byte corrupted frames across all modes, forged headers/modes/bit groups with valid CRC/RS, BOM handling, newlines, and legacy V2 optical regression fixtures.
 
-## ผลการทดสอบเพิ่มเติม
+## Extended Test Results
 
-- คู่บิตผิดทุกคู่ในกรอบ 31 ไบต์ รวม 30,628 กรณี กู้คืนได้ครบ
-- ความเสียหายหนึ่งไบต์ทุกตำแหน่ง × ทุก XOR mask ที่ไม่เป็นศูนย์ รวม 7,905 กรณี กู้คืนได้ครบ
-- กรอบข้อมูลสุ่ม 2,000 กรณีถูกปฏิเสธ ไม่ใช่ข้อรับประกันว่าไม่มี false positive สำหรับ input ทั้งหมด
-- ภาพ 37 กรณีที่ rasterize จาก SVG ของ renderer จริง ครอบคลุม Circle และ LonCle: ขนาด 240–800 พิกเซล, มุมหมุน, สะท้อนกระจก, กลับดำ–ขาว, ภาพที่แปลงหลายอย่างพร้อมกัน, Gaussian blur, JPEG quality 35 และข้อมูลเสียหาย 4 ไบต์
-- ภาพที่กำหนดให้อ่านได้ 30 กรณีอ่าน `Table-24` ถูกทั้งหมด และภาพรอยขีดทดลองอีก 2 กรณีอ่านได้ รอยขีดบางนี้ถูกตัว sampling กรองออกโดยไม่ต้องแก้ไบต์ด้วย RS
-- ภาพถูกปิดทับหนัก 2 ภาพ ภาพว่างขาว/ดำ และภาพ noise รวม 5 กรณีถูกปฏิเสธ ไม่พบข้อความผิดที่ถูกยอมรับในชุดภาพนี้
-- ค้นหาศูนย์กลาง ขนาด มุมหมุน polarity และการสะท้อนจากพิกเซล โดยไม่ส่งค่าการแปลงของ fixture ให้ decoder; ยังคงระบุจำนวนวงเป็น 7 และ density เป็น 0.35
-- เวลารายภาพใน JSON เป็นข้อมูลวินิจฉัยจากการรันครั้งเดียวบนเครื่องนี้ ไม่ใช่ benchmark หรือข้อตกลงด้านประสิทธิภาพ
+- All 30,628 unique pairs of bit flips in a 31-byte frame cleanly recovered.
+- All 7,905 single-byte corruption patterns (all positions × all non-zero XOR masks) cleanly recovered.
+- 2,000 completely random frames successfully rejected.
+- 37 rasterized SVG fixtures covering Circle and LonCle styles: sizes 240–800 px, rotations, mirror reflections, color inversions, multi-transform combinations, Gaussian blur, JPEG quality 35, and 4-byte payload damage.
+- All 30 designated readable fixtures decoded `Table-24` with 100% accuracy, plus 2 exploratory scratch fixtures decoded successfully (fine scratches filtered out by sampling prior to RS decoding).
+- 2 severely occluded fixtures, blank white/black images, and random noise (5 total negative cases) rejected without false positives.
+- Automatic center, scale, rotation, polarity, and mirror reflection detection from raw pixels without hints from fixture metadata (fixed ring count 7, density 0.35).
+- Per-image decode times recorded in JSON are diagnostic measurements from a single local run, not production benchmarks or performance guarantees.
 
-## ข้อจำกัด
+## Limitations
 
-- ชุดเพิ่มเติมอ่านภาพที่สร้างจาก SVG ได้แล้ว แต่ยังไม่ได้ทดสอบภาพถ่าย กล้องจริง และ perspective ภาพ fixture เป็น format ทดลองและสแกนด้วยตัวหลัก version 1 ไม่ได้
-- เว็บทดลองหน้านี้ใช้จำนวนวงที่กำหนดและ density คงที่ 0.35 ไม่มี erasures; codec และตัวอ่าน Rust/WASM สำหรับ V2.1 เพิ่มใน `native/rust/src/v2.rs` และทดสอบร่วมกับเว็บสแกนใหม่แล้ว
-- เมื่อเสียหายเกินขีดจำกัด RS อาจแก้เป็นข้อมูลอื่นได้ CRC32 ช่วยลดการยอมรับผิด แต่ยังมีโอกาสชนกัน และไม่ใช่การยืนยันความแท้ของข้อมูล
-- V2.1 ใช้โหมดเดียวต่อกรอบ ไม่มี Kanji mode, mixed segments, ระดับ ECC ให้เลือก หรือการอ่านไฟล์ไบนารีจากปุ่มบนเว็บโดยตรง (ใช้ Uint8Array ผ่าน API หรือ hex บนเว็บ)
-- ก่อนนำไปใช้จริงต้องวางแผนอัปเดตตัวอ่าน V2 เดิม เพราะอ่านกรอบ V2.1 ไม่ได้
-- implementation นี้เป็นต้นแบบที่ผ่านการทดสอบข้างต้น ยังไม่ถือเป็นการตรวจรับระดับ production
+- The extended suite tests rasterized SVG fixtures; real-world camera perspective distortion and uncontrolled lighting are not yet fully covered. Prototype fixtures cannot be scanned by the legacy V1 scanner.
+- The ECC Lab web test bench operates with fixed ring counts and fixed 0.35 density without erasure decoding. The Rust/WASM V2.1 codec and scanner are available in `native/rust/src/v2.rs` and integrated with the mobile scanner app.
+- Corruptions exceeding error correction limits may occasionally cause RS to decode to an incorrect payload. CRC32 minimizes false acceptance, but hash collisions remain mathematically possible. CRC32 does not provide cryptographic authenticity.
+- V2.1 supports a single packing mode per frame (no Kanji mode, mixed segments, selectable ECC levels, or direct binary file upload via GUI buttons; binary payloads can be loaded via API or hex input).
+- Deploying to production requires an update strategy for existing V2 decoders, as they cannot parse V2.1 frames.
+- This codebase represents an experimental prototype validated against the test suites above, not a finalized production release.

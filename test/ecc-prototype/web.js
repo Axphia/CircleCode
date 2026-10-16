@@ -9,7 +9,7 @@ const rendering = () => ({ style: element('style').value, center: 'Code', bg: '#
 
 function setText(id, text) { element(id).textContent = text; }
 function resultText(result) {
-  return result.mode === 'binary' ? [...result.bytes].map(byte => byte.toString(16).padStart(2, '0').toUpperCase()).join(' ') || '(ไบนารีว่าง)' : result.text || '(ข้อความว่าง)';
+  return result.mode === 'binary' ? [...result.bytes].map(byte => byte.toString(16).padStart(2, '0').toUpperCase()).join(' ') || '(Empty binary)' : result.text || '(Empty text)';
 }
 function draw(canvas, nextModel) {
   const context = canvas.getContext('2d');
@@ -31,11 +31,11 @@ function renderExperiment() {
   draw(element('damaged'), modelWithFrame(model, damagedFrame));
   draw(element('recovered'), result.ok ? modelWithFrame(model, result.codeword) : null);
   element('decode-status').classList.toggle('error', !matched);
-  setText('decode-title', matched ? 'กู้ข้อมูลตรงกับต้นฉบับ' : result.ok ? 'ข้อความไม่ตรงกับต้นฉบับ' : 'ปฏิเสธผล / กู้ข้อมูลไม่ได้');
+  setText('decode-title', matched ? 'Data recovered, matches original' : result.ok ? 'Decoded text differs from original' : 'Corrupted / Recovery rejected');
   setText('decoded-text', result.ok ? resultText(result) : result.reason);
-  setText('corrected-count', result.ok ? `แก้ ${result.correctedBytes} ไบต์` : 'RS / CRC ไม่ผ่าน');
-  setText('damage-caption', `${changedBytes} ไบต์ · ${changedBits} บิตเปลี่ยน`);
-  setText('recovery-caption', result.ok ? 'ผลหลังแก้ RS และผ่าน CRC32' : 'ไม่แสดงโค้ดที่กู้ไม่ได้');
+  setText('corrected-count', result.ok ? `Corrected ${result.correctedBytes} byte(s)` : 'RS / CRC failed');
+  setText('damage-caption', `${changedBytes} byte(s) · ${changedBits} bit(s) flipped`);
+  setText('recovery-caption', result.ok ? 'Recovered via RS + CRC32' : 'Unrecoverable code not displayed');
   setText('frame-label', `${originalFrame.length} BYTES`);
   const grid = element('byte-grid');
   const focusedIndex = grid.contains(document.activeElement) ? document.activeElement.dataset.index : null;
@@ -48,7 +48,7 @@ function renderExperiment() {
     button.dataset.index = index;
     button.textContent = value.toString(16).padStart(2, '0').toUpperCase();
     button.setAttribute('aria-pressed', String(changed));
-    button.setAttribute('aria-label', `ไบต์ ${index} ค่า ${button.textContent}${changed ? ' เปลี่ยนแล้ว' : ''}`);
+    button.setAttribute('aria-label', `Byte ${index} value ${button.textContent}${changed ? ' (modified)' : ''}`);
     button.addEventListener('click', () => {
       damagedFrame[index] = changed ? originalFrame[index] : value ^ (element('damage-mode').value === 'byte' ? 255 : 1);
       renderExperiment();
@@ -65,7 +65,7 @@ function generate() {
     let payload = element('payload').value;
     if (mode === 'binary') {
       const hex = payload.replace(/\s/g, '');
-      if (hex.length % 2 || !/^[0-9a-f]*$/i.test(hex)) throw new Error('ไบนารีต้องเป็นเลขฐานสิบหกครบคู่ เช่น 00 FF 41 80');
+      if (hex.length % 2 || !/^[0-9a-f]*$/i.test(hex)) throw new Error('Binary payload must be valid hex byte pairs, e.g. 00 FF 41 80');
       payload = Uint8Array.from(hex.match(/../g) || [], pair => parseInt(pair, 16));
     }
     const nextModel = buildEccModel(payload, rings, mode);
@@ -74,17 +74,17 @@ function generate() {
     damagedFrame = originalFrame.slice();
     element('scan-rings').value = String(rings);
     const available = originalFrame.length - 17;
-    const unit = model.mode === 'numeric' ? 'หลัก' : model.mode === 'alphanumeric' ? 'ตัว' : 'ไบต์';
-    setText('capacity', `${model.mode} · ${model.payloadLength} / ${modeCapacity(model.mode, available)} ${unit} · แพ็ก ${model.packedBits} / ${available * 8} บิต`);
+    const unit = model.mode === 'numeric' ? 'digits' : model.mode === 'alphanumeric' ? 'chars' : 'bytes';
+    setText('capacity', `${model.mode} · ${model.payloadLength} / ${modeCapacity(model.mode, available)} ${unit} · packed ${model.packedBits} / ${available * 8} bits`);
     renderExperiment();
   } catch (error) {
     model = originalFrame = damagedFrame = null;
     for (const id of ['clean', 'damaged', 'recovered']) draw(element(id), null);
     element('byte-grid').replaceChildren();
     element('decode-status').classList.add('error');
-    setText('decode-title', 'สร้างโค้ดไม่ได้');
+    setText('decode-title', 'Cannot encode');
     setText('decoded-text', error.message);
-    setText('capacity', 'ข้อความต้องอยู่ภายในความจุของจำนวนวงที่เลือก');
+    setText('capacity', 'Payload exceeds the capacity of selected ring count');
     setText('frame-label', '—');
     setText('corrected-count', '—');
     setText('damage-caption', '—');
@@ -98,8 +98,8 @@ element('settings').addEventListener('submit', event => { event.preventDefault()
 element('payload').addEventListener('input', generate);
 element('encoding-mode').addEventListener('change', () => {
   const binary = element('encoding-mode').value === 'binary';
-  setText('payload-label', binary ? 'ไบต์ฐานสิบหกที่ต้องการเก็บ' : 'ข้อความที่ต้องการเก็บ');
-  setText('input-help', binary ? 'ใส่ไบต์ครบคู่ เช่น 00 FF 41 80 · เว้นวรรคได้ · ไม่เติม 0x' : 'Auto เลือก Numeric / Alphanumeric / UTF-8 ให้ทั้งข้อความ โดยคงตัวพิมพ์และเลขศูนย์นำหน้า');
+  setText('payload-label', binary ? 'Hexadecimal bytes to encode' : 'Payload text to encode');
+  setText('input-help', binary ? 'Enter paired hex bytes, e.g. 00 FF 41 80 · Spaces allowed · Do not include 0x' : 'Auto selects Numeric / Alphanumeric / UTF-8 across the entire text, preserving case and leading zeros.');
   generate();
 });
 element('rings').addEventListener('change', generate);
@@ -138,7 +138,7 @@ element('download-png').addEventListener('click', () => {
     if (blob) download(blob, 'circlecode-ecc-damaged.png');
     else {
       element('decode-status').classList.add('error');
-      setText('decode-title', 'บันทึก PNG ไม่สำเร็จ');
+      setText('decode-title', 'Failed to save PNG');
     }
   }, 'image/png');
 });
@@ -153,13 +153,13 @@ function workerFailure() {
   worker = null;
   if (pendingScan) {
     clearTimeout(pendingScan.timeout);
-    pendingScan.reject(new Error('ตัวอ่านภาพเริ่มทำงานไม่ได้ กรุณาเปิดผ่าน HTTP server แล้วลองใหม่'));
+    pendingScan.reject(new Error('Failed to start image reader worker. Please serve via HTTP and retry.'));
     pendingScan = null;
   }
 }
 function scanInWorker(image, rings) {
   return new Promise((resolve, reject) => {
-    if (pendingScan) { reject(new Error('กำลังอ่านภาพอื่นอยู่')); return; }
+    if (pendingScan) { reject(new Error('Another scan is currently in progress')); return; }
     if (!worker) {
       worker = new Worker(new URL('./scan-worker.js', import.meta.url), { type: 'module' });
       worker.onerror = worker.onmessageerror = workerFailure;
@@ -185,19 +185,19 @@ function setBusy(value) {
 }
 function showScan(result, ms) {
   element('scan-status').classList.toggle('error', !result.ok);
-  setText('scan-title', result.ok ? 'อ่านภาพสำเร็จ' : 'ปฏิเสธผลอ่าน');
+  setText('scan-title', result.ok ? 'Image scanned successfully' : 'Scan rejected');
   setText('scan-text', result.ok ? resultText(result) : result.reason);
   setText('scan-mode', result.ok ? result.mode : '—');
-  setText('scan-corrected', result.ok ? `${result.correctedBytes} ไบต์` : '—');
-  setText('scan-inverted', result.ok ? result.inverted ? 'ใช่' : 'ไม่' : '—');
-  setText('scan-mirrored', result.ok ? result.mirrored ? 'ใช่' : 'ไม่' : '—');
+  setText('scan-corrected', result.ok ? `${result.correctedBytes} byte(s)` : '—');
+  setText('scan-inverted', result.ok ? result.inverted ? 'Yes' : 'No' : '—');
+  setText('scan-mirrored', result.ok ? result.mirrored ? 'Yes' : 'No' : '—');
   setText('scan-time', Number.isFinite(ms) ? `${ms.toFixed(1)} ms` : '—');
 }
 async function scanSource(loadSource) {
   if (scanBusy) return;
   setBusy(true);
-  setText('scan-title', 'กำลังอ่านภาพ…');
-  setText('scan-text', 'กำลังค้นหาตำแหน่งและตรวจข้อมูล');
+  setText('scan-title', 'Scanning image…');
+  setText('scan-text', 'Locating code and verifying data…');
   let source;
   try {
     source = await loadSource();
@@ -207,7 +207,7 @@ async function scanSource(loadSource) {
     const preview = element('scan-preview');
     preview.width = Math.round(width * scale);
     preview.height = Math.round(height * scale);
-    if (preview.width < 32 || preview.height < 32) throw new Error('ภาพเล็กเกินไป ต้องมีขนาดอย่างน้อย 32 × 32 พิกเซลหลังย่อภาพ');
+    if (preview.width < 32 || preview.height < 32) throw new Error('Image too small; must be at least 32 × 32 pixels after scaling.');
     const context = preview.getContext('2d', { willReadFrequently: true });
     context.drawImage(source, 0, 0, preview.width, preview.height);
     const image = context.getImageData(0, 0, preview.width, preview.height);
@@ -230,9 +230,9 @@ element('scan-sample').addEventListener('click', () => scanSource(async () => {
 }));
 element('upload').addEventListener('change', () => scanSource(async () => {
   const file = element('upload').files?.[0];
-  if (!file) throw new Error('ยังไม่ได้เลือกไฟล์ภาพ');
-  if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) throw new Error('รองรับเฉพาะ PNG, JPEG และ WebP');
-  if (file.size > 10 * 1024 * 1024) throw new Error('ไฟล์ภาพต้องไม่เกิน 10 MB');
+  if (!file) throw new Error('No image file selected');
+  if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) throw new Error('Only PNG, JPEG, and WebP are supported');
+  if (file.size > 10 * 1024 * 1024) throw new Error('Image file must not exceed 10 MB');
   return createImageBitmap(file);
 }));
 window.addEventListener('pagehide', () => {

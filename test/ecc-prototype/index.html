@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="th">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -15,76 +15,76 @@
   <main class="wrap">
     <section class="intro" aria-labelledby="title">
       <p class="eyebrow">REED–SOLOMON + CRC32</p>
-      <h1 id="title">ทำข้อมูลเสีย<br><span>แล้วลองกู้กลับมา</span></h1>
-      <p class="lede">ลองพลิกบิต ดูไบต์ที่เปลี่ยน และตรวจว่าตัวถอดรหัสกู้ข้อความเดิมได้หรือปฏิเสธผล</p>
-      <div class="intro-note"><span class="status-dot" aria-hidden="true"></span> ประมวลผลในเบราว์เซอร์ · ใช้ parity 8 ไบต์ · กู้ได้สูงสุด 4 ไบต์ที่เสียหาย</div>
+      <h1 id="title">Corrupt data<br><span>and recover it live</span></h1>
+      <p class="lede">Flip bits, inspect byte differences, and verify whether the decoder recovers the original message or rejects corruption.</p>
+      <div class="intro-note"><span class="status-dot" aria-hidden="true"></span> Processed in-browser · 8 parity bytes · Recovers up to 4 corrupted bytes</div>
     </section>
 
-    <section class="workspace" aria-label="สร้างและทดลองความเสียหาย">
+    <section class="workspace" aria-label="Encode and experiment with corruption">
       <form id="settings" class="controls">
-        <p class="eyebrow">01 / สร้างข้อมูล</p>
-        <label for="encoding-mode">โหมดแพ็กข้อมูล</label>
-        <select id="encoding-mode"><option value="auto">Auto / เลือกตามข้อมูล</option><option value="numeric">Numeric / ตัวเลข</option><option value="alphanumeric">Alphanumeric / A–Z และสัญลักษณ์</option><option value="utf8">UTF-8 / ข้อความทั่วไป</option><option value="binary">Binary / ไบต์ฐานสิบหก</option></select>
-        <label id="payload-label" for="payload">ข้อความที่ต้องการเก็บ</label>
+        <p class="eyebrow">01 / ENCODE PAYLOAD</p>
+        <label for="encoding-mode">Packing Mode</label>
+        <select id="encoding-mode"><option value="auto">Auto / Infer from input</option><option value="numeric">Numeric / Digits</option><option value="alphanumeric">Alphanumeric / A–Z and symbols</option><option value="utf8">UTF-8 / General text</option><option value="binary">Binary / Hex bytes</option></select>
+        <label id="payload-label" for="payload">Payload Text</label>
         <textarea id="payload" rows="3" spellcheck="false" aria-describedby="input-help capacity">Table-24</textarea>
-        <p class="field-note" id="input-help">Auto เลือก Numeric / Alphanumeric / UTF-8 ให้ทั้งข้อความ โดยคงตัวพิมพ์และเลขศูนย์นำหน้า</p>
+        <p class="field-note" id="input-help">Auto selects Numeric / Alphanumeric / UTF-8 across the entire payload, preserving case and leading zeros.</p>
         <p class="field-note" id="capacity"></p>
         <div class="field-row">
-          <div><label for="rings">จำนวนวง</label><select id="rings"><option>4</option><option>5</option><option>6</option><option selected>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option></select></div>
-          <div><label for="style">รูปแบบ</label><select id="style"><option value="circle">Circle / ขีดแยก</option><option value="loncle">LonCle / ต่อเนื่อง</option></select></div>
+          <div><label for="rings">Rings</label><select id="rings"><option>4</option><option>5</option><option>6</option><option selected>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option></select></div>
+          <div><label for="style">Style</label><select id="style"><option value="circle">Circle / Discrete dashes</option><option value="loncle">LonCle / Continuous arcs</option></select></div>
         </div>
-        <button class="button primary full" type="submit">สร้างโค้ดใหม่ <span aria-hidden="true">↗</span></button>
+        <button class="button primary full" type="submit">Re-encode <span aria-hidden="true">↗</span></button>
         <div class="divider"></div>
-        <p class="eyebrow">02 / ทำข้อมูลเสีย</p>
-        <label for="damage-count">จำนวนไบต์ที่ต้องการเปลี่ยน <output id="damage-label" for="damage-count">0</output></label>
+        <p class="eyebrow">02 / CORRUPT FRAME</p>
+        <label for="damage-count">Bytes to corrupt <output id="damage-label" for="damage-count">0</output></label>
         <input id="damage-count" type="range" min="0" max="8" value="0">
-        <div class="range-labels"><span>0 / ต้นฉบับ</span><span>4 / ขีดจำกัดการกู้</span><span>8</span></div>
-        <label for="damage-mode">วิธีเปลี่ยนแต่ละไบต์</label>
-        <select id="damage-mode"><option value="byte">กลับทั้งไบต์ / XOR FF</option><option value="bit">พลิก 1 บิต / XOR 01</option></select>
-        <button class="button dark full" id="apply-damage" type="button">สุ่มตำแหน่งที่เสียหาย</button>
-        <button class="button quiet full" id="reset" type="button">คืนค่าต้นฉบับ</button>
-        <p class="field-note">หรือกดไบต์ทางขวาเพื่อเลือกตำแหน่งเอง ความเสียหายเกิน 4 ไบต์อาจกู้ไม่ได้</p>
+        <div class="range-labels"><span>0 / Clean</span><span>4 / Recovery limit</span><span>8</span></div>
+        <label for="damage-mode">Corruption method</label>
+        <select id="damage-mode"><option value="byte">Invert full byte / XOR FF</option><option value="bit">Flip 1 bit / XOR 01</option></select>
+        <button class="button dark full" id="apply-damage" type="button">Corrupt Random Positions</button>
+        <button class="button quiet full" id="reset" type="button">Reset to Clean</button>
+        <p class="field-note">Or click bytes on the right to toggle manually. Damage exceeding 4 bytes may be unrecoverable.</p>
       </form>
 
       <div class="experiment">
-        <div class="section-bar"><div><p class="eyebrow">LIVE EXPERIMENT</p><h2>จากต้นฉบับ สู่ผลที่กู้คืน</h2></div><span class="tag neutral" id="frame-label">—</span></div>
+        <div class="section-bar"><div><p class="eyebrow">LIVE EXPERIMENT</p><h2>From Source to Recovery</h2></div><span class="tag neutral" id="frame-label">—</span></div>
         <div class="code-grid">
-          <figure><div class="figure-label"><span>01</span> ต้นฉบับ</div><canvas id="clean" width="480" height="480" role="img" aria-label="บาร์โค้ดต้นฉบับ"></canvas><figcaption>ข้อมูลก่อนเปลี่ยนบิต</figcaption></figure>
-          <figure><div class="figure-label"><span>02</span> หลังทำเสียหาย</div><canvas id="damaged" width="480" height="480" role="img" aria-label="บาร์โค้ดที่มีข้อมูลเสียหาย"></canvas><figcaption id="damage-caption">ยังไม่มีความเสียหาย</figcaption></figure>
-          <figure><div class="figure-label"><span>03</span> กู้คืน</div><canvas id="recovered" width="480" height="480" role="img" aria-label="บาร์โค้ดหลังกู้คืน"></canvas><figcaption id="recovery-caption">RS + CRC32</figcaption></figure>
+          <figure><div class="figure-label"><span>01</span> Clean</div><canvas id="clean" width="480" height="480" role="img" aria-label="Original clean barcode"></canvas><figcaption>Original uncorrupted data</figcaption></figure>
+          <figure><div class="figure-label"><span>02</span> Damaged</div><canvas id="damaged" width="480" height="480" role="img" aria-label="Damaged barcode"></canvas><figcaption id="damage-caption">No damage applied</figcaption></figure>
+          <figure><div class="figure-label"><span>03</span> Recovered</div><canvas id="recovered" width="480" height="480" role="img" aria-label="Recovered barcode"></canvas><figcaption id="recovery-caption">RS + CRC32</figcaption></figure>
         </div>
         <div id="decode-status" class="result" role="status" aria-live="polite">
-          <div><span class="result-label">ผลกู้จากไบต์</span><strong id="decode-title">กำลังเตรียม…</strong></div>
+          <div><span class="result-label">Byte Recovery</span><strong id="decode-title">Initializing…</strong></div>
           <span class="result-pill" id="corrected-count">—</span>
           <p id="decoded-text"></p>
         </div>
-        <div class="byte-header"><div><h3>ไบต์ในกรอบข้อมูล</h3><p>กดเพื่อพลิกข้อมูล · เลขฐานสิบหก · ตำแหน่งเริ่มที่ 0</p></div><span class="byte-key"><i aria-hidden="true"></i> เปลี่ยนแล้ว</span></div>
-        <div class="byte-grid" id="byte-grid" aria-label="เลือกไบต์ที่ต้องการเปลี่ยน"></div>
-        <div class="actions"><button class="button quiet" id="download-png" type="button">บันทึกภาพที่เสียหาย PNG</button><button class="button quiet" id="download-svg" type="button">บันทึกภาพที่เสียหาย SVG</button></div>
+        <div class="byte-header"><div><h3>Frame Bytes</h3><p>Click to toggle · Hexadecimal · 0-indexed</p></div><span class="byte-key"><i aria-hidden="true"></i> Modified</span></div>
+        <div class="byte-grid" id="byte-grid" aria-label="Select bytes to modify"></div>
+        <div class="actions"><button class="button quiet" id="download-png" type="button">Download Damaged PNG</button><button class="button quiet" id="download-svg" type="button">Download Damaged SVG</button></div>
       </div>
     </section>
 
     <section class="optical-section" aria-labelledby="optical-title">
-      <div class="section-bar"><div><p class="eyebrow">03 / อ่านจากภาพจริงในเบราว์เซอร์</p><h2 id="optical-title">ให้พิกเซลเป็นคำตอบ</h2></div><span class="tag neutral">OPTICAL DECODE</span></div>
-      <p class="section-description">อ่านพิกเซลจาก Canvas หรือไฟล์ภาพ แล้วค้นหาศูนย์กลาง มุมหมุน ภาพกลับสี และภาพกระจก ก่อนตรวจ RS + CRC32</p>
+      <div class="section-bar"><div><p class="eyebrow">03 / IN-BROWSER OPTICAL DECODE</p><h2 id="optical-title">Pixels to Payload</h2></div><span class="tag neutral">OPTICAL DECODE</span></div>
+      <p class="section-description">Samples raw pixels from canvas or image files, detecting center, scale, rotation, polarity, and mirroring before RS + CRC32 verification.</p>
       <div class="optical-grid">
         <div>
-          <label for="scan-rings">จำนวนวงของภาพที่จะอ่าน</label>
+          <label for="scan-rings">Expected Ring Count</label>
           <select id="scan-rings"><option>4</option><option>5</option><option>6</option><option selected>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option></select>
-          <button id="scan-current" class="button primary full" type="button">อ่านภาพที่ทำเสียหายด้านบน</button>
-          <label for="sample">หรือลองภาพทดสอบที่แนบมา / 7 วง</label>
-          <select id="sample"><option value="circle-clean.png">ต้นฉบับ Circle</option><option value="circle-mirror-inverted-rotate.png">หมุน + กระจก + กลับสี</option><option value="loncle-blur-1.2.png">LonCle / ภาพเบลอ</option><option value="circle-damaged.png">เสียหาย 4 ไบต์</option><option value="loncle-scratch.png">LonCle / รอยขีด</option><option value="circle-occluded.png">ปิดทับหนัก / ควรปฏิเสธ</option><option value="random-noise.png">Noise / ควรปฏิเสธ</option></select>
-          <button id="scan-sample" class="button dark full" type="button">อ่านภาพตัวอย่าง</button>
-          <label class="upload" for="upload"><span>เลือกภาพ PNG, JPEG หรือ WebP</span><small>ไม่เกิน 10 MB · ประมวลผลในเครื่อง</small></label>
+          <button id="scan-current" class="button primary full" type="button">Scan Damaged Canvas Above</button>
+          <label for="sample">Or test bundled fixtures / 7 rings</label>
+          <select id="sample"><option value="circle-clean.png">Clean Circle</option><option value="circle-mirror-inverted-rotate.png">Rotate + Mirror + Invert</option><option value="loncle-blur-1.2.png">LonCle / Blurred</option><option value="circle-damaged.png">4-byte Damaged</option><option value="loncle-scratch.png">LonCle / Scratch</option><option value="circle-occluded.png">Heavy Occlusion / Reject</option><option value="random-noise.png">Random Noise / Reject</option></select>
+          <button id="scan-sample" class="button dark full" type="button">Scan Bundled Sample</button>
+          <label class="upload" for="upload"><span>Choose PNG, JPEG, or WebP</span><small>Up to 10 MB · Processed locally</small></label>
           <input id="upload" type="file" accept="image/png,image/jpeg,image/webp">
         </div>
-        <div class="scan-preview"><canvas id="scan-preview" width="480" height="480" role="img" aria-label="ภาพที่ส่งให้ตัวอ่าน"></canvas></div>
-        <div class="scan-result" id="scan-status" role="status" aria-live="polite"><span class="eyebrow">ผลอ่านจากภาพ</span><h3 id="scan-title">พร้อมทดลอง</h3><p id="scan-text">เลือกภาพหรืออ่าน Canvas ด้านบน</p><dl><div><dt>โหมดข้อมูล</dt><dd id="scan-mode">—</dd></div><div><dt>แก้ไข</dt><dd id="scan-corrected">—</dd></div><div><dt>ภาพกลับสี</dt><dd id="scan-inverted">—</dd></div><div><dt>ภาพกระจก</dt><dd id="scan-mirrored">—</dd></div><div><dt>เวลาถอดรหัส</dt><dd id="scan-time">—</dd></div></dl></div>
+        <div class="scan-preview"><canvas id="scan-preview" width="480" height="480" role="img" aria-label="Image frame passed to scanner"></canvas></div>
+        <div class="scan-result" id="scan-status" role="status" aria-live="polite"><span class="eyebrow">Optical Scan Result</span><h3 id="scan-title">Ready</h3><p id="scan-text">Choose an image or scan the canvas above</p><dl><div><dt>Mode</dt><dd id="scan-mode">—</dd></div><div><dt>Corrected</dt><dd id="scan-corrected">—</dd></div><div><dt>Inverted</dt><dd id="scan-inverted">—</dd></div><div><dt>Mirrored</dt><dd id="scan-mirrored">—</dd></div><div><dt>Decode Time</dt><dd id="scan-time">—</dd></div></dl></div>
       </div>
     </section>
-    <footer><p>พื้นที่ทดลอง CircleCode V2.1 · ตัวอ่านใหม่อ่าน V2 เดิมได้ · ใช้กับ scanner หลัก V1 ไม่ได้ · CRC32 ใช้ตรวจความผิดพลาด ไม่ใช้ยืนยันความแท้</p><a href="./README.md">รายละเอียดการทดลอง ↗</a></footer>
-    <noscript>ต้องเปิด JavaScript เพื่อใช้งานการทดลองนี้</noscript>
-    <p id="boot-error" class="boot-error" role="alert">กำลังโหลดโมดูล หากเปิดไฟล์โดยตรง ให้รัน HTTP server ตาม README แล้วเปิดผ่าน localhost</p>
+    <footer><p>CircleCode V2.1 Experimental Workbench · Decoder backward compatible with V2 · Incompatible with legacy V1 · CRC32 verifies integrity, not cryptographic authenticity.</p><a href="./README.md">Experiment Details ↗</a></footer>
+    <noscript>JavaScript is required to run this experiment.</noscript>
+    <p id="boot-error" class="boot-error" role="alert">Loading modules… If opening the HTML file directly, run the local HTTP server per README instructions and navigate via localhost.</p>
   </main>
   <script type="module" src="./web.js"></script>
 </body>

@@ -1,57 +1,57 @@
-# เว็บสแกน V2.1 — ทดลองใน test เท่านั้น
+# Mobile Web Scanner V2.1 — Experimental Test Suite Only
 
-เว็บมือถือทดลองกล้องและอ่านภาพ CircleCode V2/V2.1 ใช้ JavaScript สำหรับ UI/กล้อง และ Rust/WebAssembly หรือ JavaScript อ่านภาพใน Worker โค้ดทั้งหมดรวม Rust, WASM และไลบรารีร่วมอยู่ภายใน test/ecc-prototype ไม่เปลี่ยนไลบรารีหลักหรือ package.json ที่รากโปรเจกต์ และไม่มีการตั้งค่าเผยแพร่ Sites ในโฟลเดอร์นี้
+Experimental mobile web app for camera and image scanning of CircleCode V2/V2.1. Uses JavaScript for UI/camera handling and Rust/WebAssembly or JavaScript inside a Web Worker for optical decoding. All code, including Rust, WASM, and shared libraries, is located entirely within `test/ecc-prototype` without modifying the core project library or root `package.json`, and without deploying to production sites.
 
-## เปิดเว็บทดลอง
+## Running the Web Scanner
 
-จากรากโปรเจกต์:
+From the repository root:
 
 ```sh
 npm --prefix test/ecc-prototype run build:scanner
 npm --prefix test/ecc-prototype run preview
 ```
 
-เปิด http://127.0.0.1:4180/ บนเครื่องเดียวกัน ส่วน ECC Lab เดิมเปิดด้วย npm --prefix test/ecc-prototype run lab ที่พอร์ต 4173
+Open `http://127.0.0.1:4180/` on the same machine. The companion ECC Lab is launched with `npm --prefix test/ecc-prototype run lab` on port 4173.
 
-โทรศัพท์ที่เปิดผ่าน HTTP IP ของเครื่องอื่นใน LAN ใช้กล้องไม่ได้ ต้องใช้ HTTPS หรือ origin ที่เบราว์เซอร์ถือว่าเป็น secure context ดู [getUserMedia](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia) ยังไม่ได้เผยแพร่เว็บหรือรับรองการใช้งานบนโทรศัพท์จริง
+Phones connecting via an HTTP LAN IP cannot access the camera. Mobile browsers require HTTPS or an origin considered a secure context. See [getUserMedia](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia). This tool is not published or certified for production phone deployment.
 
-## สิ่งที่ทดลองได้
+## Features & Capabilities
 
-- เปิด/หยุด/สลับกล้อง โดยขอกล้องหลังเป็นตัวเลือกที่ต้องการ ไม่ใช้ไมโครโฟน
-- ภาพกล้อง crop กลางและย่อไม่เกิน 640 × 640 ทำงานครั้งละหนึ่งเฟรม และต้องอ่านตรงกันสองเฟรมก่อนยอมรับและหยุดกล้อง
-- กล้องและ Worker หยุดเมื่อสลับแท็บ ออกจากหน้า กดหยุด หรือพบข้อผิดพลาด ผลขอสิทธิ์ที่มาช้าจะปล่อยกล้องทันทีหากงานถูกยกเลิก
-- PNG/JPEG/WebP ตรวจลายเซ็นไฟล์ จำกัด 10 MB และไม่เกิน 32 ล้านพิกเซล ย่อด้านยาวไม่เกิน 960 ก่อนอ่าน
-- เลือก Rust/WASM, JavaScript หรือ Auto ที่ใช้ JS สำรองเมื่อโหลด WASM ไม่ได้ ค้นหาจำนวนวง 4–14 อัตโนมัติหรือระบุเองได้
-- อ่าน Numeric, Alphanumeric, UTF-8 และ Binary ไบนารีแสดงเป็น hex และบันทึกคืนเป็นไฟล์ดิบได้
-- ภาพประมวลผลในเครื่อง ไม่เก็บประวัติ ไม่ส่งภาพขึ้นเซิร์ฟเวอร์ และไม่เปิดลิงก์จากผลอ่านอัตโนมัติ
+- Start / stop / switch camera with back camera requested by default (microphone is never accessed).
+- Camera video frames are centered, cropped, and resized to at most 640 × 640 px; processed frame-by-frame with a 2-consecutive-frame agreement requirement before accepting and pausing the camera.
+- Camera and Worker immediately shut down when switching tabs, leaving the page, tapping stop, or encountering an error. Stale permission grants release tracks immediately if the request was cancelled.
+- Upload PNG/JPEG/WebP images with magic signature checks, limited to 10 MB and 32 megapixels, downscaled to a max dimension of 960 px before scanning.
+- Selectable decoding engine: Rust/WASM, JavaScript, or Auto (which falls back to JS if WASM fails to load). Supports automatic ring count search (4–14 rings) or manual ring selection.
+- Decodes Numeric, Alphanumeric, UTF-8, and Binary payloads. Binary payloads display as hexadecimal and can be downloaded as raw binary files.
+- Client-side processing: no history stored, no images uploaded to servers, and links are not automatically opened.
 
-หน้านี้รองรับ V2/V2.1 เท่านั้น ไม่อ่าน V1 และยังกู้ข้อมูลเสียได้สูงสุด 4 ไบต์ตาม format ทดลองเดิม
+This scanner supports V2/V2.1 formats only (does not scan legacy V1), with error correction up to 4 corrupted bytes following the experimental format specification.
 
-## โครงสร้างภายใน test/ecc-prototype
+## Internal Directory Structure
 
-- v2/: codec, packing, RS และ scanner JS ที่ ECC Lab กับเว็บสแกนใช้ร่วมกัน
-- legacy/: สำเนา renderer และตัวช่วย V1 ที่แยกจากโปรเจกต์หลัก
-- native/rust/: crate ทดลองพร้อม source, Cargo.lock และ outputs ของ wasm-pack แยกจาก native/rust หลัก
-- wasm/: runtime V2 สำหรับเว็บทดลองนี้เท่านั้น
-- scanner-web/src/: หน้าเว็บ กล้อง Worker และตัวจัดการการยกเลิกงาน
-- scanner-web/dist/: ไฟล์เว็บที่สร้างจากโค้ดทดลองข้างต้น
+- `v2/`: Codec, packing, Reed–Solomon, and JS scanner shared between ECC Lab and the web scanner.
+- `legacy/`: Isolated snapshot of the V1 renderer and utilities.
+- `native/rust/`: Experimental Rust crate with source, Cargo.lock, and wasm-pack output separate from the primary rust crate.
+- `wasm/`: V2 runtime artifacts for this test suite only.
+- `scanner-web/src/`: Web app UI, camera management, Worker, and task cancellation handler.
+- `scanner-web/dist/`: Static web output built from the sources above.
 
-สร้าง WASM ทดลองใหม่ โดยต้องมี Rust target wasm32-unknown-unknown และ wasm-pack:
+Rebuilding experimental WASM (requires `wasm32-unknown-unknown` Rust target and `wasm-pack`):
 
 ```sh
 npm --prefix test/ecc-prototype run build:wasm
 npm --prefix test/ecc-prototype run build:scanner
 ```
 
-คำสั่งนี้สร้างเฉพาะ test/ecc-prototype/native/rust/pkg และ sync ไป test/ecc-prototype/wasm ไม่เปลี่ยน WASM ของโปรเจกต์หลัก
+This compiles `native/rust/` into `native/rust/pkg` and synchronizes artifacts to `test/ecc-prototype/wasm` without modifying the root project's WASM bundle.
 
-## ตรวจสอบ
+## Validation
 
 ```sh
 npm --prefix test/ecc-prototype test
 cargo test --locked --manifest-path test/ecc-prototype/native/rust/Cargo.toml
 ```
 
-ชุดทดสอบใช้ ImageMagick และ Python/Pillow ที่มีในเครื่อง รวมการแพ็ก/กู้ข้อมูล, JS–Rust ตรงกัน 2,000 กรณี, ภาพ 37 กรณี, ภาพเสียหาย 4 ไบต์ทุกโหมดทั้ง Circle/LonCle และค้นหาจำนวนวงครบ 4–14 ทั้งสอง engine กล้องจำลองตรวจ cancellation, track cleanup, stale replies และการยืนยันสองเฟรม
+The test suite runs against local ImageMagick and Python/Pillow, validating data packing and recovery, 2,000 JS–Rust parity checks, 37 optical fixtures, 4-byte damaged images across all modes and styles (Circle/LonCle), and automatic ring count detection across 4–14 rings in both engines. Simulated camera tests verify cancellation, track cleanup, stale reply rejection, and 2-frame confirmation.
 
-ตรวจในเบราว์เซอร์จริงแล้วทั้ง JS และ Rust/WASM รวมอ่าน PNG Binary และดาวน์โหลดกลับตรง 14 ไบต์ แต่ยังไม่ได้ตรวจกล้องจริงบน Android/iOS แสง/มุมเอียงทุกสภาพ หรือความร้อนและแบตเตอรี่ จึงยังเป็นโค้ดทดลองใน test ไม่ใช่การรับรอง production
+Validated in real desktop browsers across both JS and Rust/WASM engines, including binary PNG scanning and round-trip 14-byte downloads. Testing has not yet covered physical mobile devices, all lighting/tilt conditions, or thermal/battery impact; this remains prototype test code, not a production certification.

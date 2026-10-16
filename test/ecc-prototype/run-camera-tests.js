@@ -33,9 +33,9 @@ class FakeWorker {
 const client = new ScannerClient(FakeWorker);
 const image = () => ({ width: 32, height: 32, data: new Uint8ClampedArray(4096) });
 const cancelled = client.scan(image(), 7, 'auto');
-await assert.rejects(client.scan(image(), 7, 'auto'), /ก่อนหน้า/);
+await assert.rejects(client.scan(image(), 7, 'auto'), /previous|ก่อนหน้า/i);
 client.stop();
-await assert.rejects(cancelled, /ยกเลิก/);
+await assert.rejects(cancelled, /cancel|ยกเลิก/i);
 assert.equal(worker.terminated, true);
 const good = client.scan(image(), 7, 'js');
 worker.onmessage({ data: { id: worker.sent.id - 1, result: { ok: true } } });

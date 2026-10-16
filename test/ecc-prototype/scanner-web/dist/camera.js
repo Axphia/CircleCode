@@ -8,7 +8,7 @@ export class Camera {
   async start(video, facing = 'environment') {
     this.stop();
     const generation = this.generation;
-    if (!this.devices?.getUserMedia) throw new Error('เปิดกล้องไม่ได้ ต้องใช้ HTTPS และเบราว์เซอร์ที่รองรับกล้อง');
+    if (!this.devices?.getUserMedia) throw new Error('Camera access unavailable. HTTPS and a supported browser are required.');
     let stream;
     try {
       stream = await this.devices.getUserMedia({ audio: false, video: { facingMode: { ideal: facing }, width: { ideal: 1280 }, height: { ideal: 1280 } } });
