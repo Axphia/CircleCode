@@ -1,12 +1,20 @@
-//! CircleCode Rust/WebAssembly Full Scanner Engine
-//! High-performance circular barcode decoder with subpixel sampling and Reed-Solomon/checksum error recovery.
+//! CircleCode Rust Core — WebAssembly, C/C++ FFI, Flutter Dart FFI, Swift, & Android JNI Engine
+//! High-performance circular barcode encoder & decoder with subpixel sampling and checksum error recovery.
 
 use serde::{Deserialize, Serialize};
+use std::ffi::{c_char, CStr, CString};
+use std::ptr;
+use std::slice;
+
+#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
+pub const DISC_R: f32 = 190.0;
 pub const CENTER_R: f32 = 42.0;
 pub const R_START: f32 = 55.0;
 pub const R_END: f32 = 157.0;
+pub const DASH_OFF: f32 = 0.28;
+pub const DASH_LEN: f32 = 0.44;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ScanResult {
@@ -23,12 +31,236 @@ pub struct ScanResult {
     pub reason: Option<String>,
 }
 
+/// C-compatible result struct for direct FFI consumers (C, C++, Swift, Flutter dart:ffi)
+#[repr(C)]
+pub struct CircleCodeResultC {
+    pub ok: i32,
+    pub len: i32,
+    pub chk: u8,
+    pub rings: i32,
+    pub density: f32,
+    pub rot: f32,
+    pub sep: f32,
+    pub fixed: i32,
+}
+
 #[derive(Clone, Debug)]
 struct ParsedBits {
     text: String,
     bytes: Vec<u8>,
     len: usize,
     chk: u8,
+}
+
+// =============================================================================
+// Deterministic PRNG & Encoder (100% bit-identical to circle-code.js)
+// =============================================================================
+
+fn xmur3_seed(s: &str) -> u32 {
+    let utf16: Vec<u16> = s.encode_utf16().collect();
+    let mut h: u32 = 1779033703u32 ^ (utf16.len() as u32);
+    for &ch in &utf16 {
+        h = (h ^ (ch as u32)).wrapping_mul(3432918353);
+        h = h.rotate_left(13);
+    }
+    h = (h ^ (h >> 16)).wrapping_mul(2246822507);
+    h = (h ^ (h >> 13)).wrapping_mul(3266489909);
+    h ^ (h >> 16)
+}
+
+struct Mulberry32 {
+    a: u32,
+}
+
+impl Mulberry32 {
+    fn new(seed: u32) -> Self {
+        Self { a: seed }
+    }
+
+    fn next_f64(&mut self) -> f64 {
+        self.a = self.a.wrapping_add(0x6D2B79F5);
+        let mut t = (self.a ^ (self.a >> 15)).wrapping_mul(1 | self.a);
+        t = t.wrapping_add((t ^ (t >> 7)).wrapping_mul(61 | t)) ^ t;
+        ((t ^ (t >> 14)) as f64) / 4294967296.0
+    }
+}
+
+fn escape_xml(val: &str) -> String {
+    let mut out = String::with_capacity(val.len());
+    for c in val.chars() {
+        match c {
+            '&' => out.push_str("&amp;"),
+            '<' => out.push_str("&lt;"),
+            '>' => out.push_str("&gt;"),
+            '"' => out.push_str("&quot;"),
+            '\'' => out.push_str("&apos;"),
+            '\u{0000}'..='\u{0008}'
+            | '\u{000B}'
+            | '\u{000C}'
+            | '\u{000E}'..='\u{001F}'
+            | '\u{FFFE}'
+            | '\u{FFFF}' => out.push('\u{FFFD}'),
+            _ => out.push(c),
+        }
+    }
+    out
+}
+
+#[derive(Clone, Debug)]
+pub struct ArcRun {
+    pub start: usize,
+    pub len: usize,
+    pub full: bool,
+}
+
+pub fn get_runs(bits: &[u8]) -> Vec<ArcRun> {
+    let n = bits.len();
+    if bits.iter().all(|&b| b == 1) {
+        return vec![ArcRun { start: 0, len: n, full: true }];
+    }
+    let mut first_zero = 0;
+    while first_zero < n && bits[first_zero] == 1 {
+        first_zero += 1;
+    }
+    let mut runs = Vec::new();
+    let mut i = 0;
+    while i < n {
+        let idx = (first_zero + i) % n;
+        if bits[idx] == 1 {
+            let run_start = idx;
+            let mut len = 0;
+            while i < n && bits[(first_zero + i) % n] == 1 {
+                len += 1;
+                i += 1;
+            }
+            runs.push(ArcRun { start: run_start, len, full: false });
+        } else {
+            i += 1;
+        }
+    }
+    runs
+}
+
+/// Encodes a UTF-8 payload into a scalable CircleCode SVG string (Circle or LonCle mode).
+pub fn encode_svg(
+    payload: &str,
+    rings_count: usize,
+    density: f32,
+    loncle: bool,
+    center_text: &str,
+) -> Result<String, String> {
+    let k = if rings_count == 0 { 5 } else { rings_count };
+    let d = if density <= 0.0 { 0.35 } else { density };
+    let bytes = payload.as_bytes();
+    let rs = radii(k);
+    let ns: Vec<usize> = rs.iter().map(|&r| slot_count(r, d)).collect();
+    let cap: usize = ns.iter().map(|&n| n.saturating_sub(1)).sum();
+    let need = 16 + bytes.len() * 8 + 8;
+    if need > cap {
+        return Err(format!(
+            "Payload too long: need {} bits, capacity {}. Shorten text or add rings.",
+            need, cap
+        ));
+    }
+
+    let mut checksum: u8 = 0;
+    for &b in bytes {
+        checksum = checksum.wrapping_add(b);
+    }
+
+    let mut seq: Vec<u8> = Vec::with_capacity(cap);
+    for i in (0..16).rev() {
+        seq.push(((bytes.len() >> i) & 1) as u8);
+    }
+    for &b in bytes {
+        for i in (0..8).rev() {
+            seq.push(((b >> i) & 1) as u8);
+        }
+    }
+    for i in (0..8).rev() {
+        seq.push(((checksum >> i) & 1) as u8);
+    }
+
+    let mut rng = Mulberry32::new(xmur3_seed(&format!("{}#pad", payload)));
+    while seq.len() < cap {
+        seq.push(if rng.next_f64() > 0.5 { 1 } else { 0 });
+    }
+
+    let safe_payload = escape_xml(payload);
+    let safe_center = escape_xml(if center_text.is_empty() { "Pay" } else { center_text });
+    let mode_label = if loncle { "LonCle" } else { "Circle" };
+
+    let mut h = format!(
+        "<svg xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"CircleCode barcode: {}\" viewBox=\"0 0 400 400\">",
+        safe_payload
+    );
+    h.push_str(&format!("<title>CircleCode Barcode: {}</title>", safe_payload));
+    h.push_str(&format!(
+        "<desc>Circular barcode in {} mode containing {} data rings encoding {} bytes of UTF-8 payload.</desc>",
+        mode_label,
+        k,
+        bytes.len()
+    ));
+    h.push_str("<circle cx=\"200\" cy=\"200\" r=\"190\" fill=\"#ffffff\"/>");
+
+    let cx = 200.0f32;
+    let cy = 200.0f32;
+    let mut bit_idx = 0usize;
+
+    for (ri, &r) in rs.iter().enumerate() {
+        let n = ns[ri];
+        let slot = (std::f32::consts::PI * 2.0) / (n as f32);
+        let mut ring_bits = Vec::with_capacity(n);
+        for j in 0..n {
+            if j == 0 {
+                ring_bits.push(1u8);
+            } else {
+                ring_bits.push(seq[bit_idx]);
+                bit_idx += 1;
+            }
+        }
+
+        if loncle {
+            for run in get_runs(&ring_bits) {
+                if run.full {
+                    h.push_str(&format!(
+                        "<circle cx=\"200\" cy=\"200\" r=\"{}\" stroke=\"#000000\" stroke-width=\"7.5\" fill=\"none\"/>",
+                        r
+                    ));
+                } else {
+                    let a0 = (run.start as f32 / n as f32) * std::f32::consts::PI * 2.0 + slot * DASH_OFF;
+                    let a1 = a0 + ((run.len - 1) as f32) * slot + slot * DASH_LEN;
+                    let p0 = (cx + r * a0.cos(), cy + r * a0.sin());
+                    let p1 = (cx + r * a1.cos(), cy + r * a1.sin());
+                    let large_arc = if (a1 - a0) > std::f32::consts::PI { 1 } else { 0 };
+                    h.push_str(&format!(
+                        "<path d=\"M {:.2} {:.2} A {} {} 0 {} 1 {:.2} {:.2}\" stroke=\"#000000\" stroke-width=\"7.5\" stroke-linecap=\"round\" fill=\"none\"/>",
+                        p0.0, p0.1, r, r, large_arc, p1.0, p1.1
+                    ));
+                }
+            }
+        } else {
+            for (j, &bit) in ring_bits.iter().enumerate() {
+                let col = if bit == 1 { "#000000" } else { "#8e8e93" };
+                let a0 = (j as f32 / n as f32) * std::f32::consts::PI * 2.0 + slot * DASH_OFF;
+                let a1 = a0 + slot * DASH_LEN;
+                let p0 = (cx + r * a0.cos(), cy + r * a0.sin());
+                let p1 = (cx + r * a1.cos(), cy + r * a1.sin());
+                h.push_str(&format!(
+                    "<path d=\"M {:.2} {:.2} A {} {} 0 0 1 {:.2} {:.2}\" stroke=\"{}\" stroke-width=\"7.5\" stroke-linecap=\"round\" fill=\"none\"/>",
+                    p0.0, p0.1, r, r, p1.0, p1.1, col
+                ));
+            }
+        }
+    }
+
+    h.push_str("<circle cx=\"200\" cy=\"200\" r=\"42\" fill=\"#000000\"/>");
+    h.push_str(&format!(
+        "<text x=\"200\" y=\"200\" fill=\"#ffffff\" font-family=\"system-ui,Segoe UI,Arial,sans-serif\" font-size=\"19\" font-weight=\"bold\" text-anchor=\"middle\" dominant-baseline=\"central\">{}</text></svg>",
+        safe_center
+    ));
+
+    Ok(h)
 }
 
 #[inline(always)]
@@ -340,7 +572,6 @@ fn correct_bits(
         sum = sum.wrapping_add(b);
     }
 
-    // 1-bit flip matching mathematical delta
     let diff_plus = sum.wrapping_sub(chk);
     let diff_minus = chk.wrapping_sub(sum);
     let weak = &order[..16.min(order.len())];
@@ -358,7 +589,6 @@ fn correct_bits(
         }
     }
 
-    // 2-bit flip if aggressive
     if aggressive && len >= 4 && sep > 12.0 && f_mean < 145.0 {
         let target_delta = (chk.wrapping_sub(sum)) as i32;
         let pool = &order[..8.min(order.len())];
@@ -492,7 +722,6 @@ pub fn try_config(
         });
     }
 
-    // Try error correction
     if bits.len() >= 24 {
         let mut len = 0usize;
         for i in 0..16 {
@@ -557,7 +786,6 @@ pub fn find_center(g: &[f32], w: usize, h: usize) -> Option<(f32, f32, f32)> {
                     continue;
                 }
 
-                // Fast 4-point check on outer badge rim (0.80 * r)
                 let in4 = sample(g, w, h, x_f, y_f, 0.80 * r, 0.0, 1.0, 0.0) +
                           sample(g, w, h, x_f, y_f, 0.80 * r, std::f32::consts::FRAC_PI_2, 1.0, 0.0) +
                           sample(g, w, h, x_f, y_f, 0.80 * r, std::f32::consts::PI, 1.0, 0.0) +
@@ -592,9 +820,6 @@ pub fn find_center(g: &[f32], w: usize, h: usize) -> Option<(f32, f32, f32)> {
         }
     }
 
-    // Centroid refinement via annulus (ring) search
-    // Symmetrical outer ring between 0.55*r and 1.05*r provides the exact center
-    // completely immune to white logos/text ("Pay", custom logos, icons) in the center
     if let Some((rough_x, rough_y, rough_r)) = best {
         let mut sum_x = 0.0;
         let mut sum_y = 0.0;
@@ -633,16 +858,23 @@ pub fn find_center(g: &[f32], w: usize, h: usize) -> Option<(f32, f32, f32)> {
     best
 }
 
-#[wasm_bindgen]
-pub fn scan_frame_wasm(
-    rgba: &[u8],
-    width: usize,
-    height: usize,
-    aggressive: bool,
-) -> Result<JsValue, JsValue> {
-    let total_pixels = width * height;
-    if rgba.len() < total_pixels * 4 {
-        return Err(JsValue::from_str("Invalid buffer size"));
+/// Pure Rust scanner entrypoint shared by WebAssembly, C FFI, Swift, Flutter, and Android JNI.
+pub fn scan_frame(rgba: &[u8], width: usize, height: usize, aggressive: bool) -> ScanResult {
+    let total_pixels = width.saturating_mul(height);
+    if total_pixels == 0 || rgba.len() < total_pixels * 4 {
+        return ScanResult {
+            ok: false,
+            text: None,
+            bytes: None,
+            len: 0,
+            chk: 0,
+            rings: 0,
+            density: 0.0,
+            rot: 0.0,
+            sep: 0.0,
+            fixed: 0,
+            reason: Some("Invalid buffer size".to_string()),
+        };
     }
 
     let g = to_grayscale(rgba, total_pixels);
@@ -659,7 +891,6 @@ pub fn scan_frame_wasm(
     for &sc in &scales {
         for &k in &rings_to_try {
             for &d in &[0.35f32, 0.37f32] {
-                // Find candidate rotations
                 let mut best_rot = 0.0f32;
                 let mut best_s = 999.0f32;
 
@@ -676,19 +907,17 @@ pub fn scan_frame_wasm(
                     continue;
                 }
 
-                // Fine sweep around best rotation
                 for off in [-1.2, -0.6, 0.0, 0.6, 1.2] {
                     let rot = best_rot + (off as f32) * std::f32::consts::PI / 180.0;
                     if let Some(res) = try_config(&g, width, height, cx, cy, sc, k, d, rot, aggressive, 1.0, 0.0) {
-                        return serde_wasm_bindgen::to_value(&res)
-                            .map_err(|e| JsValue::from_str(&e.to_string()));
+                        return res;
                     }
                 }
             }
         }
     }
 
-    let fail = ScanResult {
+    ScanResult {
         ok: false,
         text: None,
         bytes: None,
@@ -700,7 +929,133 @@ pub fn scan_frame_wasm(
         sep: 0.0,
         fixed: 0,
         reason: Some("No valid circular barcode detected".to_string()),
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+pub fn scan_frame_wasm(
+    rgba: &[u8],
+    width: usize,
+    height: usize,
+    aggressive: bool,
+) -> Result<JsValue, JsValue> {
+    let total_pixels = width.saturating_mul(height);
+    if rgba.len() < total_pixels * 4 {
+        return Err(JsValue::from_str("Invalid buffer size"));
+    }
+    let res = scan_frame(rgba, width, height, aggressive);
+    serde_wasm_bindgen::to_value(&res).map_err(|e| JsValue::from_str(&e.to_string()))
+}
+
+// =============================================================================
+// Universal C ABI / FFI Exports (C, C++, Swift, Flutter dart:ffi, JNA/JNI)
+// =============================================================================
+
+/// Encodes a null-terminated UTF-8 `payload` string into a heap-allocated SVG string.
+/// Caller MUST free the returned pointer with `circlecode_free_string(ptr)`.
+#[no_mangle]
+pub unsafe extern "C" fn circlecode_encode_svg(
+    payload_ptr: *const c_char,
+    rings: usize,
+    density: f32,
+    loncle: i32,
+    center_text_ptr: *const c_char,
+) -> *mut c_char {
+    if payload_ptr.is_null() {
+        return ptr::null_mut();
+    }
+    let payload = match CStr::from_ptr(payload_ptr).to_str() {
+        Ok(s) => s,
+        Err(_) => return ptr::null_mut(),
+    };
+    let center = if center_text_ptr.is_null() {
+        "Pay"
+    } else {
+        CStr::from_ptr(center_text_ptr).to_str().unwrap_or("Pay")
     };
 
-    serde_wasm_bindgen::to_value(&fail).map_err(|e| JsValue::from_str(&e.to_string()))
+    match encode_svg(payload, rings, density, loncle != 0, center) {
+        Ok(svg) => CString::new(svg).unwrap_or_default().into_raw(),
+        Err(_) => ptr::null_mut(),
+    }
+}
+
+/// Scans an RGBA frame buffer and writes the decoded UTF-8 payload into `out_text_buf`.
+/// Optionally writes metadata into `out_meta`.
+#[no_mangle]
+pub unsafe extern "C" fn circlecode_scan_rgba(
+    rgba_ptr: *const u8,
+    rgba_len: usize,
+    width: usize,
+    height: usize,
+    aggressive: i32,
+    out_text_buf: *mut u8,
+    out_text_cap: usize,
+    out_meta: *mut CircleCodeResultC,
+) -> i32 {
+    if rgba_ptr.is_null() || width == 0 || height == 0 || rgba_len < width.saturating_mul(height).saturating_mul(4) {
+        return -1;
+    }
+
+    let rgba = slice::from_raw_parts(rgba_ptr, rgba_len);
+    let res = scan_frame(rgba, width, height, aggressive != 0);
+
+    if !out_meta.is_null() {
+        (*out_meta) = CircleCodeResultC {
+            ok: if res.ok { 1 } else { 0 },
+            len: res.len as i32,
+            chk: res.chk,
+            rings: res.rings as i32,
+            density: res.density,
+            rot: res.rot,
+            sep: res.sep,
+            fixed: res.fixed as i32,
+        };
+    }
+
+    if !res.ok {
+        return 0;
+    }
+
+    if let Some(text) = res.text {
+        let bytes = text.as_bytes();
+        if !out_text_buf.is_null() && out_text_cap > 0 {
+            let copy_len = bytes.len().min(out_text_cap.saturating_sub(1));
+            ptr::copy_nonoverlapping(bytes.as_ptr(), out_text_buf, copy_len);
+            *out_text_buf.add(copy_len) = 0;
+        }
+        return bytes.len() as i32;
+    }
+
+    0
+}
+
+/// Scans an RGBA frame buffer and returns a heap-allocated null-terminated JSON string.
+/// Caller MUST free the returned pointer with `circlecode_free_string(ptr)`.
+#[no_mangle]
+pub unsafe extern "C" fn circlecode_scan_rgba_json(
+    rgba_ptr: *const u8,
+    rgba_len: usize,
+    width: usize,
+    height: usize,
+    aggressive: i32,
+) -> *mut c_char {
+    if rgba_ptr.is_null() || width == 0 || height == 0 || rgba_len < width.saturating_mul(height).saturating_mul(4) {
+        let err_json = r#"{"ok":false,"reason":"Invalid buffer size"}"#;
+        return CString::new(err_json).unwrap().into_raw();
+    }
+
+    let rgba = slice::from_raw_parts(rgba_ptr, rgba_len);
+    let res = scan_frame(rgba, width, height, aggressive != 0);
+    let json = serde_json::to_string(&res).unwrap_or_else(|_| r#"{"ok":false,"reason":"Serialization error"}"#.to_string());
+    CString::new(json).unwrap_or_default().into_raw()
+}
+
+/// Frees a C string previously returned by `circlecode_scan_rgba_json` or `circlecode_encode_svg`.
+#[no_mangle]
+pub unsafe extern "C" fn circlecode_free_string(ptr: *mut c_char) {
+    if !ptr.is_null() {
+        let _ = CString::from_raw(ptr);
+    }
 }

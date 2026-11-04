@@ -1,0 +1,5 @@
+module CircleCodeC [system] {
+    header "circlecode.h"
+    export *
+}
+

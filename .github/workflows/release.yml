@@ -37,6 +37,7 @@ jobs:
           npm install
           cd native/rust
           wasm-pack build --target web --release
+          cargo build --release
           cd ../..
           cp native/rust/pkg/circlecode_core* wasm/
           npm run build
@@ -148,6 +149,9 @@ jobs:
             dist/circlecode.min.js \
             index.cjs \
             wasm/circlecode_core_bg.wasm \
+            native/include/circlecode.h \
+            native/rust/target/release/libcirclecode_core.so \
+            native/rust/target/release/libcirclecode_core.a \
             *.tgz \
             --title "Release ${TAG}" \
             --notes-file RELEASE_NOTES.md \

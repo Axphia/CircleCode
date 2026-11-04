@@ -1,0 +1,12 @@
+name: circlecode_ffi
+description: Native Dart FFI bindings for CircleCode circular barcode encoder and scanner (Android, iOS, macOS, Windows, Linux).
+version: 1.1.7
+homepage: https://circlecode.js.org
+repository: https://github.com/Axphia/CircleCode
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  ffi: ^2.1.0
+

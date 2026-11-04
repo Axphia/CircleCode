@@ -1,7 +1,7 @@
 {
   "name": "@axphia/circlecode",
   "version": "1.1.7",
-  "description": "High-performance, dependency-free circular barcode encoder & decoder with native WebAssembly acceleration for Browser and Node.js.",
+  "description": "High-performance, dependency-free circular barcode encoder & decoder with native WebAssembly and Mobile/C FFI acceleration for Browser, Node.js, Flutter, iOS, Android, and C++.",
   "type": "module",
   "main": "./index.cjs",
   "module": "./index.js",
@@ -16,7 +16,8 @@
     "scanner-worker.js",
     "dist",
     "wasm",
-    "native/rust/pkg"
+    "native/include",
+    "native/bindings"
   ],
   "exports": {
     ".": {
@@ -45,7 +46,8 @@
     "test": "node test/test.js && node test/test-generator.js",
     "test:wasm": "node test/test-wasm.js",
     "build": "node scripts/build.js",
-    "build:wasm": "cd native/rust && wasm-pack build --target web --release"
+    "build:wasm": "cd native/rust && wasm-pack build --target web --release",
+    "build:native": "cd native/rust && cargo build --release"
   },
   "repository": {
     "type": "git",
@@ -61,7 +63,12 @@
     "decoder",
     "svg",
     "canvas",
-    "webcam"
+    "webcam",
+    "wasm",
+    "flutter",
+    "swift",
+    "android",
+    "ffi"
   ],
   "author": "Axphia Project",
   "license": "MIT",

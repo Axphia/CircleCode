@@ -1,6 +1,6 @@
 # CircleCode API Reference (v1.1.7)
 
-`circlecode` provides a unified suite of tools for generating and scanning circular barcodes in dual modes (Circle discrete dashes & LonCle sweeping connected arcs) across Browser, Node.js, and WebAssembly runtimes.
+`@axphia/circlecode` provides a unified suite of tools for generating and scanning circular barcodes in dual modes (**Circle** discrete dashes & **LonCle** sweeping connected arcs) across Browser, Node.js, WebAssembly, and Native Mobile / C FFI runtimes (Flutter, Swift, C/C++, Java/Kotlin).
 
 ---
 
@@ -19,10 +19,10 @@
   - [`scanCanvas(canvas, options)`](#scancanvascanvas-options)
   - [`scanImage(source, options)`](#scanimagesource-options)
   - [`CircleScanner` (Live Camera Controller)](#circlescanner)
-- [Native WebAssembly API (`circlecode/wasm`)](#native-webassembly-api-circlecodewasm)
+- [Native WebAssembly API (`@axphia/circlecode/wasm`)](#native-webassembly-api-axphiacirclecodewasm)
   - [`ensureWasm(wasmBinaryOrUrl)`](#ensurewasmwasmbinaryorurl)
   - [`scanFrameWasm(rgba, width, height, aggressive)`](#scanframewasmrgba-width-height-aggressive)
-- [Web Worker API (`circlecode/worker`)](#web-worker-api-circlecodeworker)
+- [Native Mobile & C FFI API (Flutter, Swift, C/C++, Java)](#native-mobile--c-ffi-api-flutter-swift-cc-java)
 
 ---
 
@@ -30,16 +30,16 @@
 
 ```bash
 # npm
-npm install circlecode
+npm install @axphia/circlecode
 
 # yarn
-yarn add circlecode
+yarn add @axphia/circlecode
 
 # pnpm
-pnpm add circlecode
+pnpm add @axphia/circlecode
 
 # bun
-bun add circlecode
+bun add @axphia/circlecode
 ```
 
 ---
@@ -48,11 +48,11 @@ bun add circlecode
 
 | Import Path | Content | Target Environments |
 | :--- | :--- | :--- |
-| `circlecode` | Full library (Encoder + Scanner) | Browser, Node.js (ESM & CJS) |
-| `circlecode/encoder` | Pure Encoder (SVG & Canvas generator) | Browser, Node.js |
-| `circlecode/scanner` | Pure JS Scanner (Image, Canvas, Camera) | Browser, Node.js |
-| `circlecode/worker` | Web Worker background scanning script | Modern Browsers |
-| `circlecode/wasm` | High-performance Rust WebAssembly engine | Browsers, Node.js (WASM enabled) |
+| `@axphia/circlecode` | Full library (Encoder + Scanner) | Browser, Node.js (ESM & CJS) |
+| `@axphia/circlecode/encoder` | Pure Encoder (SVG & Canvas generator) | Browser, Node.js |
+| `@axphia/circlecode/scanner` | Pure JS Scanner (Image, Canvas, Camera) | Browser, Node.js |
+| `@axphia/circlecode/worker` | Web Worker background scanning script | Modern Browsers |
+| `@axphia/circlecode/wasm` | High-performance Rust WebAssembly engine | Browsers, Node.js (WASM enabled) |
 
 ---
 
@@ -65,7 +65,7 @@ Builds the binary data model and slot allocation for a circular barcode.
 #### Parameters:
 - `payload` (`string`): UTF-8 text or URL to encode.
 - `options` (`object`, optional):
-  - `rings` (`number`, default: `5`): Number of concentric rings (scanner supports `4` to `14`). The library does not select the ring count automatically; pass a larger value when needed. At density `0.35`, five rings hold at most 19 UTF-8 payload bytes. Oversized payloads throw an error.
+  - `rings` (`number`, default: `5`): Number of concentric rings (scanner supports `4` to `14`). At density `0.35`, five rings hold at most 19 UTF-8 payload bytes. Oversized payloads throw an error.
   - `density` (`number`, default: `0.35`): Dash frequency per unit radius (default: `0.35`).
   - `mode` (`string`, default: `'data'`): `'data'` or `'art'`.
 
@@ -83,7 +83,7 @@ interface CircleCodeModel {
 
 #### Example:
 ```javascript
-import { buildModel } from 'circlecode';
+import { buildModel } from '@axphia/circlecode';
 
 const model = buildModel('Table-24', { rings: 5, density: 0.35 });
 console.log(`Capacity: ${model.used} / ${model.cap} bits`);
@@ -93,10 +93,11 @@ console.log(`Capacity: ${model.used} / ${model.cap} bits`);
 
 ### `renderToSVG(model, options)`
 
-Renders a `CircleCodeModel` to a clean, scalable SVG string.
+Renders a `CircleCodeModel` to a clean, accessible, scalable SVG string.
 
 #### Parameters:
 - `model` (`CircleCodeModel`): Object returned by `buildModel`.
+- `options` (`RenderOptions`, optional):
   - `style` (`'circle' | 'loncle'`, default: `'circle'`):
     - `'circle'`: Classic discrete mode with individual dashed pills for each bit.
     - `'loncle'`: LonCle mode with continuous sweeping variable-length arcs merging contiguous 1-bits.
@@ -104,26 +105,18 @@ Renders a `CircleCodeModel` to a clean, scalable SVG string.
   - `dark` (`string`, default: `'#000000'`): Hex or CSS color for active bits (1) and center badge.
   - `light` (`string`, default: `'#8e8e93'`): Hex or CSS color for inactive bits (0).
   - `lineWidth` (`number`, default: `7.5`): Stroke width in 400x400 normalized space.
-  - `bg` (`string`, default: `'transparent'`): Canvas background color.
+  - `bg` (`string`, default: `'#ffffff'`): Disc background color (or `'transparent'`).
   - `center` (`string | object`, default: `'Pay'`): Plain text or an image to render inside the center circular badge.
   - `centerBg` (`string`, default: `'#000000'`): Center circular badge background color (`'#000000'`, `'#ffffff'`, or `'transparent'`).
 
 #### Returns:
-- `string`: Valid SVG markup.
-
-Text and attribute values are XML-escaped; characters forbidden in XML 1.0 are replaced with U+FFFD. Center image URLs support relative paths, HTTP(S), blob URLs, and image data URLs (PNG, JPEG, GIF, WebP, AVIF, BMP, ICO, or SVG). Other URL schemes throw an error. SVG accepts `{ dataUrl }`, `{ img }`, or an image element (using `currentSrc` or `src`). Canvas requires a loaded image element or `{ img }`. String values and `{ text }` render literal text. No built-in brand logos are included.
+- `string`: Valid SVG markup with `role="img"`, `aria-label`, `<title>`, and `<desc>`.
 
 ---
 
 ### `renderToCanvas(model, ctx, size, options)`
 
 Renders a `CircleCodeModel` directly onto an HTML5 2D canvas context.
-
-#### Parameters:
-- `model` (`CircleCodeModel`): Model from `buildModel`.
-- `ctx` (`CanvasRenderingContext2D`): Target 2D rendering context.
-- `size` (`number`, default: `400`): Width and height of output in pixels.
-- `options` (`RenderOptions`, optional): Styling options.
 
 ---
 
@@ -133,86 +126,43 @@ Renders a `CircleCodeModel` directly onto an HTML5 2D canvas context.
 
 Decodes a circular barcode from raw pixel data (`ImageData` or `{ data, width, height }`).
 
-#### Parameters:
-- `imageData` (`ImageData | { data: Uint8ClampedArray | Uint8Array, width: number, height: number }`)
-- `options` (`ScanOptions`, optional):
-  - `aggressive` (`boolean`, default: `true`): Enables 1-bit and 2-bit mathematical error correction.
-  - `perspective` (`boolean`, default: `true`): Tests elliptical perspective transforms (15°–30° camera tilt).
-  - `mirrored` (`boolean`, default: `true`): Enables mirrored front-camera / selfie photo decoding.
-  - `cx`, `cy` (`number`, optional): Known center coordinates (overrides auto-detection).
-  - `scale` (`number`, optional): Known scale factor.
+### `scanCanvas(canvas, options)`
 
-#### Returns:
-```typescript
-interface ScanResult {
-  ok: boolean;
-  text?: string;        // Decoded UTF-8 string
-  bytes?: number[];     // Decoded raw byte array
-  len?: number;         // Payload byte length
-  chk?: number;         // Checksum byte
-  rings?: number;       // Number of rings detected
-  density?: number;     // Dash density detected
-  rot?: number;         // Angle of rotation (in radians)
-  sep?: number;         // Otsu / K-means luminance separation contrast
-  fixed?: number;       // Bits repaired (0 = clean, 1 = 1-bit fix, 2 = 2-bit fix)
-  reason?: string;      // Error explanation if ok === false
-}
-```
+Decodes a circular barcode from an `HTMLCanvasElement` or `CanvasRenderingContext2D` (automatically downsampling images larger than `maxScanDimension = 600` px).
 
----
+### `scanImage(source, options)`
+
+Asynchronously loads and decodes an `HTMLImageElement` or image URL (`Promise<ScanResult>`).
 
 ### `CircleScanner`
 
 High-level camera scanner controller that manages `getUserMedia`, torch toggle, and frame processing.
 
-#### Constructor:
 ```javascript
-const scanner = new CircleScanner(options);
+import { CircleScanner } from '@axphia/circlecode';
+
+const scanner = new CircleScanner({ fps: 12, useWorker: true });
+await scanner.start(videoElement, (result) => {
+  console.log('Decoded:', result.text);
+});
 ```
-
-#### Options:
-- `fps` (`number`, default: `12`): Target scanning rate.
-- `facingMode` (`'environment' | 'user'`, default: `'environment'`): Back or front camera.
-- `useWorker` (`boolean`, default: `false`): Run frame decoding in background Web Worker thread.
-- `workerUrl` (`string`, default: `'scanner-worker.js'`): Path or URL to worker script.
-- `perspective` (`boolean`, default: `true`): Compensate for camera angle.
-- `confirmCount` (`number`, default: `2`): Consecutive frames required to confirm (clean 0-fix decodes confirm in 1 frame).
-- `onScan` (`(result: ScanResult) => void`): Callback triggered upon successful decode.
-- `onError` (`(error: Error) => void`): Error callback.
-
-#### Methods:
-- `await scanner.start(videoElement)`: Requests camera permissions and begins playback and decoding.
-- `scanner.stop()`: Stops camera stream, releases video tracks, and terminates active worker.
-- `scanner.hasTorch()`: Returns `boolean` whether current camera has a flashlight.
-- `await scanner.setTorch(boolean)`: Turns flashlight on or off.
-- `await scanner.toggleTorch()`: Toggles flashlight state.
 
 ---
 
-## Native WebAssembly API (`circlecode/wasm`)
-
-Compiled from Rust using wasm-bindgen. Decode latency depends on hardware, image content, resolution, and the number of search attempts. Run `npm run test:wasm` for local synthetic-image timings; these are smoke tests, not a representative camera benchmark.
+## Native WebAssembly API (`@axphia/circlecode/wasm`)
 
 ```javascript
-import { ensureWasm, scanFrameWasm } from 'circlecode/wasm';
+import { ensureWasm, scanFrameWasm } from '@axphia/circlecode/wasm';
 
-// 1. Initialize WASM module once
 await ensureWasm();
-
-// 2. Decode raw RGBA frame buffer
 const result = scanFrameWasm(rgbaBuffer, width, height, true);
-
 if (result.ok) {
   console.log('Decoded text:', result.text);
 }
 ```
 
-### `ensureWasm(wasmBinaryOrUrl)`
-Initializes the WebAssembly runtime. Accepts an optional ArrayBuffer, Response, or URL.
+---
 
-### `scanFrameWasm(rgba, width, height, aggressive)`
-- `rgba` (`Uint8Array | Uint8ClampedArray`): Raw pixel array of size `width * height * 4`.
-- `width` (`number`): Pixel width.
-- `height` (`number`): Pixel height.
-- `aggressive` (`boolean`, default: `true`): Enables error correction.
-- **Returns**: `WasmScanResult`.
+## Native Mobile & C FFI API (Flutter, Swift, C/C++, Java)
+
+See [`native/README.md`](../native/README.md) and [`native/include/circlecode.h`](../native/include/circlecode.h) for the native C ABI (`circlecode_encode_svg`, `circlecode_scan_rgba`, `circlecode_scan_rgba_json`, `circlecode_free_string`) and official bindings for **Flutter (`dart:ffi`)**, **Swift (iOS/macOS)**, **C/C++17**, and **Java/Kotlin (Android JNI)**.

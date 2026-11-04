@@ -3,10 +3,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import assert from 'assert';
 import { buildModel } from '../index.js';
-import init, { scan_frame_wasm } from '../native/rust/pkg/circlecode_core.js';
+import init, { scan_frame_wasm } from '../wasm/circlecode_core.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const wasmPath = path.resolve(__dirname, '../native/rust/pkg/circlecode_core_bg.wasm');
+const wasmPath = path.resolve(__dirname, '../wasm/circlecode_core_bg.wasm');
 
 console.log('--- Testing Full Rust WebAssembly Decoder ---');
 console.log('Loading WASM binary from:', wasmPath);
