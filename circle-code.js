@@ -12,7 +12,7 @@
  * contexts/strings, so this file also imports cleanly in Node.
  */
 
-export const VERSION = '1.1.6';
+export const VERSION = '1.1.7';
 export const DISC_R = 190;
 export const R_START = 55;
 export const R_END = 157;
@@ -215,7 +215,13 @@ export function renderToSVG(model, style) {
   const cx = 200, cy = 200;
   const isLonCle = !!(o.style === 'loncle' || o.loncle || o.lonCle || o.connectedArcs || o.merged);
   const pol = (r, a) => [cx + r * Math.cos(a), cy + r * Math.sin(a)];
-  let h = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">';
+  const safePayload = escapeXml(model && model.payload !== undefined ? model.payload : '');
+  const modeLabel = isLonCle ? 'LonCle' : 'Circle';
+  const ringCount = model && Array.isArray(model.rings) ? model.rings.length : 0;
+  const byteCount = model && typeof model.bytes === 'number' ? model.bytes : 0;
+  let h = '<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CircleCode barcode: ' + safePayload + '" viewBox="0 0 400 400">';
+  h += '<title>CircleCode Barcode: ' + safePayload + '</title>';
+  h += '<desc>Circular barcode in ' + modeLabel + ' mode containing ' + ringCount + ' data rings encoding ' + byteCount + ' bytes of UTF-8 payload.</desc>';
   if (o.bg !== 'transparent') {
     h += '<circle cx="200" cy="200" r="190" fill="' + (o.bg || '#ffffff') + '"/>';
   }

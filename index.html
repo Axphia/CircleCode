@@ -845,7 +845,7 @@
   <script src="./dist/circlecode.min.js"></script>
   <script>
     if (!window.CircleCode) {
-      document.write('<script src="https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.6/dist/circlecode.min.js"><\/script>');
+      document.write('<script src="https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.7/dist/circlecode.min.js"><\/script>');
     }
   </script>
 </head>
@@ -870,7 +870,7 @@
       <a href="web-use-demo/scanner-wasm.html">WASM Scanner (Live)</a>
       <a href="web-use-demo/example.html">Showcase</a>
       <a href="https://github.com/Axphia/CircleCode" target="_blank" rel="noopener">GitHub</a>
-      <div class="nav-badge-pill">v1.1.6</div>
+      <div class="nav-badge-pill">v1.1.7</div>
       <a href="web-use-demo/" class="nav-btn">Launch Demos →</a>
     </div>
   </nav>
@@ -881,7 +881,7 @@
     <section class="hero">
       <div class="badge-pill">
         <span class="live-dot"></span>
-        Dual-Mode Circular Barcode Standard: Circle &amp; LonCle v1.1.6
+        Dual-Mode Circular Barcode Standard: Circle &amp; LonCle v1.1.7
       </div>
 
       <!-- Centerpiece 3D Floating Holographic Barcode Stage -->
@@ -1128,9 +1128,9 @@
 
       <!-- Package Install -->
       <div class="code-box-wrapper">
-        <button class="btn-copy-code" onclick="copySnippet(this, 'npm install @axphia/circlecode@1.1.6')">Copy</button>
-        <div class="code-box"># Install official v1.1.6 release via NPM
-npm install @axphia/circlecode@1.1.6</div>
+        <button class="btn-copy-code" onclick="copySnippet(this, 'npm install @axphia/circlecode@1.1.7')">Copy</button>
+        <div class="code-box"># Install official v1.1.7 release via NPM
+npm install @axphia/circlecode@1.1.7</div>
       </div>
 
       <!-- 1. Encoder -->
@@ -1185,10 +1185,10 @@ npm install @axphia/circlecode@1.1.6</div>
         <p style="font-size: 13px; color: var(--text-sec); margin-bottom: 8px;">Rust WASM decoder; measure latency and resource use on the target device:</p>
         <div class="code-box-wrapper">
           <button class="btn-copy-code" onclick="copySnippet(this)">Copy</button>
-          <div class="code-box"><span class="code-kw">import</span> init, { scan_frame_wasm } <span class="code-kw">from</span> <span class="code-str">'https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.6/wasm/circlecode_core.js'</span>;
+          <div class="code-box"><span class="code-kw">import</span> init, { scan_frame_wasm } <span class="code-kw">from</span> <span class="code-str">'https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.7/wasm/circlecode_core.js'</span>;
 
 <span class="code-comment">// 1. Initialize WebAssembly core</span>
-<span class="code-kw">await</span> <span class="code-fn">init</span>({ module_or_path: <span class="code-str">'https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.6/wasm/circlecode_core_bg.wasm'</span> });
+<span class="code-kw">await</span> <span class="code-fn">init</span>({ module_or_path: <span class="code-str">'https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.7/wasm/circlecode_core_bg.wasm'</span> });
 
 <span class="code-comment">// 2. Decode an RGBA camera frame</span>
 <span class="code-kw">const</span> result = <span class="code-fn">scan_frame_wasm</span>(rgbaPixelData, 400, 400, <span class="code-kw">true</span>);
@@ -1204,7 +1204,7 @@ npm install @axphia/circlecode@1.1.6</div>
         <p style="font-size: 13px; color: var(--text-sec); margin-bottom: 8px;">Include directly via script tag in vanilla HTML:</p>
         <div class="code-box-wrapper">
           <button class="btn-copy-code" onclick="copySnippet(this)">Copy</button>
-          <div class="code-box">&lt;script src=<span class="code-str">"https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.6/dist/circlecode.min.js"</span>&gt;&lt;/script&gt;
+          <div class="code-box">&lt;script src=<span class="code-str">"https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.7/dist/circlecode.min.js"</span>&gt;&lt;/script&gt;
 &lt;script&gt;
   <span class="code-kw">const</span> { buildModel, renderToCanvas, scanCanvas } = window.CircleCode;
 &lt;/script&gt;</div>

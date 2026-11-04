@@ -1,5 +1,5 @@
 /**
- * CircleCode v1.0.0 — Universal Module Definition (UMD)
+ * CircleCode v1.1.7 — Universal Module Definition (UMD)
  * https://circlecode.js.org
  * (c) 2026 Axphia Project. MIT License.
  */
@@ -32,7 +32,7 @@
  * contexts/strings, so this file also imports cleanly in Node.
  */
 
-const VERSION = '1.1.6';
+const VERSION = '1.1.7';
 const DISC_R = 190;
 const R_START = 55;
 const R_END = 157;
@@ -235,7 +235,13 @@ function renderToSVG(model, style) {
   const cx = 200, cy = 200;
   const isLonCle = !!(o.style === 'loncle' || o.loncle || o.lonCle || o.connectedArcs || o.merged);
   const pol = (r, a) => [cx + r * Math.cos(a), cy + r * Math.sin(a)];
-  let h = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">';
+  const safePayload = escapeXml(model && model.payload !== undefined ? model.payload : '');
+  const modeLabel = isLonCle ? 'LonCle' : 'Circle';
+  const ringCount = model && Array.isArray(model.rings) ? model.rings.length : 0;
+  const byteCount = model && typeof model.bytes === 'number' ? model.bytes : 0;
+  let h = '<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CircleCode barcode: ' + safePayload + '" viewBox="0 0 400 400">';
+  h += '<title>CircleCode Barcode: ' + safePayload + '</title>';
+  h += '<desc>Circular barcode in ' + modeLabel + ' mode containing ' + ringCount + ' data rings encoding ' + byteCount + ' bytes of UTF-8 payload.</desc>';
   if (o.bg !== 'transparent') {
     h += '<circle cx="200" cy="200" r="190" fill="' + (o.bg || '#ffffff') + '"/>';
   }
@@ -1723,13 +1729,40 @@ if (typeof window !== 'undefined') {
     R_START: R_START,
     R_END: R_END,
     CENTER_R: CENTER_R,
+    DASH_OFF: DASH_OFF,
+    DASH_LEN: DASH_LEN,
+    xmur3: xmur3,
+    mulberry32: mulberry32,
+    rngFrom: rngFrom,
     radii: radii,
     slotCount: slotCount,
     buildModel: buildModel,
     getRuns: getRuns,
     renderToCanvas: renderToCanvas,
     renderToSVG: renderToSVG,
+    modelToBits: modelToBits,
     parsePayloadBits: parsePayloadBits,
+    correctBitFlips: correctBitFlips,
+    finishBits: finishBits,
+    orderMirroredBits: orderMirroredBits,
+    otsuThreshold: otsuThreshold,
+    kmeansThreshold: kmeansThreshold,
+    fastCos: fastCos,
+    fastSin: fastSin,
+    toGrayscale: toGrayscale,
+    sample: sample,
+    sampleRadialMin: sampleRadialMin,
+    median3: median3,
+    otsuThr: otsuThr,
+    kmeans2: kmeans2,
+    parseBitsAt: parseBitsAt,
+    parseBits: parseBits,
+    repairLens: repairLens,
+    correctBits: correctBits,
+    finderScore: finderScore,
+    mirrorFinderScore: mirrorFinderScore,
+    tryConfig: tryConfig,
+    tryConfigMirrored: tryConfigMirrored,
     findCenterAndScale: findCenterAndScale,
     estimateDisc: estimateDisc,
     scanImageData: scanImageData,

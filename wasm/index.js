@@ -16,7 +16,11 @@ let initialized = false;
  */
 export async function ensureWasm(wasmBinaryOrUrl) {
   if (initialized) return true;
-  await initWasm(wasmBinaryOrUrl);
+  if (wasmBinaryOrUrl !== undefined && (typeof wasmBinaryOrUrl !== 'object' || wasmBinaryOrUrl === null || Object.getPrototypeOf(wasmBinaryOrUrl) !== Object.prototype)) {
+    await initWasm({ module_or_path: wasmBinaryOrUrl });
+  } else {
+    await initWasm(wasmBinaryOrUrl);
+  }
   initialized = true;
   return true;
 }

@@ -32,8 +32,10 @@ scannerCode = scannerCode
   .replace(/function\s+radii\s*\([\s\S]*?^}/m, '')
   .replace(/function\s+slotCount\s*\([\s\S]*?^}/m, '');
 
+const pkg = JSON.parse(fs.readFileSync(path.resolve(root, 'package.json'), 'utf8'));
+
 const umdBundle = `/**
- * CircleCode v1.0.0 — Universal Module Definition (UMD)
+ * CircleCode v${pkg.version} — Universal Module Definition (UMD)
  * https://circlecode.js.org
  * (c) 2026 Axphia Project. MIT License.
  */
@@ -63,13 +65,40 @@ const umdBundle = `/**
     R_START: R_START,
     R_END: R_END,
     CENTER_R: CENTER_R,
+    DASH_OFF: DASH_OFF,
+    DASH_LEN: DASH_LEN,
+    xmur3: xmur3,
+    mulberry32: mulberry32,
+    rngFrom: rngFrom,
     radii: radii,
     slotCount: slotCount,
     buildModel: buildModel,
     getRuns: getRuns,
     renderToCanvas: renderToCanvas,
     renderToSVG: renderToSVG,
+    modelToBits: modelToBits,
     parsePayloadBits: parsePayloadBits,
+    correctBitFlips: correctBitFlips,
+    finishBits: finishBits,
+    orderMirroredBits: orderMirroredBits,
+    otsuThreshold: otsuThreshold,
+    kmeansThreshold: kmeansThreshold,
+    fastCos: fastCos,
+    fastSin: fastSin,
+    toGrayscale: toGrayscale,
+    sample: sample,
+    sampleRadialMin: sampleRadialMin,
+    median3: median3,
+    otsuThr: otsuThr,
+    kmeans2: kmeans2,
+    parseBitsAt: parseBitsAt,
+    parseBits: parseBits,
+    repairLens: repairLens,
+    correctBits: correctBits,
+    finderScore: finderScore,
+    mirrorFinderScore: mirrorFinderScore,
+    tryConfig: tryConfig,
+    tryConfigMirrored: tryConfigMirrored,
     findCenterAndScale: findCenterAndScale,
     estimateDisc: estimateDisc,
     scanImageData: scanImageData,
@@ -82,6 +111,9 @@ const umdBundle = `/**
 
 fs.writeFileSync(path.resolve(distDir, 'circlecode.umd.js'), umdBundle, 'utf8');
 console.log('✓ Created dist/circlecode.umd.js (' + (Buffer.byteLength(umdBundle) / 1024).toFixed(1) + ' KB)');
+
+fs.writeFileSync(path.resolve(root, 'index.cjs'), umdBundle, 'utf8');
+console.log('✓ Created index.cjs (' + (Buffer.byteLength(umdBundle) / 1024).toFixed(1) + ' KB)');
 
 // Simple minifier (remove comments, excessive whitespace)
 const minified = umdBundle

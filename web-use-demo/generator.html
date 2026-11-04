@@ -760,7 +760,7 @@ function renderOptions(o){
 
 function buildJsCode(payload,o){
   const rendering = JSON.stringify(renderOptions(o), (key, value) => key === 'img' ? undefined : value, 2);
-  return `import { buildModel, renderToCanvas } from 'https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.6/circle-code.js';
+  return `import { buildModel, renderToCanvas } from 'https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.7/circle-code.js';
 
 const canvas = document.querySelector('#circle-code');
 if (!canvas) throw new Error('Add <canvas id="circle-code"></canvas> to the page.');

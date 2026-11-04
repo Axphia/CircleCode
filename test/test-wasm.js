@@ -14,7 +14,7 @@ console.log('Loading WASM binary from:', wasmPath);
 const wasmBytes = fs.readFileSync(wasmPath);
 console.log('WASM Binary Size:', (wasmBytes.length / 1024).toFixed(1), 'KB');
 
-await init(wasmBytes);
+await init({ module_or_path: wasmBytes });
 console.log('✓ WebAssembly module instantiated successfully!');
 
 function renderSyntheticCode(model, w = 400, h = 400, rot = 0.5) {

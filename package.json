@@ -1,6 +1,6 @@
 {
   "name": "@axphia/circlecode",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "description": "High-performance, dependency-free circular barcode encoder & decoder with native WebAssembly acceleration for Browser and Node.js.",
   "type": "module",
   "main": "./index.cjs",
@@ -27,12 +27,12 @@
     "./encoder": {
       "types": "./index.d.ts",
       "import": "./circle-code.js",
-      "require": "./circle-code.js"
+      "require": "./index.cjs"
     },
     "./scanner": {
       "types": "./index.d.ts",
       "import": "./circle-scanner.js",
-      "require": "./circle-scanner.js"
+      "require": "./index.cjs"
     },
     "./worker": "./scanner-worker.js",
     "./wasm": {
@@ -41,6 +41,7 @@
     }
   },
   "scripts": {
+    "dev": "npx serve .",
     "test": "node test/test.js && node test/test-generator.js",
     "test:wasm": "node test/test-wasm.js",
     "build": "node scripts/build.js",

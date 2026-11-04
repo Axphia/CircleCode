@@ -1,4 +1,4 @@
-# CircleCode API Reference (v1.1.6)
+# CircleCode API Reference (v1.1.7)
 
 `circlecode` provides a unified suite of tools for generating and scanning circular barcodes in dual modes (Circle discrete dashes & LonCle sweeping connected arcs) across Browser, Node.js, and WebAssembly runtimes.
 
