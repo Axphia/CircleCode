@@ -4,19 +4,18 @@
   <img src="https://raw.githubusercontent.com/Axphia/CircleCode/02c7416623aa0b1378a653161c4ca0ef0ee63e8c/images/logo.png" alt="CircleCode Logo" width="160" style="border-radius: 28px; box-shadow: 0 10px 30px rgba(0, 113, 227, 0.25);" />
 </p>
 <h2 align="center">High-performance, dependency-free circular barcode codec for Browser and Node.js</h2>
-  <p align="center">
-    Generate elegant circular barcodes in dual modes (<b>Circle</b> discrete dashes &amp; <b>LonCle</b> connected sweeping arcs) with custom center branding, and scan them across full 360° rotations at native speeds.
-  </p>
-  <p align="center">
-    <a href="https://github.com/Axphia/CircleCode/actions/workflows/build-and-publish.yml"><img src="https://github.com/Axphia/CircleCode/actions/workflows/build-and-publish.yml/badge.svg" alt="CI & Publish" /></a>
-    <a href="https://www.npmjs.com/package/@axphia/circlecode"><img src="https://img.shields.io/npm/v/@axphia/circlecode?color=0071e3&style=flat-square" alt="NPM Version" /></a>
-    <a href="https://www.jsdelivr.com/package/npm/@axphia/circlecode"><img src="https://data.jsdelivr.com/v1/package/npm/@axphia/circlecode/badge" alt="jsDelivr CDN" /></a>
-    <a href="https://circlecode.js.org"><img src="https://img.shields.io/badge/website-circlecode.js.org-0071e3?style=flat-square" alt="Website" /></a>
-    <a href="https://github.com/Axphia/CircleCode"><img src="https://img.shields.io/badge/github-Axphia%2FCircleCode-black?style=flat-square&logo=github" alt="GitHub" /></a>
-    <img src="https://img.shields.io/badge/dependencies-0-brightgreen?style=flat-square" alt="Zero Dependencies" />
-    <img src="https://img.shields.io/badge/WASM-Rust_Accelerated-orange?style=flat-square" alt="Rust WASM" />
-    <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License" />
-  </p>
+<p align="center">
+  Generate elegant circular barcodes in dual modes (<b>Circle</b> discrete dashes &amp; <b>LonCle</b> connected sweeping arcs) with custom center branding, and scan them across full 360° rotations at native speeds.
+</p>
+<p align="center">
+  <a href="https://github.com/Axphia/CircleCode/actions/workflows/build-and-publish.yml"><img src="https://github.com/Axphia/CircleCode/actions/workflows/build-and-publish.yml/badge.svg" alt="CI & Publish" /></a>
+  <a href="https://www.npmjs.com/package/@axphia/circlecode"><img src="https://img.shields.io/npm/v/@axphia/circlecode?color=0071e3&style=flat-square" alt="NPM Version" /></a>
+  <a href="https://www.jsdelivr.com/package/npm/@axphia/circlecode"><img src="https://data.jsdelivr.com/v1/package/npm/@axphia/circlecode/badge" alt="jsDelivr CDN" /></a>
+  <a href="https://circlecode.js.org"><img src="https://img.shields.io/badge/website-circlecode.js.org-0071e3?style=flat-square" alt="Website" /></a>
+  <a href="https://github.com/Axphia/CircleCode"><img src="https://img.shields.io/badge/github-Axphia%2FCircleCode-black?style=flat-square&logo=github" alt="GitHub" /></a>
+  <img src="https://img.shields.io/badge/dependencies-0-brightgreen?style=flat-square" alt="Zero Dependencies" />
+  <img src="https://img.shields.io/badge/WASM-Rust_Accelerated-orange?style=flat-square" alt="Rust WASM" />
+  <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License" />
 </p>
 
 ---
@@ -34,22 +33,29 @@ Both modes preserve exact angular slot center alignment, allowing the same scann
 
 ---
 
-## Documentation
+## Documentation & Policies
 
 - **[Documentation Hub & Benchmarks](docs/README.md)** — Complete technical documentation and empirical performance benchmarks.
-- **[API Reference](docs/API.md)** — Complete function signatures, options, and TypeScript definitions.
+- **[Changelog](CHANGELOG.md)** — Release history and version notes.
+- **[API Reference (v1.1.7)](docs/API.md)** — Complete function signatures, options, and TypeScript definitions.
 - **[Technical Specification](docs/SPECIFICATION.md)** — Format geometry, dash angles, header encoding, and error correction.
 - **[System Architecture](docs/ARCHITECTURE.md)** — Dual-engine design, subpixel image pipeline, and threading models.
 - **[Native Rust Core](native/README.md)** — Compiling and benchmarking the WebAssembly module.
+- **[Accessibility Statement (WCAG 2.1 AA)](ACCESSIBILITY.md)** — Semantic SVG attributes (`role="img"`, `aria-label`, `<title>`, `<desc>`), contrast ratios, and screen reader support.
+- **[Security Policy](SECURITY.md)** — XSS/SVG sanitization safeguards, URL protocol whitelisting, and vulnerability reporting.
+- **[Contributing Guidelines](CONTRIBUTING.md)** — Local setup, coding standards, and pull request workflow.
+- **[Code of Conduct](CODE_OF_CONDUCT.md)** — Community standards and expectations.
 
 ---
 
 ## Engine Selection: Pure JS vs Native Rust WASM
 
+![CircleCode Performance Benchmark](images/performance-benchmark.png)
+
 | Engine | Recommended Use Case | Frame Latency | Why use it? |
 | :--- | :--- | :--- | :--- |
-| **Pure JavaScript** (`circlecode`) | **Web Image Uploads & File Decoding** | Device-dependent | **Zero dependencies**, without fetching `.wasm` binaries. Suitable for file uploads, static images, and Node.js scripts. |
-| **Native Rust WASM** (`circlecode/wasm`) | **Camera Scanning** | Device-dependent | Compiled Rust decoder. Measure both engines on the target device; speed, CPU use, and thermals depend on the workload. |
+| **Pure JavaScript** (`@axphia/circlecode`) | **Web Image Uploads & File Decoding** | Device-dependent | **Zero dependencies**, without fetching `.wasm` binaries. Suitable for file uploads, static images, and Node.js scripts. |
+| **Native Rust WASM** (`@axphia/circlecode/wasm`) | **Camera Scanning** | Device-dependent | Compiled Rust decoder. Measure both engines on the target device; speed, CPU use, and thermals depend on the workload. |
 
 Run `npm run test:wasm` for local synthetic-image timings. These are single-run correctness checks, not a representative benchmark or a camera/UI FPS guarantee. See [measurement guidance](native/README.md#measuring-performance).
 
@@ -59,14 +65,14 @@ Run `npm run test:wasm` for local synthetic-image timings. These are single-run 
 
 - **Dual Visual Modes (Circle & LonCle):** Choose between classic discrete pill dashes or fluid, variable-length sweeping connected ribbons.
 - **Zero Dependencies:** Pure vanilla JavaScript default. Runs out-of-the-box in Node.js, modern browsers, PWAs, or embedded webviews.
-- **Native WebAssembly Decoder (`circlecode/wasm`):** An alternative decoder compiled from Rust; measure performance on the target device.
+- **Native WebAssembly Decoder (`@axphia/circlecode/wasm`):** An alternative decoder compiled from Rust; measure performance on the target device.
 - **Non-Blocking Web Worker:** Dedicated background worker (`scanner-worker.js`) decouples CPU-heavy decoding from the UI thread so the interface can remain responsive.
 - **Perspective & Tilt Recovery:** Automatically corrects for camera angles (15°–30° tilt) and elliptical distortion.
 - **Subpixel 360° Scanning Engine:** Dual-centroid edge detection, scale-aware radial search (`dr = 2.2 * scale`), and hybrid Otsu/K-means thresholding for extreme reliability under shadows and glare.
 - **Live Camera & Mobile Features:** Integrated torch (flashlight) toggle, digital zoom crop, and 1-frame instant lock when checksum matches.
-- **Vector SVG & Canvas Support:** Export crisp, high-resolution SVG markup or render directly to 2D canvas contexts.
+- **Accessible Vector SVG & Canvas Support:** Export crisp, high-resolution SVG markup with built-in WCAG 2.1 AA accessibility metadata (`role="img"`, `aria-label`, `<title>`, `<desc>`) and strict XML/URL sanitization, or render directly to 2D canvas contexts.
 - **Center Branding Badge:** Dedicated center circular slot ($R=42$) for brand icons, text, or avatars with zero data occlusion.
-- **Dual Module Format:** Full support for ECMAScript Modules (`import`), CommonJS (`require`), TypeScript types (`index.d.ts`), and standalone UMD browser bundle.
+- **Universal Module Support (v1.1.7):** Full support for ECMAScript Modules (`import`), CommonJS (`require`), TypeScript types (`index.d.ts`), and standalone UMD browser bundle.
 
 ---
 
@@ -105,7 +111,7 @@ bun add @axphia/circlecode
 Include directly via script tag in vanilla HTML:
 
 ```html
-<!-- Standalone UMD Bundle -->
+<!-- Standalone UMD Bundle (v1.1.7) -->
 <script src="https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.7/dist/circlecode.min.js"></script>
 <script>
   const { buildModel, renderToCanvas, renderToSVG, scanCanvas, CircleScanner } = window.CircleCode;
@@ -164,7 +170,7 @@ Use the zero-dependency pure JavaScript scanner for user photo uploads, drag-and
 
 #### Scan Static Image or Canvas Element
 ```javascript
-import { scanCanvas, scanImageData, scanImage } from 'circlecode';
+import { scanCanvas, scanImageData, scanImage } from '@axphia/circlecode';
 
 // A) Scan directly from an HTMLCanvasElement
 const result = scanCanvas(canvas, { aggressive: false, perspective: true });
@@ -177,7 +183,7 @@ if (result.ok) {
   console.error('Scan failed:', result.reason);
 }
 
-// B) Scan from an uploaded <img> element or File object
+// B) Scan from an uploaded <img> element or URL
 const img = document.querySelector('img#uploadedCode');
 const imgResult = await scanImage(img, { aggressive: true });
 if (imgResult.ok) {
@@ -187,7 +193,7 @@ if (imgResult.ok) {
 
 #### Live Pure JS Camera Scanner (with Web Worker)
 ```javascript
-import { CircleScanner } from 'circlecode';
+import { CircleScanner } from '@axphia/circlecode';
 
 const videoElement = document.getElementById('cameraVideo');
 
@@ -219,10 +225,10 @@ if (scanner.hasTorch()) {
 The compiled Rust WebAssembly core provides an alternative decoder for camera frames. Benchmark it on the target device before choosing an engine:
 
 ```javascript
-import { initWasm, scanFrameWasm } from 'circlecode/wasm';
+import { ensureWasm, scanFrameWasm } from '@axphia/circlecode/wasm';
 
 // 1. Initialize WebAssembly runtime
-await initWasm();
+await ensureWasm();
 
 // 2. Decode an RGBA pixel buffer (width * height * 4 bytes)
 const start = performance.now();
@@ -242,7 +248,7 @@ if (result.ok) {
 ### 4. CommonJS Usage (Node.js)
 
 ```javascript
-const { buildModel, renderToSVG, scanCanvas } = require('circlecode');
+const { buildModel, renderToSVG, scanCanvas } = require('@axphia/circlecode');
 
 const model = buildModel('Hello World');
 const svg = renderToSVG(model, { dark: '#0071e3', light: '#ffffff' });
@@ -273,13 +279,16 @@ const svg = renderToSVG(model, { dark: '#0071e3', light: '#ffffff' });
 git clone https://github.com/Axphia/CircleCode.git
 cd CircleCode
 
+# Start local interactive showcase server
+npm run dev
+
 # Run JavaScript test suite
 npm test
 
 # Run Rust WebAssembly test suite
 npm run test:wasm
 
-# Rebuild standalone UMD bundle
+# Rebuild standalone UMD & CommonJS bundles
 npm run build
 
 # Recompile Rust WebAssembly core
@@ -288,9 +297,11 @@ npm run build:wasm
 
 ---
 
-<img src="images/circle-code-1024.png" alt="CircleCode Diagram" width="200" height="200">
-
-<img src="images\circle-code.svg" alt="CircleCode Diagram" width="200" height="200">
+<p align="center">
+  <img src="images/circle-code-1024.png" alt="CircleCode PNG Diagram" width="200" height="200" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="images/circle-code.svg" alt="CircleCode SVG Diagram" width="200" height="200" />
+</p>
 
 ## License
 
