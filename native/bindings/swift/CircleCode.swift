@@ -1,4 +1,4 @@
-// CircleCode Swift Binding for iOS & macOS (v1.1.7)
+// CircleCode Swift Binding for iOS & macOS (v1.1.8)
 // Links against libcirclecode_core.a / circlecode_core.xcframework and native/include/circlecode.h
 
 import Foundation

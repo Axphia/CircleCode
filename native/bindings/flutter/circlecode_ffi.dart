@@ -1,4 +1,4 @@
-// CircleCode Flutter / Dart FFI Binding (v1.1.7)
+// CircleCode Flutter / Dart FFI Binding (v1.1.8)
 // Supports both Encoding (SVG generation) and Decoding (RGBA frame scanning)
 // on Android (libcirclecode_core.so), iOS/macOS (DynamicLibrary.process()), Windows, and Linux.
 

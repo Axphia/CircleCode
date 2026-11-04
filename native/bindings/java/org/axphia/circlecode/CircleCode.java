@@ -1,7 +1,7 @@
 package org.axphia.circlecode;
 
 /**
- * CircleCode Android / Java Native Binding (v1.1.7)
+ * CircleCode Android / Java Native Binding (v1.1.8)
  * Supports both SVG barcode generation and RGBA camera frame decoding via JNI.
  */
 public final class CircleCode {

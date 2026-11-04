@@ -1,5 +1,5 @@
 /**
- * CircleCode — TypeScript definitions (v1.1.7)
+ * CircleCode — TypeScript definitions (v1.1.8)
  */
 
 export interface ModelOptions {

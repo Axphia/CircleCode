@@ -12,7 +12,7 @@
  * contexts/strings, so this file also imports cleanly in Node.
  */
 
-export const VERSION = '1.1.7';
+export const VERSION = '1.1.8';
 export const DISC_R = 190;
 export const R_START = 55;
 export const R_END = 157;

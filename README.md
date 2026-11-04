@@ -37,7 +37,7 @@ Both modes preserve exact angular slot center alignment, allowing the same scann
 
 - **[Documentation Hub & Benchmarks](docs/README.md)** — Complete technical documentation and empirical performance benchmarks.
 - **[Changelog](CHANGELOG.md)** — Release history and version notes.
-- **[API Reference (v1.1.7)](docs/API.md)** — Complete function signatures, options, and TypeScript definitions.
+- **[API Reference (v1.1.8)](docs/API.md)** — Complete function signatures, options, and TypeScript definitions.
 - **[Technical Specification](docs/SPECIFICATION.md)** — Format geometry, dash angles, header encoding, and error correction.
 - **[System Architecture](docs/ARCHITECTURE.md)** — Dual-engine design, subpixel image pipeline, and threading models.
 - **[Native Rust Core](native/README.md)** — Compiling and benchmarking the WebAssembly module.
@@ -72,7 +72,7 @@ Run `npm run test:wasm` for local synthetic-image timings. These are single-run 
 - **Live Camera & Mobile Features:** Integrated torch (flashlight) toggle, digital zoom crop, and 1-frame instant lock when checksum matches.
 - **Accessible Vector SVG & Canvas Support:** Export crisp, high-resolution SVG markup with built-in WCAG 2.1 AA accessibility metadata (`role="img"`, `aria-label`, `<title>`, `<desc>`) and strict XML/URL sanitization, or render directly to 2D canvas contexts.
 - **Center Branding Badge:** Dedicated center circular slot ($R=42$) for brand icons, text, or avatars with zero data occlusion.
-- **Universal Module Support (v1.1.7):** Full support for ECMAScript Modules (`import`), CommonJS (`require`), TypeScript types (`index.d.ts`), and standalone UMD browser bundle.
+- **Universal Module Support (v1.1.8):** Full support for ECMAScript Modules (`import`), CommonJS (`require`), TypeScript types (`index.d.ts`), and standalone UMD browser bundle.
 
 ---
 
@@ -111,8 +111,8 @@ bun add @axphia/circlecode
 Include directly via script tag in vanilla HTML:
 
 ```html
-<!-- Standalone UMD Bundle (v1.1.7) -->
-<script src="https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.7/dist/circlecode.min.js"></script>
+<!-- Standalone UMD Bundle (v1.1.8) -->
+<script src="https://cdn.jsdelivr.net/npm/@axphia/circlecode@1.1.8/dist/circlecode.min.js"></script>
 <script>
   const { buildModel, renderToCanvas, renderToSVG, scanCanvas, CircleScanner } = window.CircleCode;
 </script>

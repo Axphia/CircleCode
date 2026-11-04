@@ -48,7 +48,7 @@ All measurements reflect average decode execution time across consecutive frame 
 
 ## Architectural Comparison: CircleCode vs Traditional 2D Barcodes
 
-| Feature / Capability | CircleCode (`v1.1.7`) | Standard QR Code | Aztec Code |
+| Feature / Capability | CircleCode (`v1.1.8`) | Standard QR Code | Aztec Code |
 | :--- | :---: | :---: | :---: |
 | **Rotational Invariance** | **360° Circular Symmetry** (Angular sweep lock) | 3 Corner Finder Patterns | Central Square Bullseye |
 | **Center Brand Badge** | **Native Feature** (0% data loss) | Destructive Overlay (Relies on Reed-Solomon repair) | Not Supported |

@@ -1,5 +1,5 @@
 /**
- * CircleCode Native C / C++17 Header (v1.1.7)
+ * CircleCode Native C / C++17 Header (v1.1.8)
  * High-performance circular barcode encoder & decoder ABI for C, C++, Swift, Flutter, and JNI.
  * https://circlecode.js.org
  */

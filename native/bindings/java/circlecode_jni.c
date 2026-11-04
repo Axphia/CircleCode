@@ -1,5 +1,5 @@
 /**
- * CircleCode Android JNI Bridge (v1.1.7)
+ * CircleCode Android JNI Bridge (v1.1.8)
  * Connects org.axphia.circlecode.CircleCode (Java/Kotlin) to circlecode.h (Rust C ABI).
  */
 

@@ -1,6 +1,6 @@
 # CircleCode Native Engine (WebAssembly, Flutter, Swift, C/C++, Android JNI)
 
-High-performance native core for CircleCode (`v1.1.7`), built in Rust and compiled to:
+High-performance native core for CircleCode (`v1.1.8`), built in Rust and compiled to:
 - **WebAssembly (`.wasm`)** for Web & Node.js
 - **Native Shared & Static Libraries (`.so`, `.dylib`, `.a`, `.dll`)** with a standard **C ABI (`circlecode.h`)** for **Flutter (`dart:ffi`)**, **Swift (iOS/macOS)**, **C / C++**, and **Java / Kotlin (Android JNI)**.
 

@@ -1,5 +1,5 @@
 /**
- * CircleCode v1.1.7 — Universal Module Definition (UMD)
+ * CircleCode v1.1.8 — Universal Module Definition (UMD)
  * https://circlecode.js.org
  * (c) 2026 Axphia Project. MIT License.
  */
@@ -32,7 +32,7 @@
  * contexts/strings, so this file also imports cleanly in Node.
  */
 
-const VERSION = '1.1.7';
+const VERSION = '1.1.8';
 const DISC_R = 190;
 const R_START = 55;
 const R_END = 157;
